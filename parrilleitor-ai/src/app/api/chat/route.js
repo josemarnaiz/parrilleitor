@@ -1,6 +1,8 @@
 import { getSession, withApiAuthRequired } from '@auth0/nextjs-auth0/edge'
 import { AIProviderFactory } from '@/services/ai/AIProviderFactory'
 
+const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com'
+
 const SYSTEM_PROMPT = `You are an AI agent specializing in nutrition and sports. Your purpose is to provide personalized advice, tips, and diet recommendations to users based on their specific sport or daily exercise routines.
 
 When providing advice, follow these guidelines:
@@ -21,6 +23,16 @@ async function handler(req) {
       return Response.json(
         { error: 'Not authenticated' },
         { status: 401 }
+      )
+    }
+
+    // Verificar rol premium
+    const roles = session.user[`${AUTH0_NAMESPACE}/roles`] || []
+    if (!roles.includes('premium')) {
+      console.log('Usuario no premium intentando acceder:', session.user.email)
+      return Response.json(
+        { error: 'Se requiere una cuenta premium para acceder al chat' },
+        { status: 403 }
       )
     }
 

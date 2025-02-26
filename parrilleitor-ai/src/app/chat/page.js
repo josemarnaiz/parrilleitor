@@ -4,20 +4,44 @@ import { useState, useEffect } from 'react'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { useRouter } from 'next/navigation'
 
+const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com'
+
 export default function Chat() {
-  const { user, isLoading, error: authError } = useUser()
+  const { user, isLoading } = useUser()
   const router = useRouter()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [error, setError] = useState(null)
+  const [isPremium, setIsPremium] = useState(false)
 
   useEffect(() => {
-    if (authError) {
-      console.error('Auth error:', authError)
-      router.push('/api/auth/login')
+    async function checkPremiumStatus() {
+      try {
+        const response = await fetch('/api/users/roles', {
+          credentials: 'include'
+        })
+        
+        if (!response.ok) {
+          throw new Error('Error al verificar el estado premium')
+        }
+
+        const data = await response.json()
+        if (!data.user.isPremium) {
+          router.push('/unauthorized')
+          return
+        }
+        setIsPremium(true)
+      } catch (err) {
+        console.error('Error verificando estado premium:', err)
+        router.push('/unauthorized')
+      }
     }
-  }, [authError, router])
+
+    if (user) {
+      checkPremiumStatus()
+    }
+  }, [user, router])
 
   if (isLoading) {
     return (
@@ -27,8 +51,7 @@ export default function Chat() {
     )
   }
 
-  if (!user) {
-    router.push('/api/auth/login')
+  if (!user || !isPremium) {
     return null
   }
 
@@ -56,8 +79,8 @@ export default function Chat() {
         const errorData = await response.json()
         console.error('Chat API error:', errorData)
         
-        if (response.status === 401) {
-          router.push('/api/auth/login')
+        if (response.status === 401 || response.status === 403) {
+          router.push('/unauthorized')
           return
         }
         
