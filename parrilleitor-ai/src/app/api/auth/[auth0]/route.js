@@ -52,28 +52,40 @@ export const GET = handleAuth({
           sessionExists: !!session,
           userEmail: session?.user?.email,
           accessToken: !!session?.accessToken,
-          idToken: !!session?.idToken
+          idToken: !!session?.idToken,
+          timestamp: new Date().toISOString()
         })
 
         if (!session) {
           throw new Error('No session created during callback')
         }
 
-        return {
+        // Ensure session data is complete
+        const enhancedSession = {
           ...session,
           user: {
             ...session.user,
-            // Ensure these fields are present
             email: session.user.email,
             email_verified: session.user.email_verified,
-            sub: session.user.sub
-          }
+            sub: session.user.sub,
+            sessionStartTime: new Date().toISOString()
+          },
+          expiresIn: 24 * 60 * 60 // 24 hours in seconds
         }
+
+        console.log('Enhanced session created:', {
+          email: enhancedSession.user.email,
+          sessionStartTime: enhancedSession.user.sessionStartTime,
+          expiresIn: enhancedSession.expiresIn
+        })
+
+        return enhancedSession
       } catch (error) {
         console.error('Callback error:', {
           message: error.message,
           stack: error.stack,
-          type: error.constructor.name
+          type: error.constructor.name,
+          timestamp: new Date().toISOString()
         })
         throw error
       }

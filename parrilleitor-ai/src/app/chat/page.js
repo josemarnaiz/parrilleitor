@@ -17,6 +17,7 @@ export default function Chat() {
 
   useEffect(() => {
     let isMounted = true
+    let retryTimeout = null
 
     async function checkPremiumStatus() {
       try {
@@ -24,10 +25,20 @@ export default function Chat() {
         setIsCheckingAccess(true)
         setError(null)
 
-        if (!user) {
-          console.log('No user found, waiting for user data...')
-          return // En lugar de redirigir, simplemente esperamos
+        if (!user || isUserLoading) {
+          console.log('Waiting for user data...', {
+            hasUser: !!user,
+            isLoading: isUserLoading,
+            timestamp: new Date().toISOString()
+          })
+          return
         }
+
+        console.log('Checking premium status for:', {
+          email: user.email,
+          retryCount,
+          timestamp: new Date().toISOString()
+        })
 
         const response = await fetch('/api/users/roles', {
           method: 'GET',
@@ -40,36 +51,39 @@ export default function Chat() {
         
         if (!response.ok) {
           const errorData = await response.json()
-          console.error('Error checking premium status:', {
+          console.error('Premium status check failed:', {
             status: response.status,
             error: errorData,
-            retryCount
+            retryCount,
+            timestamp: new Date().toISOString()
           })
           
-          // Solo reintentamos si el error es "retryable"
           if (response.status === 401 && errorData.retryable && retryCount < 3) {
-            console.log('Session check failed, retrying...', { retryCount })
             if (isMounted) {
               setRetryCount(prev => prev + 1)
+              // Exponential backoff: 1s, 2s, 4s
+              const delay = Math.min(Math.pow(2, retryCount) * 1000, 4000)
+              console.log(`Retrying in ${delay}ms...`)
+              retryTimeout = setTimeout(checkPremiumStatus, delay)
             }
             return
           }
           
-          // Solo redirigimos al login si explícitamente no es "retryable"
           if (response.status === 401 && !errorData.retryable) {
-            console.log('Session invalid, redirecting to login')
+            console.log('Session expired, redirecting to login')
             router.push('/api/auth/login')
             return
           }
           
-          throw new Error(errorData.error || 'Error al verificar el estado premium')
+          throw new Error(errorData.error || 'Error checking premium status')
         }
 
         const data = await response.json()
-        console.log('Premium status check:', {
+        console.log('Premium status result:', {
           email: user.email,
           isPremium: data.user.isPremium,
-          retryCount
+          retryCount,
+          timestamp: new Date().toISOString()
         })
 
         if (!data.user.isPremium) {
@@ -83,13 +97,14 @@ export default function Chat() {
           setRetryCount(0)
         }
       } catch (err) {
-        console.error('Error in premium check:', {
-          error: err,
-          retryCount
+        console.error('Premium check error:', {
+          error: err.message,
+          stack: err.stack,
+          retryCount,
+          timestamp: new Date().toISOString()
         })
         if (isMounted) {
           setError(err.message)
-          // Solo redirigimos después de agotar los reintentos
           if (retryCount >= 3) {
             router.push('/unauthorized')
           }
@@ -101,15 +116,16 @@ export default function Chat() {
       }
     }
 
-    const timeoutId = setTimeout(() => {
-      if (!isUserLoading) {
-        checkPremiumStatus()
-      }
-    }, Math.min(retryCount * 1000, 3000)) // Máximo 3 segundos de delay
+    // Solo iniciamos la verificación si tenemos datos de usuario
+    if (!isUserLoading && user) {
+      checkPremiumStatus()
+    }
 
     return () => {
       isMounted = false
-      clearTimeout(timeoutId)
+      if (retryTimeout) {
+        clearTimeout(retryTimeout)
+      }
     }
   }, [user, isUserLoading, router, retryCount])
 
