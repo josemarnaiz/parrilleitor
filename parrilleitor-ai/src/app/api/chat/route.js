@@ -1,4 +1,4 @@
-import { getSession } from '@auth0/nextjs-auth0'
+import { getSession, withApiAuthRequired } from '@auth0/nextjs-auth0'
 import { AIProviderFactory } from '@/services/ai/AIProviderFactory'
 
 const SYSTEM_PROMPT = `You are an AI agent specializing in nutrition and sports. Your purpose is to provide personalized advice, tips, and diet recommendations to users based on their specific sport or daily exercise routines.
@@ -13,12 +13,13 @@ When providing advice, follow these guidelines:
 
 Remember to maintain a friendly and professional tone.`
 
-export async function POST(request) {
+async function handler(request) {
   try {
     const session = await getSession(request)
     
     if (!session) {
-      console.error('No session found')
+      console.error('No session found in chat API')
+      console.log('Request headers:', Object.fromEntries(request.headers))
       return new Response(JSON.stringify({ error: 'No session found' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
@@ -62,4 +63,6 @@ export async function POST(request) {
       }
     )
   }
-} 
+}
+
+export const POST = withApiAuthRequired(handler) 

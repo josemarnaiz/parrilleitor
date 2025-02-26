@@ -2,15 +2,28 @@
 
 import { useState } from 'react'
 import { useUser } from '@auth0/nextjs-auth0/client'
+import { useRouter } from 'next/navigation'
 
 export default function Chat() {
   const { user, isLoading } = useUser()
+  const router = useRouter()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [error, setError] = useState(null)
 
-  if (isLoading) return <div>Loading...</div>
-  if (!user) return <div>Please log in to access the chat.</div>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
+        <div className="text-2xl">Cargando...</div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    router.push('/api/auth/login')
+    return null
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -20,6 +33,7 @@ export default function Chat() {
     setMessages([...messages, newMessage])
     setInput('')
     setIsTyping(true)
+    setError(null)
 
     try {
       const response = await fetch('/api/chat', {
@@ -27,13 +41,26 @@ export default function Chat() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ message: input }),
       })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        if (response.status === 401) {
+          console.error('Error de autenticación:', errorData)
+          router.push('/api/auth/login')
+          return
+        }
+        throw new Error(errorData.error || 'Error en la respuesta del servidor')
+      }
 
       const data = await response.json()
       setMessages(prev => [...prev, { role: 'assistant', content: data.message }])
     } catch (error) {
       console.error('Error:', error)
+      setError(error.message)
+      setMessages(prev => [...prev, { role: 'error', content: 'Lo siento, ha ocurrido un error. Por favor, intenta de nuevo.' }])
     } finally {
       setIsTyping(false)
     }
@@ -44,12 +71,19 @@ export default function Chat() {
       <div className="max-w-4xl mx-auto">
         <div className="bg-gray-800 rounded-lg shadow-lg p-6 min-h-[600px] flex flex-col">
           <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+            {error && (
+              <div className="bg-red-500 text-white p-4 rounded-lg mb-4">
+                {error}
+              </div>
+            )}
             {messages.map((message, index) => (
               <div
                 key={index}
                 className={`p-4 rounded-lg ${
                   message.role === 'user' 
                     ? 'bg-blue-600 ml-auto max-w-[80%]' 
+                    : message.role === 'error'
+                    ? 'bg-red-500 mr-auto max-w-[80%]'
                     : 'bg-gray-700 mr-auto max-w-[80%]'
                 }`}
               >
@@ -74,6 +108,7 @@ export default function Chat() {
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+              disabled={isTyping}
             >
               Enviar
             </button>
