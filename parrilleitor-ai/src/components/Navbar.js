@@ -40,6 +40,12 @@ export default function Navbar() {
               >
                 Chat
               </Link>
+              <Link
+                href="/admin/users"
+                className="text-gray-300 hover:text-white transition-colors"
+              >
+                Mi Cuenta
+              </Link>
               <a 
                 href="/api/auth/logout"
                 className="text-gray-300 hover:text-white transition-colors"
