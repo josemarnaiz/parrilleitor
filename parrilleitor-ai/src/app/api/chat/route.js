@@ -1,4 +1,4 @@
-import { getSession } from '@auth0/nextjs-auth0'
+import { getSession, withApiAuthRequired } from '@auth0/nextjs-auth0/edge'
 import { AIProviderFactory } from '@/services/ai/AIProviderFactory'
 
 const SYSTEM_PROMPT = `You are an AI agent specializing in nutrition and sports. Your purpose is to provide personalized advice, tips, and diet recommendations to users based on their specific sport or daily exercise routines.
@@ -13,32 +13,18 @@ When providing advice, follow these guidelines:
 
 Remember to maintain a friendly and professional tone.`
 
-export async function POST(request) {
+async function handler(req) {
   try {
-    // Log request headers for debugging
-    const headers = Object.fromEntries(request.headers.entries())
-    console.log('Request headers:', headers)
-
-    const session = await getSession(request)
-    console.log('Session:', session)
-
-    if (!session) {
-      console.error('No session found in chat API')
+    const session = await getSession(req)
+    
+    if (!session?.user) {
       return Response.json(
-        { error: 'No session found' },
+        { error: 'Not authenticated' },
         { status: 401 }
       )
     }
 
-    if (!session.user) {
-      console.error('No user found in session')
-      return Response.json(
-        { error: 'No user found in session' },
-        { status: 401 }
-      )
-    }
-
-    const { message } = await request.json()
+    const { message } = await req.json()
     
     if (!message) {
       return Response.json(
@@ -63,4 +49,8 @@ export async function POST(request) {
       { status: 500 }
     )
   }
-} 
+}
+
+export const POST = withApiAuthRequired(handler)
+
+export const runtime = 'edge' 
