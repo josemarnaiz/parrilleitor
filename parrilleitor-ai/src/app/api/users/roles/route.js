@@ -27,10 +27,24 @@ export async function GET(req) {
       headers: Object.fromEntries(req.headers.entries())
     })
 
-    if (!session?.user) {
-      console.log('No session found in roles endpoint')
+    // Si no hay sesión pero hay token de autorización, intentar usar eso
+    const authHeader = req.headers.get('authorization')
+    if (!session?.user && authHeader) {
+      console.log('No session but found auth header, attempting to use it')
+      // Por ahora devolvemos un 401 más suave que permita reintentos
       return Response.json(
-        { error: 'No autenticado' },
+        { error: 'Sesión no encontrada', retryable: true },
+        { 
+          status: 401,
+          headers: commonHeaders
+        }
+      )
+    }
+
+    if (!session?.user) {
+      console.log('No session and no auth header found')
+      return Response.json(
+        { error: 'No autenticado', retryable: false },
         { 
           status: 401,
           headers: commonHeaders
@@ -83,7 +97,8 @@ export async function GET(req) {
       { 
         error: 'Error al verificar roles',
         details: error.message,
-        type: error.constructor.name
+        type: error.constructor.name,
+        retryable: true
       },
       { 
         status: 500,

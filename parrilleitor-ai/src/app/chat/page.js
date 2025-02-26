@@ -16,15 +16,17 @@ export default function Chat() {
   const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
+    let isMounted = true
+
     async function checkPremiumStatus() {
       try {
+        if (!isMounted) return
         setIsCheckingAccess(true)
         setError(null)
 
         if (!user) {
-          console.log('No user found, redirecting to login')
-          router.push('/api/auth/login')
-          return
+          console.log('No user found, waiting for user data...')
+          return // En lugar de redirigir, simplemente esperamos
         }
 
         const response = await fetch('/api/users/roles', {
@@ -44,14 +46,18 @@ export default function Chat() {
             retryCount
           })
           
-          if (response.status === 401 && retryCount < 3) {
-            console.log('Session expired, retrying...', { retryCount })
-            setRetryCount(prev => prev + 1)
+          // Solo reintentamos si el error es "retryable"
+          if (response.status === 401 && errorData.retryable && retryCount < 3) {
+            console.log('Session check failed, retrying...', { retryCount })
+            if (isMounted) {
+              setRetryCount(prev => prev + 1)
+            }
             return
           }
           
-          if (response.status === 401) {
-            console.log('Session expired after retries, redirecting to login')
+          // Solo redirigimos al login si explícitamente no es "retryable"
+          if (response.status === 401 && !errorData.retryable) {
+            console.log('Session invalid, redirecting to login')
             router.push('/api/auth/login')
             return
           }
@@ -67,24 +73,31 @@ export default function Chat() {
         })
 
         if (!data.user.isPremium) {
-          console.log('User not premium, redirecting')
+          console.log('User not premium, redirecting to unauthorized')
           router.push('/unauthorized')
           return
         }
 
-        setIsPremium(true)
-        setRetryCount(0)
+        if (isMounted) {
+          setIsPremium(true)
+          setRetryCount(0)
+        }
       } catch (err) {
         console.error('Error in premium check:', {
           error: err,
           retryCount
         })
-        setError(err.message)
-        if (retryCount >= 3) {
-          router.push('/unauthorized')
+        if (isMounted) {
+          setError(err.message)
+          // Solo redirigimos después de agotar los reintentos
+          if (retryCount >= 3) {
+            router.push('/unauthorized')
+          }
         }
       } finally {
-        setIsCheckingAccess(false)
+        if (isMounted) {
+          setIsCheckingAccess(false)
+        }
       }
     }
 
@@ -92,9 +105,12 @@ export default function Chat() {
       if (!isUserLoading) {
         checkPremiumStatus()
       }
-    }, retryCount * 1000) // Incrementar el delay con cada reintento
+    }, Math.min(retryCount * 1000, 3000)) // Máximo 3 segundos de delay
 
-    return () => clearTimeout(timeoutId)
+    return () => {
+      isMounted = false
+      clearTimeout(timeoutId)
+    }
   }, [user, isUserLoading, router, retryCount])
 
   if (isUserLoading || isCheckingAccess) {
@@ -137,7 +153,8 @@ export default function Chat() {
         const errorData = await response.json()
         console.error('Chat API error:', errorData)
         
-        if (response.status === 401) {
+        // Solo redirigimos al login si es un error de autenticación no recuperable
+        if (response.status === 401 && !errorData.retryable) {
           router.push('/api/auth/login')
           return
         }
