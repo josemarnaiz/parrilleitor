@@ -1,10 +1,10 @@
-import { getSession, withApiAuthRequired } from '@auth0/nextjs-auth0/edge'
+import { getSession } from '@auth0/nextjs-auth0'
 import { isInAllowedList } from '@/config/allowedUsers'
 
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles'
 const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS'
 
-async function handler(request) {
+export async function GET(request) {
   try {
     const session = await getSession(request)
     
@@ -13,22 +13,14 @@ async function handler(request) {
       hasSession: !!session,
       hasUser: !!session?.user,
       userEmail: session?.user?.email,
-      userRoles: session?.user?.[AUTH0_NAMESPACE],
-      headers: Object.fromEntries(request.headers),
-      cookies: request.cookies
+      userRoles: session?.user?.[AUTH0_NAMESPACE]
     })
 
     if (!session?.user) {
       console.log('No session found or session expired')
       return Response.json(
         { error: 'No autenticado. Por favor, inicia sesión nuevamente.' },
-        { 
-          status: 401,
-          headers: {
-            'Cache-Control': 'no-store, must-revalidate',
-            'Pragma': 'no-cache'
-          }
-        }
+        { status: 401 }
       )
     }
 
@@ -70,11 +62,6 @@ async function handler(request) {
         isAllowedListUser,
         hasPremiumRole
       }
-    }, {
-      headers: {
-        'Cache-Control': 'no-store, must-revalidate',
-        'Pragma': 'no-cache'
-      }
     })
 
   } catch (error) {
@@ -91,17 +78,7 @@ async function handler(request) {
         details: error.message,
         type: error.constructor.name
       },
-      { 
-        status: 500,
-        headers: {
-          'Cache-Control': 'no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      }
+      { status: 500 }
     )
   }
-}
-
-export const GET = withApiAuthRequired(handler)
-
-export const runtime = 'edge' 
+} 
