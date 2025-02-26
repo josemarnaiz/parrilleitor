@@ -5,8 +5,29 @@ import { isInAllowedList } from './src/config/allowedUsers'
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles'
 const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS'
 
+// Rutas que no requieren autenticación
+const publicPaths = [
+  '/',
+  '/api/auth/login',
+  '/api/auth/logout',
+  '/api/auth/callback',
+  '/unauthorized'
+]
+
 export default withMiddlewareAuthRequired(async function middleware(req) {
   try {
+    // No aplicar middleware a rutas públicas
+    const path = req.nextUrl.pathname
+    if (publicPaths.some(p => path.startsWith(p))) {
+      return new Response(null, {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store, max-age=0',
+          'RSC': '1'
+        }
+      })
+    }
+
     const res = new Response()
     const session = await getSession(req, res)
     
@@ -50,6 +71,8 @@ export default withMiddlewareAuthRequired(async function middleware(req) {
         status: 302,
         headers: {
           Location: '/unauthorized',
+          'Cache-Control': 'no-store, max-age=0',
+          'RSC': '1'
         },
       })
     }
@@ -65,6 +88,8 @@ export default withMiddlewareAuthRequired(async function middleware(req) {
       status: 302,
       headers: {
         Location: '/unauthorized',
+        'Cache-Control': 'no-store, max-age=0',
+        'RSC': '1'
       },
     })
   }
@@ -73,7 +98,8 @@ export default withMiddlewareAuthRequired(async function middleware(req) {
 export const config = {
   matcher: [
     '/chat',
-    '/api/chat'
+    '/api/chat',
+    '/admin/:path*'
   ]
 }
 

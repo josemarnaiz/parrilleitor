@@ -1,26 +1,39 @@
-import { handleAuth, handleCallback, handleLogout } from '@auth0/nextjs-auth0/edge'
+import { handleAuth, handleCallback, handleLogin, handleLogout } from '@auth0/nextjs-auth0/edge'
 
 const AUTH0_BASE_URL = process.env.AUTH0_BASE_URL || 'https://parrilleitorai.vercel.app'
 
-// Configuración común de CORS
-const corsHeaders = {
+// Configuración común de CORS y seguridad
+const commonHeaders = {
   'Access-Control-Allow-Origin': 'https://parrilleitorai.vercel.app',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-next-router-state-tree, x-next-url',
   'Access-Control-Allow-Credentials': 'true',
+  'Cache-Control': 'no-store, max-age=0',
+  'RSC': '1',
 }
 
 export const GET = handleAuth({
+  login: handleLogin({
+    returnTo: '/',
+    async afterLogin(req, res) {
+      Object.entries(commonHeaders).forEach(([key, value]) => {
+        res.headers.set(key, value)
+      })
+      return res
+    }
+  }),
   callback: handleCallback({
-    afterCallback: async (req, session) => {
+    async afterCallback(req, session, res) {
+      Object.entries(commonHeaders).forEach(([key, value]) => {
+        res.headers.set(key, value)
+      })
       return session
     }
   }),
   logout: handleLogout({
     returnTo: AUTH0_BASE_URL,
     async afterLogout(req, res) {
-      // Añadir headers CORS a la respuesta de logout
-      Object.entries(corsHeaders).forEach(([key, value]) => {
+      Object.entries(commonHeaders).forEach(([key, value]) => {
         res.headers.set(key, value)
       })
       return res
@@ -30,12 +43,15 @@ export const GET = handleAuth({
 
 export const POST = handleAuth()
 
-export const runtime = 'edge'
-
-// Configure CORS headers for preflight requests
+// Configure preflight requests
 export async function OPTIONS(request) {
   return new Response(null, {
     status: 200,
-    headers: corsHeaders
+    headers: {
+      ...commonHeaders,
+      'Access-Control-Max-Age': '86400',
+    }
   })
-} 
+}
+
+export const runtime = 'edge' 
