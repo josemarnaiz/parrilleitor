@@ -39,22 +39,42 @@ async function handleAuthError(error, action) {
 export const GET = handleAuth({
   login: handleLogin({
     returnTo: '/',
-    getLoginState() {
-      return {
-        returnTo: '/'
-      }
+    authorizationParams: {
+      audience: process.env.AUTH0_AUDIENCE,
+      scope: process.env.AUTH0_SCOPE
     }
   }),
   callback: handleCallback({
     afterCallback: async (req, session) => {
       try {
-        console.log('Auth callback:', {
-          session: session ? 'exists' : 'null',
-          user: session?.user?.email
+        // Log session details
+        console.log('Auth callback details:', {
+          sessionExists: !!session,
+          userEmail: session?.user?.email,
+          accessToken: !!session?.accessToken,
+          idToken: !!session?.idToken
         })
-        return session
+
+        if (!session) {
+          throw new Error('No session created during callback')
+        }
+
+        return {
+          ...session,
+          user: {
+            ...session.user,
+            // Ensure these fields are present
+            email: session.user.email,
+            email_verified: session.user.email_verified,
+            sub: session.user.sub
+          }
+        }
       } catch (error) {
-        console.error('Error in callback:', error)
+        console.error('Callback error:', {
+          message: error.message,
+          stack: error.stack,
+          type: error.constructor.name
+        })
         throw error
       }
     }

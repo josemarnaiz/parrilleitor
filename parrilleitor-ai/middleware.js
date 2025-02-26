@@ -11,11 +11,11 @@ const publicPaths = [
   '/api/auth/login',
   '/api/auth/logout',
   '/api/auth/callback',
+  '/api/auth/me',
   '/unauthorized'
 ]
 
-// Middleware function
-async function authMiddleware(req) {
+export default async function middleware(req) {
   try {
     // No aplicar middleware a rutas públicas
     const path = req.nextUrl.pathname
@@ -31,22 +31,26 @@ async function authMiddleware(req) {
     // Get session
     const session = await getSession(req)
     
+    // Log session state
+    console.log('Middleware session check:', {
+      path,
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      userEmail: session?.user?.email,
+      timestamp: new Date().toISOString()
+    })
+
     // Si no hay sesión, redirigir a login
     if (!session?.user) {
+      console.log('No session, redirecting to login:', {
+        path,
+        timestamp: new Date().toISOString()
+      })
       return Response.redirect(new URL('/api/auth/login', req.url))
     }
 
     const userEmail = session.user.email
     
-    // Debug completo de la sesión
-    console.log('Debug completo de sesión:', {
-      email: userEmail,
-      sessionExists: !!session,
-      userExists: !!session?.user,
-      allUserData: session?.user,
-      allRolesData: session?.user?.[AUTH0_NAMESPACE]
-    })
-
     // Verificar acceso
     const isAllowedUser = isInAllowedList(userEmail)
     const roles = session.user[AUTH0_NAMESPACE] || []
@@ -54,18 +58,25 @@ async function authMiddleware(req) {
     const hasAccess = isAllowedUser || hasPremiumRole
 
     // Log de verificación
-    console.log('Verificación de acceso:', {
+    console.log('Access verification:', {
       email: userEmail,
       isAllowedUser,
       hasPremiumRole,
       hasAccess,
-      path
+      path,
+      timestamp: new Date().toISOString()
     })
 
     if (!hasAccess) {
+      console.log('Access denied, redirecting to unauthorized:', {
+        email: userEmail,
+        path,
+        timestamp: new Date().toISOString()
+      })
       return Response.redirect(new URL('/unauthorized', req.url))
     }
 
+    // Allow the request to proceed
     return new Response(null, {
       status: 200,
       headers: {
@@ -74,16 +85,16 @@ async function authMiddleware(req) {
     })
     
   } catch (error) {
-    console.error('Error en middleware:', {
+    console.error('Middleware error:', {
       error: error.message,
       stack: error.stack,
-      type: error.constructor.name
+      type: error.constructor.name,
+      path: req.nextUrl.pathname,
+      timestamp: new Date().toISOString()
     })
     return Response.redirect(new URL('/unauthorized', req.url))
   }
 }
-
-export default authMiddleware
 
 export const config = {
   matcher: [
