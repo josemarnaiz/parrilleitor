@@ -15,11 +15,13 @@ Remember to maintain a friendly and professional tone.`
 
 export async function POST(request) {
   try {
-    const session = await getSession()
-    if (!session) {
+    const session = await getSession(request)
+    if (!session || !session.user) {
       return new Response(JSON.stringify({ error: 'Not authenticated' }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+        },
       })
     }
 
@@ -30,16 +32,20 @@ export async function POST(request) {
     return new Response(
       JSON.stringify({ message: response }),
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+        },
       }
     )
   } catch (error) {
     console.error('Error:', error)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+        },
       }
     )
   }
