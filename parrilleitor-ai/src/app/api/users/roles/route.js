@@ -1,4 +1,4 @@
-import { getSession } from '@auth0/nextjs-auth0'
+import { getSession } from '@auth0/nextjs-auth0/edge'
 import { isInAllowedList } from '@/config/allowedUsers'
 
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles'
@@ -81,4 +81,6 @@ export async function GET(request) {
       { status: 500 }
     )
   }
-} 
+}
+
+export const runtime = 'edge' 
