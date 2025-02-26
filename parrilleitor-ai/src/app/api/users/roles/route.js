@@ -45,7 +45,20 @@ async function handler(request) {
       email,
       roles,
       isAllowedListUser,
-      hasPremiumRole
+      hasPremiumRole,
+      allowedByList: isAllowedListUser,
+      allowedByRole: hasPremiumRole,
+      finalAccess: isAllowedListUser || hasPremiumRole
+    })
+
+    const isPremium = isAllowedListUser || hasPremiumRole
+
+    // Log access decision
+    console.log(`Access decision for ${email}:`, {
+      isPremium,
+      reason: isPremium 
+        ? (isAllowedListUser ? 'Allowed by list' : 'Has premium role')
+        : 'No premium access'
     })
 
     return Response.json({
@@ -53,7 +66,7 @@ async function handler(request) {
         email,
         name,
         roles,
-        isPremium: hasPremiumRole || isAllowedListUser,
+        isPremium,
         isAllowedListUser,
         hasPremiumRole
       }
