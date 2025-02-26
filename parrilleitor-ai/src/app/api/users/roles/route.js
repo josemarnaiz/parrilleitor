@@ -1,6 +1,6 @@
 import { getSession } from '@auth0/nextjs-auth0/edge'
 
-const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com'
+const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles'
 
 export async function GET(request) {
   try {
@@ -13,9 +13,17 @@ export async function GET(request) {
       )
     }
 
-    const roles = session.user[`${AUTH0_NAMESPACE}/roles`] || []
+    const roles = session.user[AUTH0_NAMESPACE] || []
     const email = session.user.email
     const name = session.user.name || email
+
+    // Debugging
+    console.log('Session user:', {
+      email,
+      name,
+      roles,
+      allUserData: session.user
+    })
 
     return Response.json({
       user: {
