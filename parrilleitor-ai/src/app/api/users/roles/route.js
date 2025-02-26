@@ -1,6 +1,8 @@
 import { getSession } from '@auth0/nextjs-auth0/edge'
+import { isInAllowedList } from '@/config/allowedUsers'
 
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles'
+const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS'
 
 export async function GET(request) {
   try {
@@ -17,11 +19,17 @@ export async function GET(request) {
     const email = session.user.email
     const name = session.user.name || email
 
+    // Verificar acceso premium por ambos métodos
+    const hasPremiumRole = roles.includes(PREMIUM_ROLE_ID)
+    const isAllowedUser = isInAllowedList(email)
+
     // Debugging
     console.log('Session user:', {
       email,
       name,
       roles,
+      hasPremiumRole,
+      isAllowedUser,
       allUserData: session.user
     })
 
@@ -30,7 +38,7 @@ export async function GET(request) {
         email,
         name,
         roles,
-        isPremium: roles.includes('premium')
+        isPremium: hasPremiumRole || isAllowedUser
       }
     })
 
