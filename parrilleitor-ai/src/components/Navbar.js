@@ -40,20 +40,20 @@ export default function Navbar() {
               >
                 Chat
               </Link>
-              <Link 
+              <a 
                 href="/api/auth/logout"
                 className="text-gray-300 hover:text-white transition-colors"
               >
                 Cerrar Sesión
-              </Link>
+              </a>
             </>
           ) : (
-            <Link 
+            <a 
               href="/api/auth/login"
               className="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition-colors"
             >
               Iniciar Sesión
-            </Link>
+            </a>
           )}
         </div>
       </div>
