@@ -14,7 +14,8 @@ const publicPaths = [
   '/unauthorized'
 ]
 
-export default withMiddlewareAuthRequired(async function middleware(req) {
+// Middleware function
+async function authMiddleware(req) {
   try {
     // No aplicar middleware a rutas públicas
     const path = req.nextUrl.pathname
@@ -22,16 +23,20 @@ export default withMiddlewareAuthRequired(async function middleware(req) {
       return new Response(null, {
         status: 200,
         headers: {
-          'Cache-Control': 'no-store, max-age=0',
-          'RSC': '1'
+          'Cache-Control': 'no-store, max-age=0'
         }
       })
     }
 
-    const res = new Response()
-    const session = await getSession(req, res)
+    // Get session
+    const session = await getSession(req)
     
-    const userEmail = session?.user?.email
+    // Si no hay sesión, redirigir a login
+    if (!session?.user) {
+      return Response.redirect(new URL('/api/auth/login', req.url))
+    }
+
+    const userEmail = session.user.email
     
     // Debug completo de la sesión
     console.log('Debug completo de sesión:', {
@@ -42,58 +47,43 @@ export default withMiddlewareAuthRequired(async function middleware(req) {
       allRolesData: session?.user?.[AUTH0_NAMESPACE]
     })
 
-    // Verificar acceso por lista de permitidos
+    // Verificar acceso
     const isAllowedUser = isInAllowedList(userEmail)
-    console.log('Verificación de lista permitida:', {
-      email: userEmail,
-      isAllowed: isAllowedUser
-    })
-
-    // Verificar rol premium
-    const roles = session?.user?.[AUTH0_NAMESPACE] || []
+    const roles = session.user[AUTH0_NAMESPACE] || []
     const hasPremiumRole = roles.includes(PREMIUM_ROLE_ID)
-    console.log('Verificación de rol premium:', {
-      email: userEmail,
-      roles,
-      hasPremiumRole
-    })
-
-    // Decisión final de acceso
     const hasAccess = isAllowedUser || hasPremiumRole
-    console.log('Decisión de acceso:', {
+
+    // Log de verificación
+    console.log('Verificación de acceso:', {
       email: userEmail,
+      isAllowedUser,
+      hasPremiumRole,
       hasAccess,
-      reason: isAllowedUser ? 'Lista permitida' : (hasPremiumRole ? 'Rol premium' : 'Sin acceso')
+      path
     })
 
     if (!hasAccess) {
-      return new Response(null, {
-        status: 302,
-        headers: {
-          Location: '/unauthorized',
-          'Cache-Control': 'no-store, max-age=0',
-          'RSC': '1'
-        },
-      })
+      return Response.redirect(new URL('/unauthorized', req.url))
     }
+
+    return new Response(null, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-store, max-age=0'
+      }
+    })
     
-    return res
   } catch (error) {
     console.error('Error en middleware:', {
       error: error.message,
       stack: error.stack,
       type: error.constructor.name
     })
-    return new Response(null, {
-      status: 302,
-      headers: {
-        Location: '/unauthorized',
-        'Cache-Control': 'no-store, max-age=0',
-        'RSC': '1'
-      },
-    })
+    return Response.redirect(new URL('/unauthorized', req.url))
   }
-})
+}
+
+export default authMiddleware
 
 export const config = {
   matcher: [
