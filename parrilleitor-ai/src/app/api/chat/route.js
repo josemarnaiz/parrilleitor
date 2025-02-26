@@ -16,36 +16,49 @@ Remember to maintain a friendly and professional tone.`
 export async function POST(request) {
   try {
     const session = await getSession(request)
-    if (!session || !session.user) {
-      return new Response(JSON.stringify({ error: 'Not authenticated' }), {
+    
+    if (!session) {
+      console.error('No session found')
+      return new Response(JSON.stringify({ error: 'No session found' }), {
         status: 401,
-        headers: { 
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (!session.user) {
+      console.error('No user found in session')
+      return new Response(JSON.stringify({ error: 'No user found in session' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
       })
     }
 
     const { message } = await request.json()
+    
+    if (!message) {
+      return new Response(JSON.stringify({ error: 'Message is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
     const aiProvider = AIProviderFactory.getProvider()
     const response = await aiProvider.getCompletion(message, SYSTEM_PROMPT)
 
-    return new Response(
-      JSON.stringify({ message: response }),
-      {
-        headers: { 
-          'Content-Type': 'application/json',
-        },
-      }
-    )
+    return new Response(JSON.stringify({ message: response }), {
+      headers: { 'Content-Type': 'application/json' },
+    })
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error in chat route:', error)
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ 
+        error: 'Internal server error', 
+        details: error.message,
+        type: error.constructor.name
+      }),
       {
         status: 500,
-        headers: { 
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       }
     )
   }

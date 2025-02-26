@@ -1,18 +1,19 @@
 import { withMiddlewareAuthRequired, getSession } from '@auth0/nextjs-auth0/edge'
 
-// Lista de emails autorizados
-const AUTHORIZED_EMAILS = [
-  // Agrega aquí los emails que quieras autorizar
-  'ejemplo@email.com'
-]
+const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com'
 
 export default withMiddlewareAuthRequired(async function middleware(req) {
   const res = new Response()
   const session = await getSession(req, res)
 
-  // Verifica si el email del usuario está en la lista de autorizados
-  if (session?.user?.email && !AUTHORIZED_EMAILS.includes(session.user.email)) {
-    // Si no está autorizado, redirige a una página de acceso denegado
+  // Log para debugging
+  console.log('Session user:', session?.user)
+
+  // Verifica si el usuario tiene el rol premium
+  const roles = session?.user?.[`${AUTH0_NAMESPACE}/roles`] || []
+  console.log('User roles:', roles)
+
+  if (!roles.includes('premium')) {
     return new Response(null, {
       status: 302,
       headers: {
@@ -26,5 +27,9 @@ export default withMiddlewareAuthRequired(async function middleware(req) {
 
 // Configura en qué rutas se aplicará este middleware
 export const config = {
-  matcher: ['/chat/:path*']
+  matcher: [
+    '/chat',
+    '/api/chat',
+    '/api/chat/:path*'
+  ]
 } 
