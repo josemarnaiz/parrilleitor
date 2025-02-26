@@ -11,24 +11,41 @@ export default withMiddlewareAuthRequired(async function middleware(req) {
     const session = await getSession(req, res)
     
     const userEmail = session?.user?.email
-    const roles = session?.user?.[AUTH0_NAMESPACE] || []
     
-    console.log('Verificando acceso para:', userEmail) // Para debugging
-    console.log('Roles del usuario:', roles) // Para debugging
-    console.log('Session user data:', session?.user) // Debugging completo
-    
-    // Verificar si el usuario tiene acceso (por rol o por estar en la lista)
-    const hasPremiumRole = roles.includes(PREMIUM_ROLE_ID)
-    const isAllowedUser = isInAllowedList(userEmail)
-    
-    console.log('Estado de acceso:', {
-      hasPremiumRole,
-      isAllowedUser,
-      email: userEmail
+    // Debug completo de la sesión
+    console.log('Debug completo de sesión:', {
+      email: userEmail,
+      sessionExists: !!session,
+      userExists: !!session?.user,
+      allUserData: session?.user,
+      allRolesData: session?.user?.[AUTH0_NAMESPACE]
     })
 
-    if (!hasPremiumRole && !isAllowedUser) {
-      console.log('Usuario no autorizado:', userEmail)
+    // Verificar acceso por lista de permitidos
+    const isAllowedUser = isInAllowedList(userEmail)
+    console.log('Verificación de lista permitida:', {
+      email: userEmail,
+      isAllowed: isAllowedUser
+    })
+
+    // Verificar rol premium
+    const roles = session?.user?.[AUTH0_NAMESPACE] || []
+    const hasPremiumRole = roles.includes(PREMIUM_ROLE_ID)
+    console.log('Verificación de rol premium:', {
+      email: userEmail,
+      roles,
+      hasPremiumRole
+    })
+
+    // Decisión final de acceso
+    const hasAccess = isAllowedUser || hasPremiumRole
+    console.log('Decisión de acceso:', {
+      email: userEmail,
+      hasAccess,
+      reason: isAllowedUser ? 'Lista permitida' : (hasPremiumRole ? 'Rol premium' : 'Sin acceso')
+    })
+
+    if (!hasAccess) {
       return new Response(null, {
         status: 302,
         headers: {
@@ -39,7 +56,11 @@ export default withMiddlewareAuthRequired(async function middleware(req) {
     
     return res
   } catch (error) {
-    console.error('Middleware error:', error)
+    console.error('Error en middleware:', {
+      error: error.message,
+      stack: error.stack,
+      type: error.constructor.name
+    })
     return new Response(null, {
       status: 302,
       headers: {
