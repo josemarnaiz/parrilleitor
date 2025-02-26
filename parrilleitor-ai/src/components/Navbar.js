@@ -46,12 +46,6 @@ export default function Navbar() {
               >
                 Mi Cuenta
               </Link>
-              <Link 
-                href="/api/auth/logout"
-                className="text-gray-300 hover:text-white transition-colors"
-              >
-                Cerrar Sesión
-              </Link>
             </>
           ) : (
             <Link 

@@ -90,9 +90,6 @@ export const GET = handleAuth({
         throw error
       }
     }
-  }),
-  logout: handleLogout({
-    returnTo: AUTH0_BASE_URL
   })
 })
 

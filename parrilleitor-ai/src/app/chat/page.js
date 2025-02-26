@@ -70,9 +70,8 @@ export default function Chat() {
           }
           
           if (response.status === 401 && !errorData.retryable) {
-            console.log('Session expired, redirecting to login')
-            router.push('/api/auth/login')
-            return
+            console.log('Session error, showing error message')
+            throw new Error('Error de sesión. Por favor, recarga la página.')
           }
           
           throw new Error(errorData.error || 'Error checking premium status')
@@ -169,10 +168,8 @@ export default function Chat() {
         const errorData = await response.json()
         console.error('Chat API error:', errorData)
         
-        // Solo redirigimos al login si es un error de autenticación no recuperable
-        if (response.status === 401 && !errorData.retryable) {
-          router.push('/api/auth/login')
-          return
+        if (response.status === 401) {
+          throw new Error('Error de sesión. Por favor, recarga la página.')
         }
         
         throw new Error(errorData.error || 'Error en la respuesta del servidor')
