@@ -1,4 +1,4 @@
-import { getSession, withApiAuthRequired } from '@auth0/nextjs-auth0/edge'
+import { getSession } from '@auth0/nextjs-auth0/edge'
 import { isInAllowedList } from '@/config/allowedUsers'
 
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles'
@@ -8,9 +8,13 @@ const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS'
 const commonHeaders = {
   'Cache-Control': 'no-store, max-age=0',
   'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': 'https://parrilleitorai.vercel.app',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Credentials': 'true',
 }
 
-async function handler(req) {
+export async function GET(req) {
   try {
     const session = await getSession(req)
 
@@ -19,7 +23,8 @@ async function handler(req) {
       hasSession: !!session,
       hasUser: !!session?.user,
       userEmail: session?.user?.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      headers: Object.fromEntries(req.headers.entries())
     })
 
     if (!session?.user) {
@@ -88,6 +93,11 @@ async function handler(req) {
   }
 }
 
-export const GET = withApiAuthRequired(handler)
+export async function OPTIONS(request) {
+  return new Response(null, {
+    status: 200,
+    headers: commonHeaders
+  })
+}
 
 export const runtime = 'edge' 

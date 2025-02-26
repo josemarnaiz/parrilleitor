@@ -13,6 +13,7 @@ export default function Chat() {
   const [error, setError] = useState(null)
   const [isPremium, setIsPremium] = useState(false)
   const [isCheckingAccess, setIsCheckingAccess] = useState(true)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     async function checkPremiumStatus() {
@@ -30,16 +31,27 @@ export default function Chat() {
           method: 'GET',
           credentials: 'include',
           headers: {
-            'Cache-Control': 'no-store, max-age=0'
+            'Cache-Control': 'no-store, max-age=0',
+            'Authorization': `Bearer ${user.accessToken || ''}`
           }
         })
         
         if (!response.ok) {
           const errorData = await response.json()
-          console.error('Error checking premium status:', errorData)
+          console.error('Error checking premium status:', {
+            status: response.status,
+            error: errorData,
+            retryCount
+          })
+          
+          if (response.status === 401 && retryCount < 3) {
+            console.log('Session expired, retrying...', { retryCount })
+            setRetryCount(prev => prev + 1)
+            return
+          }
           
           if (response.status === 401) {
-            console.log('Session expired, redirecting to login')
+            console.log('Session expired after retries, redirecting to login')
             router.push('/api/auth/login')
             return
           }
@@ -50,7 +62,8 @@ export default function Chat() {
         const data = await response.json()
         console.log('Premium status check:', {
           email: user.email,
-          isPremium: data.user.isPremium
+          isPremium: data.user.isPremium,
+          retryCount
         })
 
         if (!data.user.isPremium) {
@@ -60,24 +73,36 @@ export default function Chat() {
         }
 
         setIsPremium(true)
+        setRetryCount(0)
       } catch (err) {
-        console.error('Error in premium check:', err)
+        console.error('Error in premium check:', {
+          error: err,
+          retryCount
+        })
         setError(err.message)
-        router.push('/unauthorized')
+        if (retryCount >= 3) {
+          router.push('/unauthorized')
+        }
       } finally {
         setIsCheckingAccess(false)
       }
     }
 
-    if (!isUserLoading) {
-      checkPremiumStatus()
-    }
-  }, [user, isUserLoading, router])
+    const timeoutId = setTimeout(() => {
+      if (!isUserLoading) {
+        checkPremiumStatus()
+      }
+    }, retryCount * 1000) // Incrementar el delay con cada reintento
+
+    return () => clearTimeout(timeoutId)
+  }, [user, isUserLoading, router, retryCount])
 
   if (isUserLoading || isCheckingAccess) {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
-        <div className="text-2xl">Cargando...</div>
+        <div className="text-2xl">
+          {retryCount > 0 ? `Verificando acceso (intento ${retryCount}/3)...` : 'Cargando...'}
+        </div>
       </div>
     )
   }
@@ -101,7 +126,8 @@ export default function Chat() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-store, max-age=0'
+          'Cache-Control': 'no-store, max-age=0',
+          'Authorization': `Bearer ${user.accessToken || ''}`
         },
         credentials: 'include',
         body: JSON.stringify({ message: input }),
