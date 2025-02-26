@@ -1,16 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { useRouter } from 'next/navigation'
 
 export default function Chat() {
-  const { user, isLoading } = useUser()
+  const { user, isLoading, error: authError } = useUser()
   const router = useRouter()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (authError) {
+      console.error('Auth error:', authError)
+      router.push('/api/auth/login')
+    }
+  }, [authError, router])
 
   if (isLoading) {
     return (
@@ -47,11 +54,13 @@ export default function Chat() {
 
       if (!response.ok) {
         const errorData = await response.json()
+        console.error('Chat API error:', errorData)
+        
         if (response.status === 401) {
-          console.error('Error de autenticación:', errorData)
           router.push('/api/auth/login')
           return
         }
+        
         throw new Error(errorData.error || 'Error en la respuesta del servidor')
       }
 
@@ -60,7 +69,10 @@ export default function Chat() {
     } catch (error) {
       console.error('Error:', error)
       setError(error.message)
-      setMessages(prev => [...prev, { role: 'error', content: 'Lo siento, ha ocurrido un error. Por favor, intenta de nuevo.' }])
+      setMessages(prev => [...prev, { 
+        role: 'error', 
+        content: 'Lo siento, ha ocurrido un error. Por favor, intenta de nuevo.' 
+      }])
     } finally {
       setIsTyping(false)
     }

@@ -1,4 +1,4 @@
-import { getSession, withApiAuthRequired } from '@auth0/nextjs-auth0'
+import { getSession } from '@auth0/nextjs-auth0'
 import { AIProviderFactory } from '@/services/ai/AIProviderFactory'
 
 const SYSTEM_PROMPT = `You are an AI agent specializing in nutrition and sports. Your purpose is to provide personalized advice, tips, and diet recommendations to users based on their specific sport or daily exercise routines.
@@ -13,56 +13,54 @@ When providing advice, follow these guidelines:
 
 Remember to maintain a friendly and professional tone.`
 
-async function handler(request) {
+export async function POST(request) {
   try {
+    // Log request headers for debugging
+    const headers = Object.fromEntries(request.headers.entries())
+    console.log('Request headers:', headers)
+
     const session = await getSession(request)
-    
+    console.log('Session:', session)
+
     if (!session) {
       console.error('No session found in chat API')
-      console.log('Request headers:', Object.fromEntries(request.headers))
-      return new Response(JSON.stringify({ error: 'No session found' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      })
+      return Response.json(
+        { error: 'No session found' },
+        { status: 401 }
+      )
     }
 
     if (!session.user) {
       console.error('No user found in session')
-      return new Response(JSON.stringify({ error: 'No user found in session' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      })
+      return Response.json(
+        { error: 'No user found in session' },
+        { status: 401 }
+      )
     }
 
     const { message } = await request.json()
     
     if (!message) {
-      return new Response(JSON.stringify({ error: 'Message is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      })
+      return Response.json(
+        { error: 'Message is required' },
+        { status: 400 }
+      )
     }
 
     const aiProvider = AIProviderFactory.getProvider()
     const response = await aiProvider.getCompletion(message, SYSTEM_PROMPT)
 
-    return new Response(JSON.stringify({ message: response }), {
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return Response.json({ message: response })
+
   } catch (error) {
     console.error('Error in chat route:', error)
-    return new Response(
-      JSON.stringify({ 
+    return Response.json(
+      { 
         error: 'Internal server error', 
         details: error.message,
         type: error.constructor.name
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      },
+      { status: 500 }
     )
   }
-}
-
-export const POST = withApiAuthRequired(handler) 
+} 
