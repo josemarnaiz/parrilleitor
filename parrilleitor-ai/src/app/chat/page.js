@@ -4,46 +4,77 @@ import { useState, useEffect } from 'react'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { useRouter } from 'next/navigation'
 
-const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com'
-
 export default function Chat() {
-  const { user, isLoading } = useUser()
+  const { user, isLoading: isUserLoading } = useUser()
   const router = useRouter()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [error, setError] = useState(null)
   const [isPremium, setIsPremium] = useState(false)
+  const [isCheckingAccess, setIsCheckingAccess] = useState(true)
 
   useEffect(() => {
     async function checkPremiumStatus() {
       try {
+        setIsCheckingAccess(true)
+        setError(null)
+
+        if (!user) {
+          console.log('No user found, redirecting to login')
+          router.push('/api/auth/login')
+          return
+        }
+
         const response = await fetch('/api/users/roles', {
-          credentials: 'include'
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-store, max-age=0'
+          }
         })
         
         if (!response.ok) {
-          throw new Error('Error al verificar el estado premium')
+          const errorData = await response.json()
+          console.error('Error checking premium status:', errorData)
+          
+          if (response.status === 401) {
+            console.log('Session expired, redirecting to login')
+            router.push('/api/auth/login')
+            return
+          }
+          
+          throw new Error(errorData.error || 'Error al verificar el estado premium')
         }
 
         const data = await response.json()
+        console.log('Premium status check:', {
+          email: user.email,
+          isPremium: data.user.isPremium
+        })
+
         if (!data.user.isPremium) {
+          console.log('User not premium, redirecting')
           router.push('/unauthorized')
           return
         }
+
         setIsPremium(true)
       } catch (err) {
-        console.error('Error verificando estado premium:', err)
+        console.error('Error in premium check:', err)
+        setError(err.message)
         router.push('/unauthorized')
+      } finally {
+        setIsCheckingAccess(false)
       }
     }
 
-    if (user) {
+    if (!isUserLoading) {
       checkPremiumStatus()
     }
-  }, [user, router])
+  }, [user, isUserLoading, router])
 
-  if (isLoading) {
+  if (isUserLoading || isCheckingAccess) {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
         <div className="text-2xl">Cargando...</div>
@@ -70,6 +101,7 @@ export default function Chat() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, max-age=0'
         },
         credentials: 'include',
         body: JSON.stringify({ message: input }),
@@ -79,8 +111,8 @@ export default function Chat() {
         const errorData = await response.json()
         console.error('Chat API error:', errorData)
         
-        if (response.status === 401 || response.status === 403) {
-          router.push('/unauthorized')
+        if (response.status === 401) {
+          router.push('/api/auth/login')
           return
         }
         
@@ -90,7 +122,7 @@ export default function Chat() {
       const data = await response.json()
       setMessages(prev => [...prev, { role: 'assistant', content: data.message }])
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error in chat:', error)
       setError(error.message)
       setMessages(prev => [...prev, { 
         role: 'error', 

@@ -1,56 +1,55 @@
-import { getSession } from '@auth0/nextjs-auth0/edge'
+import { getSession, withApiAuthRequired } from '@auth0/nextjs-auth0/edge'
 import { isInAllowedList } from '@/config/allowedUsers'
 
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles'
 const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS'
 
-export async function GET(request) {
+// Headers comunes
+const commonHeaders = {
+  'Cache-Control': 'no-store, max-age=0',
+  'Content-Type': 'application/json',
+}
+
+async function handler(req) {
   try {
-    const session = await getSession(request)
-    
+    const session = await getSession(req)
+
     // Debug session data
-    console.log('Session data:', {
+    console.log('Roles endpoint - Session data:', {
       hasSession: !!session,
       hasUser: !!session?.user,
       userEmail: session?.user?.email,
-      userRoles: session?.user?.[AUTH0_NAMESPACE]
+      timestamp: new Date().toISOString()
     })
 
     if (!session?.user) {
-      console.log('No session found or session expired')
+      console.log('No session found in roles endpoint')
       return Response.json(
-        { error: 'No autenticado. Por favor, inicia sesión nuevamente.' },
-        { status: 401 }
+        { error: 'No autenticado' },
+        { 
+          status: 401,
+          headers: commonHeaders
+        }
       )
     }
 
     const email = session.user.email
     const name = session.user.name || email
-    
+
     // Check both Auth0 roles and allowed users list
     const isAllowedListUser = isInAllowedList(email)
     const roles = session.user[AUTH0_NAMESPACE] || []
     const hasPremiumRole = roles.includes(PREMIUM_ROLE_ID)
+    const isPremium = isAllowedListUser || hasPremiumRole
 
-    // Debug authorization data
-    console.log('Authorization check:', {
+    // Log authorization details
+    console.log('Roles endpoint - Authorization check:', {
       email,
       roles,
       isAllowedListUser,
       hasPremiumRole,
-      allowedByList: isAllowedListUser,
-      allowedByRole: hasPremiumRole,
-      finalAccess: isAllowedListUser || hasPremiumRole
-    })
-
-    const isPremium = isAllowedListUser || hasPremiumRole
-
-    // Log access decision
-    console.log(`Access decision for ${email}:`, {
       isPremium,
-      reason: isPremium 
-        ? (isAllowedListUser ? 'Allowed by list' : 'Has premium role')
-        : 'No premium access'
+      timestamp: new Date().toISOString()
     })
 
     return Response.json({
@@ -62,14 +61,17 @@ export async function GET(request) {
         isAllowedListUser,
         hasPremiumRole
       }
+    }, {
+      headers: commonHeaders
     })
 
   } catch (error) {
     // Enhanced error logging
-    console.error('Error in roles endpoint:', {
+    console.error('Roles endpoint - Error:', {
       message: error.message,
       stack: error.stack,
-      type: error.constructor.name
+      type: error.constructor.name,
+      timestamp: new Date().toISOString()
     })
 
     return Response.json(
@@ -78,9 +80,14 @@ export async function GET(request) {
         details: error.message,
         type: error.constructor.name
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: commonHeaders
+      }
     )
   }
 }
+
+export const GET = withApiAuthRequired(handler)
 
 export const runtime = 'edge' 
