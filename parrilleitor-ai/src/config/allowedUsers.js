@@ -1,6 +1,7 @@
 // Lista adicional de usuarios con acceso premium
 export const ADDITIONAL_ALLOWED_USERS = [
   'josem.arnaizmartin@gmail.com',
+  'cesar.carlos.parrilla@gmail.com'
   // Añade más emails aquí
 ]
 
