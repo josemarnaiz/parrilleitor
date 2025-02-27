@@ -92,14 +92,7 @@ export const GET = handleAuth({
     }
   }),
   logout: handleLogout({
-    returnTo: AUTH0_BASE_URL,
-    // Asegurar que el logout es explícito
-    onRedirecting: (req, res) => {
-      console.log('Explicit logout requested:', {
-        timestamp: new Date().toISOString(),
-        url: req.url
-      })
-    }
+    returnTo: AUTH0_BASE_URL
   })
 })
 
