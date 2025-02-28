@@ -1,6 +1,8 @@
 import { handleAuth, handleCallback, handleLogin, handleLogout } from '@auth0/nextjs-auth0/edge'
+import { getAuth0Config } from '@/config/auth0Config'
 
 const AUTH0_BASE_URL = process.env.AUTH0_BASE_URL || 'https://parrilleitorai.vercel.app'
+const auth0Config = getAuth0Config()
 
 // Configuración común de CORS y seguridad
 const commonHeaders = {
@@ -38,11 +40,8 @@ async function handleAuthError(error, action) {
 
 export const GET = handleAuth({
   login: handleLogin({
-    returnTo: '/',
-    authorizationParams: {
-      audience: process.env.AUTH0_AUDIENCE,
-      scope: process.env.AUTH0_SCOPE
-    }
+    returnTo: auth0Config.returnTo,
+    authorizationParams: auth0Config.authorizationParams
   }),
   callback: handleCallback({
     afterCallback: async (req, session) => {
@@ -70,7 +69,8 @@ export const GET = handleAuth({
             sub: session.user.sub,
             sessionStartTime: new Date().toISOString()
           },
-          expiresIn: 24 * 60 * 60 // 24 hours in seconds
+          // Usar la duración de sesión de la configuración
+          expiresIn: auth0Config.sessionDuration
         }
 
         console.log('Enhanced session created:', {
@@ -92,7 +92,7 @@ export const GET = handleAuth({
     }
   }),
   logout: handleLogout({
-    returnTo: AUTH0_BASE_URL
+    returnTo: auth0Config.logoutReturnTo
   })
 })
 

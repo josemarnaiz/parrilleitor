@@ -92,7 +92,15 @@ export default async function middleware(req) {
       path: req.nextUrl.pathname,
       timestamp: new Date().toISOString()
     })
-    return Response.redirect(new URL('/unauthorized', req.url))
+    
+    // En caso de error, no redirigir automáticamente a unauthorized
+    // Simplemente permitir que la solicitud continúe
+    return new Response(null, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-store, max-age=0'
+      }
+    })
   }
 }
 

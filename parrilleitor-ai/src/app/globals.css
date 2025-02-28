@@ -17,7 +17,7 @@
   }
 
   body {
-    @apply h-full bg-[#111827] text-white;
+    @apply h-full bg-gray-900 text-white;
   }
 
   #__next {
