@@ -3,7 +3,11 @@ import './globals.css'
 import AuthProvider from '@/components/AuthProvider'
 import Navbar from '@/components/Navbar'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+})
 
 export const metadata = {
   title: 'ParrilleitorAI - Tu Asistente de Nutrición y Ejercicio',
@@ -12,11 +16,17 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="es">
-      <body className={inter.className}>
+    <html lang="es" className={`${inter.variable} h-full antialiased`}>
+      <body className="min-h-full bg-background font-sans text-foreground">
         <AuthProvider>
-          <Navbar />
-          {children}
+          <div className="relative flex min-h-screen flex-col">
+            <Navbar />
+            <main className="flex-1">
+              <div className="container-custom py-6">
+                {children}
+              </div>
+            </main>
+          </div>
         </AuthProvider>
       </body>
     </html>

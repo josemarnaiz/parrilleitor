@@ -6,13 +6,10 @@ export default {
   theme: {
     extend: {
       colors: {
-        border: "var(--border)",
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        primary: {
-          DEFAULT: "var(--primary)",
-          foreground: "var(--primary-foreground)",
-        },
+        border: 'var(--border)',
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
+        primary: 'var(--primary)',
         blue: {
           50: '#f0f9ff',
           100: '#e0f2fe',
@@ -24,7 +21,6 @@ export default {
           700: '#0369a1',
           800: '#075985',
           900: '#0c4a6e',
-          950: '#082f49',
         },
         gray: {
           50: '#f9fafb',
@@ -37,7 +33,6 @@ export default {
           700: '#374151',
           800: '#1f2937',
           900: '#111827',
-          950: '#030712',
         },
       },
       fontFamily: {
@@ -51,4 +46,4 @@ export default {
     },
   },
   plugins: [],
-};
+} 
