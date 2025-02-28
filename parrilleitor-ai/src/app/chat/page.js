@@ -50,53 +50,56 @@ export default function Chat() {
           }
         })
         
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error('Premium status check failed:', {
-            status: response.status,
-            error: errorData,
-            retryCount,
-            timestamp: new Date().toISOString()
-          })
-          
-          if (response.status === 401 && errorData.retryable && retryCount < 3) {
+        // Siempre procesamos la respuesta, incluso si no es 200
+        const data = await response.json()
+        
+        console.log('Premium status response:', {
+          status: response.status,
+          data,
+          retryCount,
+          timestamp: new Date().toISOString()
+        })
+        
+        // Si tenemos datos de usuario, los usamos
+        if (data.user) {
+          if (data.user.isTemporary) {
+            console.log('Temporary user session detected')
+            // Si es una sesión temporal, no redirigimos, solo mostramos un mensaje
             if (isMounted) {
-              setRetryCount(prev => prev + 1)
-              // Exponential backoff: 1s, 2s, 4s
-              const delay = Math.min(Math.pow(2, retryCount) * 1000, 4000)
-              console.log(`Retrying in ${delay}ms...`)
-              retryTimeout = setTimeout(checkPremiumStatus, delay)
+              setError('Sesión temporal. Por favor recarga la página si necesitas acceso completo.')
+              setIsCheckingAccess(false)
             }
             return
           }
           
-          if (response.status === 401 && !errorData.retryable) {
-            console.log('Session error, showing error message')
-            throw new Error('Error de sesión. Por favor, recarga la página.')
+          if (!data.user.isPremium) {
+            console.log('User not premium, redirecting to unauthorized')
+            router.push('/unauthorized')
+            return
           }
           
-          throw new Error(errorData.error || 'Error checking premium status')
-        }
-
-        const data = await response.json()
-        console.log('Premium status result:', {
-          email: user.email,
-          isPremium: data.user.isPremium,
-          retryCount,
-          timestamp: new Date().toISOString()
-        })
-
-        if (!data.user.isPremium) {
-          console.log('User not premium, redirecting to unauthorized')
-          router.push('/unauthorized')
+          if (isMounted) {
+            setIsPremium(true)
+            setRetryCount(0)
+            loadChatHistory() // Load chat history after confirming premium status
+          }
           return
         }
-
-        if (isMounted) {
-          setIsPremium(true)
-          setRetryCount(0)
-          loadChatHistory() // Load chat history after confirming premium status
+        
+        // Si hay un error en la respuesta pero no es crítico
+        if (!response.ok && retryCount < 3) {
+          if (isMounted) {
+            setRetryCount(prev => prev + 1)
+            // Exponential backoff: 1s, 2s, 4s
+            const delay = Math.min(Math.pow(2, retryCount) * 1000, 4000)
+            console.log(`Retrying in ${delay}ms...`)
+            retryTimeout = setTimeout(checkPremiumStatus, delay)
+          }
+          return
         }
+        
+        // Si llegamos aquí, hay un problema con la sesión
+        throw new Error(data.error || 'Error checking premium status')
       } catch (err) {
         console.error('Premium check error:', {
           error: err.message,
@@ -106,9 +109,7 @@ export default function Chat() {
         })
         if (isMounted) {
           setError(err.message)
-          if (retryCount >= 3) {
-            router.push('/unauthorized')
-          }
+          // No redirigimos automáticamente, solo mostramos el error
         }
       } finally {
         if (isMounted) {

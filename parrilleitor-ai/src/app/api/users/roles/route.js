@@ -31,25 +31,46 @@ export async function GET(req) {
     const authHeader = req.headers.get('authorization')
     if (!session?.user && authHeader) {
       console.log('No session but found auth header, attempting to use it')
-      // Por ahora devolvemos un 401 más suave que permita reintentos
-      return Response.json(
-        { error: 'Sesión no encontrada', retryable: true },
-        { 
-          status: 401,
-          headers: commonHeaders
-        }
-      )
+      
+      // En lugar de devolver un error, devolvemos un estado "no premium" temporal
+      // Esto evita el ciclo de redirección/deslogeo
+      return Response.json({
+        user: {
+          email: 'guest@example.com',
+          name: 'Guest User',
+          roles: [],
+          isPremium: false,
+          isAllowedListUser: false,
+          hasPremiumRole: false,
+          isTemporary: true
+        },
+        message: 'Sesión temporal - Por favor recarga la página si necesitas acceso completo'
+      }, {
+        status: 200,
+        headers: commonHeaders
+      })
     }
 
     if (!session?.user) {
       console.log('No session and no auth header found')
-      return Response.json(
-        { error: 'No autenticado', retryable: false },
-        { 
-          status: 401,
-          headers: commonHeaders
-        }
-      )
+      
+      // En lugar de devolver un error, devolvemos un estado "no premium" temporal
+      // Esto evita el ciclo de redirección/deslogeo
+      return Response.json({
+        user: {
+          email: 'guest@example.com',
+          name: 'Guest User',
+          roles: [],
+          isPremium: false,
+          isAllowedListUser: false,
+          hasPremiumRole: false,
+          isTemporary: true
+        },
+        message: 'Sesión no encontrada - Por favor inicia sesión para acceder'
+      }, {
+        status: 200,
+        headers: commonHeaders
+      })
     }
 
     const email = session.user.email
@@ -93,18 +114,25 @@ export async function GET(req) {
       timestamp: new Date().toISOString()
     })
 
-    return Response.json(
-      { 
-        error: 'Error al verificar roles',
-        details: error.message,
-        type: error.constructor.name,
-        retryable: true
+    // En caso de error, devolvemos un estado "no premium" temporal
+    // Esto evita el ciclo de redirección/deslogeo
+    return Response.json({
+      user: {
+        email: 'error@example.com',
+        name: 'Error User',
+        roles: [],
+        isPremium: false,
+        isAllowedListUser: false,
+        hasPremiumRole: false,
+        isTemporary: true
       },
-      { 
-        status: 500,
-        headers: commonHeaders
-      }
-    )
+      error: 'Error al verificar roles',
+      details: error.message,
+      type: error.constructor.name
+    }, {
+      status: 200,
+      headers: commonHeaders
+    })
   }
 }
 

@@ -9,6 +9,7 @@ export default function AdminUsers() {
   const router = useRouter()
   const [userRoles, setUserRoles] = useState(null)
   const [error, setError] = useState(null)
+  const [isTemporarySession, setIsTemporarySession] = useState(false)
 
   useEffect(() => {
     async function checkRoles() {
@@ -17,12 +18,19 @@ export default function AdminUsers() {
           credentials: 'include'
         })
         
-        if (!response.ok) {
-          throw new Error('Error al obtener los roles')
-        }
-
         const data = await response.json()
-        setUserRoles(data.user)
+        
+        if (data.user) {
+          setUserRoles(data.user)
+          
+          // Verificar si es una sesión temporal
+          if (data.user.isTemporary) {
+            setIsTemporarySession(true)
+            setError('Sesión temporal. Por favor recarga la página o inicia sesión nuevamente.')
+          }
+        } else if (data.error) {
+          setError(data.error)
+        }
       } catch (err) {
         setError(err.message)
       }
@@ -43,9 +51,22 @@ export default function AdminUsers() {
     )
   }
 
-  if (!user) {
-    router.push('/api/auth/login')
-    return null
+  if (!user && !isTemporarySession) {
+    // En lugar de redireccionar automáticamente, mostramos un botón para iniciar sesión
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-4">
+        <div className="container mx-auto text-center">
+          <h1 className="text-2xl font-bold mb-4">Necesitas iniciar sesión</h1>
+          <p className="mb-4">Para acceder a esta página, debes iniciar sesión primero.</p>
+          <a 
+            href="/api/auth/login" 
+            className="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+          >
+            Iniciar Sesión
+          </a>
+        </div>
+      </div>
+    )
   }
 
   return (
