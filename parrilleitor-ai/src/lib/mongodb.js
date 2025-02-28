@@ -6,35 +6,40 @@ if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
 }
 
-let cached = global.mongoose;
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
+// Cache object to store the database connection
+const cache = {
+  conn: null,
+  promise: null
+};
 
 async function connectDB() {
-  if (cached.conn) {
-    return cached.conn;
+  // If we have a connection, return it
+  if (cache.conn) {
+    return cache.conn;
   }
 
-  if (!cached.promise) {
+  // If we don't have a connection but have a connecting promise, wait for it
+  if (!cache.promise) {
     const opts = {
       bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cache.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
       return mongoose;
     });
   }
 
   try {
-    cached.conn = await cached.promise;
+    cache.conn = await cache.promise;
   } catch (e) {
-    cached.promise = null;
+    cache.promise = null;
     throw e;
   }
 
-  return cached.conn;
+  return cache.conn;
 }
 
 export default connectDB; 
