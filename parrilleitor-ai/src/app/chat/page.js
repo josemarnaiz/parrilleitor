@@ -150,17 +150,41 @@ export default function Chat() {
         }
       })
 
-      if (!response.ok) {
-        throw new Error('Error al cargar el historial')
-      }
-
+      // Siempre procesamos la respuesta, incluso si no es 200
       const data = await response.json()
-      if (data.conversations && data.conversations.length > 0) {
-        setMessages(data.conversations[0].messages || [])
+      
+      console.log('Chat history response:', {
+        status: response.status,
+        data: data
+      })
+      
+      // Verificar si tenemos conversaciones
+      if (data.conversations && Array.isArray(data.conversations) && data.conversations.length > 0) {
+        // Usar la primera conversación
+        const conversation = data.conversations[0]
+        if (conversation.messages && Array.isArray(conversation.messages)) {
+          setMessages(conversation.messages)
+        } else {
+          console.log('No hay mensajes en la conversación')
+          setMessages([])
+        }
+      } else {
+        console.log('No hay conversaciones disponibles')
+        setMessages([])
+        
+        // Si hay un mensaje de error, mostrarlo
+        if (data.message) {
+          console.log('Mensaje del servidor:', data.message)
+          // No mostrar errores de base de datos al usuario
+          if (!data.message.includes('base de datos')) {
+            setError(data.message)
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading chat history:', error)
-      setError('Error al cargar el historial de chat')
+      // No mostrar el error al usuario, solo iniciar con un chat vacío
+      setMessages([])
     } finally {
       setIsLoadingHistory(false)
     }
@@ -179,12 +203,14 @@ export default function Chat() {
         body: JSON.stringify({ messages: newMessages })
       })
 
-      if (!response.ok) {
-        throw new Error('Error al guardar la conversación')
+      const data = await response.json()
+      
+      if (!data.success) {
+        console.log('Error al guardar mensajes:', data.message)
       }
     } catch (error) {
       console.error('Error saving chat history:', error)
-      setError('Error al guardar la conversación')
+      // No mostrar el error al usuario para no interrumpir la experiencia
     }
   }
 

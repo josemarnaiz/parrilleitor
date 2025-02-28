@@ -44,43 +44,101 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Se requiere una cuenta premium' });
     }
 
-    await connectDB();
+    // Verificar si la URI de MongoDB está configurada correctamente
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri || !mongoUri.startsWith('mongodb')) {
+      console.error('MongoDB URI no válida:', mongoUri);
+      // Devolver una respuesta vacía en lugar de un error
+      return res.status(200).json({ 
+        conversations: [],
+        message: 'Base de datos no configurada correctamente'
+      });
+    }
+
+    try {
+      await connectDB();
+    } catch (dbError) {
+      console.error('Error de conexión a MongoDB:', dbError);
+      // Devolver una respuesta vacía en lugar de un error
+      return res.status(200).json({ 
+        conversations: [],
+        message: 'No se pudo conectar a la base de datos'
+      });
+    }
 
     if (req.method === 'GET') {
-      const conversations = await Conversation.find({
-        userId: session.user.sub,
-        isActive: true
-      })
-      .sort({ lastUpdated: -1 })
-      .limit(10);
+      try {
+        const conversations = await Conversation.find({
+          userId: session.user.sub,
+          isActive: true
+        })
+        .sort({ lastUpdated: -1 })
+        .limit(10);
 
-      return res.status(200).json(conversations);
+        return res.status(200).json({ conversations });
+      } catch (findError) {
+        console.error('Error al buscar conversaciones:', findError);
+        return res.status(200).json({ 
+          conversations: [],
+          message: 'Error al recuperar conversaciones'
+        });
+      }
     }
 
     if (req.method === 'POST') {
-      const { title } = req.body;
+      try {
+        const { messages } = req.body;
 
-      if (!title) {
-        return res.status(400).json({ error: 'Se requiere un título' });
+        if (!messages || !Array.isArray(messages)) {
+          return res.status(200).json({ 
+            success: false,
+            message: 'Formato de mensajes inválido'
+          });
+        }
+
+        // Buscar conversación existente o crear una nueva
+        let conversation = await Conversation.findOne({
+          userId: session.user.sub,
+          isActive: true
+        }).sort({ lastUpdated: -1 });
+
+        if (!conversation) {
+          conversation = new Conversation({
+            userId: session.user.sub,
+            userEmail: session.user.email,
+            title: 'Nueva conversación',
+            messages: messages,
+            lastUpdated: new Date(),
+            isActive: true
+          });
+        } else {
+          conversation.messages = messages;
+          conversation.lastUpdated = new Date();
+        }
+
+        await conversation.save();
+        return res.status(200).json({ 
+          success: true,
+          conversation
+        });
+      } catch (saveError) {
+        console.error('Error al guardar conversación:', saveError);
+        return res.status(200).json({ 
+          success: false,
+          message: 'Error al guardar la conversación'
+        });
       }
-
-      const conversation = new Conversation({
-        userId: session.user.sub,
-        title,
-        messages: [],
-        lastUpdated: new Date(),
-        isActive: true
-      });
-
-      await conversation.save();
-      return res.status(201).json(conversation);
     }
 
     // Method not allowed
     return res.status(405).json({ error: 'Método no permitido' });
 
   } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error general:', error);
+    return res.status(200).json({ 
+      conversations: [],
+      error: 'Error interno del servidor',
+      message: 'Se produjo un error al procesar la solicitud'
+    });
   }
 } 
