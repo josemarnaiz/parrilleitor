@@ -14,6 +14,7 @@ export default function Chat() {
   const [isPremium, setIsPremium] = useState(false)
   const [isCheckingAccess, setIsCheckingAccess] = useState(true)
   const [retryCount, setRetryCount] = useState(0)
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true)
 
   useEffect(() => {
     let isMounted = true
@@ -94,6 +95,7 @@ export default function Chat() {
         if (isMounted) {
           setIsPremium(true)
           setRetryCount(0)
+          loadChatHistory() // Load chat history after confirming premium status
         }
       } catch (err) {
         console.error('Premium check error:', {
@@ -128,6 +130,55 @@ export default function Chat() {
     }
   }, [user, isUserLoading, router, retryCount])
 
+  const loadChatHistory = async () => {
+    try {
+      setIsLoadingHistory(true)
+      const response = await fetch('/api/chat/history', {
+        credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-store, max-age=0',
+          'Authorization': `Bearer ${user.accessToken || ''}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al cargar el historial')
+      }
+
+      const data = await response.json()
+      if (data.conversations && data.conversations.length > 0) {
+        setMessages(data.conversations[0].messages || [])
+      }
+    } catch (error) {
+      console.error('Error loading chat history:', error)
+      setError('Error al cargar el historial de chat')
+    } finally {
+      setIsLoadingHistory(false)
+    }
+  }
+
+  const saveMessages = async (newMessages) => {
+    try {
+      const response = await fetch('/api/chat/history', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, max-age=0',
+          'Authorization': `Bearer ${user.accessToken || ''}`
+        },
+        body: JSON.stringify({ messages: newMessages })
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al guardar la conversación')
+      }
+    } catch (error) {
+      console.error('Error saving chat history:', error)
+      setError('Error al guardar la conversación')
+    }
+  }
+
   if (isUserLoading || isCheckingAccess) {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
@@ -147,7 +198,8 @@ export default function Chat() {
     if (!input.trim()) return
 
     const newMessage = { role: 'user', content: input }
-    setMessages([...messages, newMessage])
+    const updatedMessages = [...messages, newMessage]
+    setMessages(updatedMessages)
     setInput('')
     setIsTyping(true)
     setError(null)
@@ -176,14 +228,18 @@ export default function Chat() {
       }
 
       const data = await response.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.message }])
+      const finalMessages = [...updatedMessages, { role: 'assistant', content: data.message }]
+      setMessages(finalMessages)
+      saveMessages(finalMessages)
     } catch (error) {
       console.error('Error in chat:', error)
       setError(error.message)
-      setMessages(prev => [...prev, { 
+      const errorMessages = [...updatedMessages, { 
         role: 'error', 
         content: 'Lo siento, ha ocurrido un error. Por favor, intenta de nuevo.' 
-      }])
+      }]
+      setMessages(errorMessages)
+      saveMessages(errorMessages)
     } finally {
       setIsTyping(false)
     }
@@ -199,20 +255,26 @@ export default function Chat() {
                 {error}
               </div>
             )}
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`p-4 rounded-lg ${
-                  message.role === 'user' 
-                    ? 'bg-blue-600 ml-auto max-w-[80%]' 
-                    : message.role === 'error'
-                    ? 'bg-red-500 mr-auto max-w-[80%]'
-                    : 'bg-gray-700 mr-auto max-w-[80%]'
-                }`}
-              >
-                {message.content}
+            {isLoadingHistory ? (
+              <div className="text-center py-4">
+                Cargando historial...
               </div>
-            ))}
+            ) : (
+              messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`p-4 rounded-lg ${
+                    message.role === 'user' 
+                      ? 'bg-blue-600 ml-auto max-w-[80%]' 
+                      : message.role === 'error'
+                      ? 'bg-red-500 mr-auto max-w-[80%]'
+                      : 'bg-gray-700 mr-auto max-w-[80%]'
+                  }`}
+                >
+                  {message.content}
+                </div>
+              ))
+            )}
             {isTyping && (
               <div className="bg-gray-700 p-4 rounded-lg mr-auto">
                 Escribiendo...

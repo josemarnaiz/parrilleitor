@@ -1,6 +1,8 @@
-import { getSession, withApiAuthRequired } from '@auth0/nextjs-auth0/edge'
+import { getSession } from '@auth0/nextjs-auth0/edge'
 import { AIProviderFactory } from '@/services/ai/AIProviderFactory'
 import { isInAllowedList } from '@/config/allowedUsers'
+import connectDB from '@/lib/mongodb'
+import Conversation from '@/models/Conversation'
 
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles'
 const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS'
@@ -65,11 +67,9 @@ async function handler(req) {
     const userEmail = session.user.email
     const roles = session.user[AUTH0_NAMESPACE] || []
     
-    // Verificar acceso premium por ambos métodos
     const hasPremiumRole = roles.includes(PREMIUM_ROLE_ID)
     const isAllowedUser = isInAllowedList(userEmail)
 
-    // Debugging
     console.log('Chat API - Session user:', {
       email: userEmail,
       roles,
@@ -95,8 +95,31 @@ async function handler(req) {
       )
     }
 
+    await connectDB()
+
+    // Get the user's active conversation
+    let conversation = await Conversation.findOne({
+      userId: session.user.sub,
+      isActive: true
+    }).sort({ lastUpdated: -1 })
+
+    // Prepare conversation history for context
+    let conversationHistory = []
+    if (conversation) {
+      conversationHistory = conversation.messages.map(msg => ({
+        role: msg.role === 'error' ? 'assistant' : msg.role,
+        content: msg.content
+      }))
+    }
+
     const aiProvider = AIProviderFactory.getProvider()
-    const response = await aiProvider.getCompletion(message, SYSTEM_PROMPT)
+    
+    // Include conversation history in the context
+    const response = await aiProvider.getCompletion(
+      message,
+      SYSTEM_PROMPT,
+      conversationHistory
+    )
 
     return Response.json({ message: response })
 
@@ -113,6 +136,6 @@ async function handler(req) {
   }
 }
 
-export const POST = withApiAuthRequired(handler)
+export const POST = handler
 
 export const runtime = 'edge' 
