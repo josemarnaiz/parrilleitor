@@ -16,7 +16,16 @@ const commonHeaders = {
 
 export async function GET(req) {
   try {
-    const session = await getSession(req)
+    // Intentar obtener la sesión, pero no fallar si no existe
+    let session = null;
+    try {
+      session = await getSession(req);
+    } catch (sessionError) {
+      console.log('Error getting session, but continuing:', {
+        error: sessionError.message,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     // Debug session data
     console.log('Roles endpoint - Session data:', {

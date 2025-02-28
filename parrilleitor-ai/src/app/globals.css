@@ -16,40 +16,52 @@ body {
   background-color: #111827;
   color: white;
   font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .container-custom {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1rem;
 }
 
-.bg-gray-800 {
-  background-color: #1f2937;
+/* Asegurarse de que los elementos flex funcionen correctamente */
+.flex {
+  display: flex;
 }
 
-.bg-gray-900 {
-  background-color: #111827;
+.flex-col {
+  flex-direction: column;
 }
 
-.text-white {
-  color: white;
+.flex-1 {
+  flex: 1 1 0%;
 }
 
-.text-gray-300 {
-  color: #d1d5db;
+.items-center {
+  align-items: center;
 }
 
-.bg-blue-600 {
-  background-color: #2563eb;
+.justify-between {
+  justify-content: space-between;
 }
 
-.hover\:bg-blue-700:hover {
-  background-color: #1d4ed8;
+.justify-center {
+  justify-content: center;
 }
 
-.rounded {
-  border-radius: 0.25rem;
+/* Espaciado */
+.space-x-4 > * + * {
+  margin-left: 1rem;
+}
+
+.space-y-4 > * + * {
+  margin-top: 1rem;
 }
 
 .p-4 {
@@ -66,35 +78,218 @@ body {
   padding-bottom: 0.5rem;
 }
 
-.flex {
-  display: flex;
+.m-4 {
+  margin: 1rem;
 }
 
-.items-center {
-  align-items: center;
+.my-4 {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 
-.justify-between {
-  justify-content: space-between;
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.space-x-4 > * + * {
-  margin-left: 1rem;
+/* Colores de fondo */
+.bg-gray-800 {
+  background-color: #1f2937;
 }
 
+.bg-gray-900 {
+  background-color: #111827;
+}
+
+.bg-blue-600 {
+  background-color: #2563eb;
+}
+
+.hover\:bg-blue-700:hover {
+  background-color: #1d4ed8;
+}
+
+/* Colores de texto */
+.text-white {
+  color: white;
+}
+
+.text-gray-300 {
+  color: #d1d5db;
+}
+
+.text-gray-400 {
+  color: #9ca3af;
+}
+
+.text-blue-400 {
+  color: #60a5fa;
+}
+
+.text-red-400 {
+  color: #f87171;
+}
+
+.text-green-400 {
+  color: #4ade80;
+}
+
+/* Bordes y redondeado */
+.rounded {
+  border-radius: 0.25rem;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.border {
+  border-width: 1px;
+}
+
+.border-gray-700 {
+  border-color: #374151;
+}
+
+/* Tipografía */
 .font-bold {
   font-weight: 700;
+}
+
+.font-semibold {
+  font-weight: 600;
 }
 
 .text-xl {
   font-size: 1.25rem;
 }
 
+.text-2xl {
+  font-size: 1.5rem;
+}
+
+.text-3xl {
+  font-size: 1.875rem;
+}
+
+/* Transiciones */
 .transition-colors {
   transition-property: color, background-color, border-color;
   transition-duration: 150ms;
 }
 
+/* Sombras */
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Componentes específicos */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  background-color: #2563eb;
+  border-radius: 0.375rem;
+  transition-property: background-color;
+  transition-duration: 150ms;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.card {
+  background-color: #1f2937;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Asegurarse de que los inputs tengan estilos consistentes */
+input, textarea, select {
+  background-color: #374151;
+  color: white;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  border: 1px solid #4b5563;
+  width: 100%;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+}
+
+/* Estilos para el navbar */
+nav {
+  background-color: #1f2937;
+  padding: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Estilos para botones */
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Estilos para links */
+a {
+  color: #60a5fa;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Utilidades adicionales */
+.min-h-screen {
+  min-height: 100vh;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.max-w-md {
+  max-width: 28rem;
+}
+
+.max-w-2xl {
+  max-width: 42rem;
+}
+
+.max-w-4xl {
+  max-width: 56rem;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
+.hidden {
+  display: none;
+}
+
+.block {
+  display: block;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
+/* Asegurarse de que las capas de Tailwind se apliquen correctamente */
 @layer base {
   html {
     @apply h-full scroll-smooth;
@@ -102,10 +297,6 @@ body {
 
   body {
     @apply h-full bg-gray-900 text-white;
-  }
-
-  #__next {
-    @apply h-full;
   }
 }
 
@@ -120,14 +311,6 @@ body {
 
   .container-custom {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
-
-  .heading-primary {
-    @apply text-3xl font-bold text-white sm:text-4xl;
-  }
-
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500;
   }
 
   .card {

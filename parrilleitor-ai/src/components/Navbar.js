@@ -2,9 +2,29 @@
 
 import { useUser } from '@auth0/nextjs-auth0/client'
 import Link from 'next/link'
+import { useState } from 'react'
 
 export default function Navbar() {
   const { user, isLoading } = useUser()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  // Función para manejar el logout de forma explícita
+  const handleLogout = (e) => {
+    e.preventDefault()
+    
+    if (isLoggingOut) return
+    
+    setIsLoggingOut(true)
+    
+    // Registrar el intento de logout
+    console.log('Manual logout requested by user:', {
+      email: user?.email,
+      timestamp: new Date().toISOString()
+    })
+    
+    // Redirigir al endpoint de logout
+    window.location.href = '/api/auth/logout'
+  }
 
   if (isLoading) {
     return (
@@ -46,12 +66,13 @@ export default function Navbar() {
               >
                 Mi Cuenta
               </Link>
-              <Link
-                href="/api/auth/logout"
+              <button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
                 className="text-red-500 hover:text-red-400 transition-colors"
               >
-                Cerrar Sesión
-              </Link>
+                {isLoggingOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}
+              </button>
             </>
           ) : (
             <Link 

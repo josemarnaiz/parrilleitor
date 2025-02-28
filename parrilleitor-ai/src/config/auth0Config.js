@@ -1,7 +1,7 @@
 // Configuración de Auth0 para la aplicación
 export const auth0Config = {
-  // Duración de la sesión en segundos (60 días)
-  sessionDuration: 60 * 24 * 60 * 60,
+  // Duración de la sesión en segundos (90 días)
+  sessionDuration: 90 * 24 * 60 * 60,
   
   // Otras configuraciones de Auth0
   authorizationParams: {

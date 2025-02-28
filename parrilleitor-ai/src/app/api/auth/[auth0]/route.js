@@ -38,10 +38,17 @@ async function handleAuthError(error, action) {
   )
 }
 
-export const GET = handleAuth({
+// Configuración personalizada para Auth0
+const authConfig = {
   login: handleLogin({
     returnTo: auth0Config.returnTo,
-    authorizationParams: auth0Config.authorizationParams
+    authorizationParams: auth0Config.authorizationParams,
+    // Aumentar el tiempo de expiración de la cookie
+    cookieOptions: {
+      maxAge: 60 * 24 * 60 * 60, // 60 días en segundos
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    }
   }),
   callback: handleCallback({
     afterCallback: async (req, session) => {
@@ -89,14 +96,42 @@ export const GET = handleAuth({
         })
         throw error
       }
+    },
+    // Aumentar el tiempo de expiración de la cookie
+    cookieOptions: {
+      maxAge: 60 * 24 * 60 * 60, // 60 días en segundos
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
     }
   }),
   logout: handleLogout({
-    returnTo: auth0Config.logoutReturnTo
+    returnTo: auth0Config.logoutReturnTo,
+    // Solo permitir logout explícito
+    onRedirect: (req, res) => {
+      // Verificar si el logout fue explícitamente solicitado
+      const url = new URL(req.url)
+      const isExplicitLogout = url.pathname === '/api/auth/logout'
+      
+      console.log('Logout request details:', {
+        url: url.toString(),
+        isExplicitLogout,
+        timestamp: new Date().toISOString()
+      })
+      
+      // Solo permitir logout si fue explícitamente solicitado
+      if (isExplicitLogout) {
+        return Response.redirect(new URL(auth0Config.logoutReturnTo, req.url))
+      }
+      
+      // Si no fue explícito, redirigir a la página principal sin hacer logout
+      return Response.redirect(new URL('/', req.url))
+    }
   })
-})
+}
 
-export const POST = handleAuth()
+export const GET = handleAuth(authConfig)
+
+export const POST = handleAuth(authConfig)
 
 // Configure preflight requests
 export async function OPTIONS(request) {

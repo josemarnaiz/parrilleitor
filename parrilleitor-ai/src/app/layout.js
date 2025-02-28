@@ -17,9 +17,12 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full bg-gray-900 font-sans text-white">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </head>
+      <body className="min-h-screen bg-gray-900 text-white font-sans">
         <AuthProvider>
-          <div className="relative flex min-h-screen flex-col">
+          <div className="flex min-h-screen flex-col">
             <Navbar />
             <main className="flex-1">
               <div className="container-custom py-6">
