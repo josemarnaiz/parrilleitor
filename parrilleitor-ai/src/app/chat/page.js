@@ -73,8 +73,12 @@ export default function Chat() {
           }
           
           if (!data.user.isPremium) {
-            console.log('User not premium, redirecting to unauthorized')
-            router.push('/unauthorized')
+            console.log('User not premium, showing message instead of redirecting')
+            // En lugar de redirigir, mostramos un mensaje
+            if (isMounted) {
+              setError('Se requiere una cuenta premium para acceder al chat. Por favor, contacta al administrador.')
+              setIsCheckingAccess(false)
+            }
             return
           }
           
@@ -121,6 +125,10 @@ export default function Chat() {
     // Solo iniciamos la verificación si tenemos datos de usuario
     if (!isUserLoading && user) {
       checkPremiumStatus()
+    } else if (!isUserLoading && !user) {
+      // Si no hay usuario y no está cargando, mostramos un mensaje
+      setError('Necesitas iniciar sesión para acceder al chat.')
+      setIsCheckingAccess(false)
     }
 
     return () => {
@@ -191,7 +199,43 @@ export default function Chat() {
   }
 
   if (!user || !isPremium) {
-    return null
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-4 flex flex-col items-center justify-center">
+        <div className="bg-gray-800 rounded-lg p-8 max-w-md w-full text-center">
+          <h1 className="text-2xl font-bold mb-4">Acceso al Chat</h1>
+          
+          {error && (
+            <div className="bg-red-500 text-white p-4 rounded-lg mb-4">
+              {error}
+            </div>
+          )}
+          
+          {!user && (
+            <>
+              <p className="mb-6">Para acceder al chat, necesitas iniciar sesión con tu cuenta.</p>
+              <a 
+                href="/api/auth/login" 
+                className="bg-blue-600 px-6 py-2 rounded hover:bg-blue-700 transition-colors inline-block"
+              >
+                Iniciar Sesión
+              </a>
+            </>
+          )}
+          
+          {user && !isPremium && (
+            <>
+              <p className="mb-6">Tu cuenta no tiene acceso premium. Por favor, contacta al administrador para obtener acceso.</p>
+              <a 
+                href="/" 
+                className="bg-blue-600 px-6 py-2 rounded hover:bg-blue-700 transition-colors inline-block"
+              >
+                Volver al Inicio
+              </a>
+            </>
+          )}
+        </div>
+      </div>
+    )
   }
 
   const handleSubmit = async (e) => {

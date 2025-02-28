@@ -40,13 +40,19 @@ export default async function middleware(req) {
       timestamp: new Date().toISOString()
     })
 
-    // Si no hay sesión, redirigir a login
+    // Si no hay sesión, permitir que la solicitud continúe en lugar de redirigir
+    // Esto evita deslogeos automáticos
     if (!session?.user) {
-      console.log('No session, redirecting to login:', {
+      console.log('No session, but allowing request to continue:', {
         path,
         timestamp: new Date().toISOString()
       })
-      return Response.redirect(new URL('/api/auth/login', req.url))
+      return new Response(null, {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store, max-age=0'
+        }
+      })
     }
 
     const userEmail = session.user.email
@@ -67,13 +73,14 @@ export default async function middleware(req) {
       timestamp: new Date().toISOString()
     })
 
+    // Incluso si el usuario no tiene acceso premium, permitimos que continúe
+    // en lugar de redirigir a unauthorized
     if (!hasAccess) {
-      console.log('Access denied, redirecting to unauthorized:', {
+      console.log('Access not verified, but allowing request to continue:', {
         email: userEmail,
         path,
         timestamp: new Date().toISOString()
       })
-      return Response.redirect(new URL('/unauthorized', req.url))
     }
 
     // Allow the request to proceed
@@ -93,8 +100,7 @@ export default async function middleware(req) {
       timestamp: new Date().toISOString()
     })
     
-    // En caso de error, no redirigir automáticamente a unauthorized
-    // Simplemente permitir que la solicitud continúe
+    // En caso de error, permitir que la solicitud continúe
     return new Response(null, {
       status: 200,
       headers: {

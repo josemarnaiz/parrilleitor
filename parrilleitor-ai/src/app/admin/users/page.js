@@ -52,12 +52,11 @@ export default function AdminUsers() {
   }
 
   if (!user && !isTemporarySession) {
-    // En lugar de redireccionar automáticamente, mostramos un botón para iniciar sesión
     return (
       <div className="min-h-screen bg-gray-900 text-white p-4">
         <div className="container mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-4">Necesitas iniciar sesión</h1>
-          <p className="mb-4">Para acceder a esta página, debes iniciar sesión primero.</p>
+          <h1 className="text-2xl font-bold mb-4">Información de Usuario</h1>
+          <p className="mb-4">Para ver tu información de usuario, debes iniciar sesión primero.</p>
           <a 
             href="/api/auth/login" 
             className="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition-colors"
