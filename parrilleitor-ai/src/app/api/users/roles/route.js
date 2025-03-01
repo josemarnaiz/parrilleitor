@@ -4,6 +4,9 @@ import { isInAllowedList } from '@/config/allowedUsers'
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles'
 const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS'
 
+// Obtener la URL base actual
+const AUTH0_BASE_URL = process.env.AUTH0_BASE_URL || 'https://parrilleitorai.vercel.app'
+
 // Headers comunes
 const commonHeaders = {
   'Cache-Control': 'no-store, max-age=0',

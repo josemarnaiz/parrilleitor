@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function Chat() {
   const { user, isLoading: isUserLoading } = useUser()
@@ -15,6 +16,17 @@ export default function Chat() {
   const [isCheckingAccess, setIsCheckingAccess] = useState(true)
   const [retryCount, setRetryCount] = useState(0)
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
+  const messagesEndRef = useRef(null)
+
+  // Función para hacer scroll al fondo cuando hay nuevos mensajes
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  // Scroll automático cuando cambian los mensajes
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, isTyping])
 
   useEffect(() => {
     let isMounted = true
@@ -203,8 +215,9 @@ export default function Chat() {
 
   if (isUserLoading || isCheckingAccess) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
-        <div className="text-2xl">
+      <div className="min-h-screen bg-gray-900 text-white px-3 py-6 flex items-center justify-center">
+        <div className="text-xl md:text-2xl font-semibold text-center">
+          <div className="w-10 h-10 md:w-12 md:h-12 border-t-2 border-blue-500 border-solid rounded-full animate-spin mx-auto mb-4"></div>
           {retryCount > 0 ? `Verificando acceso (intento ${retryCount}/3)...` : 'Cargando...'}
         </div>
       </div>
@@ -214,36 +227,36 @@ export default function Chat() {
   if (!user || !isPremium) {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-4 flex flex-col items-center justify-center">
-        <div className="bg-gray-800 rounded-lg p-8 max-w-md w-full text-center">
-          <h1 className="text-2xl font-bold mb-4">Acceso al Chat</h1>
+        <div className="bg-gray-800 rounded-lg p-5 md:p-8 max-w-md w-full text-center shadow-lg">
+          <h1 className="text-xl md:text-2xl font-bold mb-4 text-gradient-sport">Acceso al Chat</h1>
           
           {error && (
-            <div className="bg-red-500 text-white p-4 rounded-lg mb-4">
+            <div className="bg-red-500 text-white p-3 rounded-lg mb-4 text-sm md:text-base">
               {error}
             </div>
           )}
           
           {!user && (
             <>
-              <p className="mb-6">Para acceder al chat, necesitas iniciar sesión con tu cuenta.</p>
-              <a 
+              <p className="mb-6 text-sm md:text-base">Para acceder al chat, necesitas iniciar sesión con tu cuenta.</p>
+              <Link 
                 href="/api/auth/login" 
-                className="bg-blue-600 px-6 py-2 rounded hover:bg-blue-700 transition-colors inline-block"
+                className="btn-sport px-5 py-2 text-sm md:text-base"
               >
                 Iniciar Sesión
-              </a>
+              </Link>
             </>
           )}
           
           {user && !isPremium && (
             <>
-              <p className="mb-6">Tu cuenta no tiene acceso premium. Por favor, contacta al administrador para obtener acceso.</p>
-              <a 
+              <p className="mb-6 text-sm md:text-base">Tu cuenta no tiene acceso premium. Por favor, contacta al administrador para obtener acceso.</p>
+              <Link 
                 href="/" 
-                className="bg-blue-600 px-6 py-2 rounded hover:bg-blue-700 transition-colors inline-block"
+                className="btn-sport px-5 py-2 text-sm md:text-base"
               >
                 Volver al Inicio
-              </a>
+              </Link>
             </>
           )}
         </div>
@@ -355,58 +368,89 @@ export default function Chat() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-gray-800 rounded-lg shadow-lg p-6 min-h-[600px] flex flex-col">
-          <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+      <div className="w-full max-w-4xl mx-auto flex-1 flex flex-col p-3 md:p-4">
+        <div className="bg-gray-800 rounded-lg shadow-lg flex-1 flex flex-col overflow-hidden">
+          {/* Encabezado del chat */}
+          <div className="bg-gray-800 border-b border-gray-700 p-3 md:p-4">
+            <h1 className="text-lg md:text-xl font-bold text-gradient-sport">ParrilleitorAI Chat</h1>
+            <p className="text-xs md:text-sm text-gray-400">Tu asistente personal de nutrición y ejercicio</p>
+          </div>
+
+          {/* Área de mensajes */}
+          <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4">
             {error && (
-              <div className="bg-red-500 text-white p-4 rounded-lg mb-4">
+              <div className="bg-red-500 text-white p-3 rounded-lg mb-3 text-sm">
                 {error}
+                <button 
+                  className="ml-2 text-white underline text-xs"
+                  onClick={() => setError(null)}
+                >
+                  Cerrar
+                </button>
               </div>
             )}
+            
             {isLoadingHistory ? (
-              <div className="text-center py-4">
+              <div className="text-center py-4 text-sm md:text-base">
+                <div className="w-8 h-8 border-t-2 border-blue-500 border-solid rounded-full animate-spin mx-auto mb-2"></div>
                 Cargando historial...
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="text-center py-8 text-gray-400 text-sm md:text-base">
+                <p className="mb-3">👋 ¡Hola! Soy tu asistente de nutrición y ejercicio.</p>
+                <p>¿En qué puedo ayudarte hoy?</p>
               </div>
             ) : (
               messages.map((message, index) => (
                 <div
                   key={index}
-                  className={`p-4 rounded-lg ${
+                  className={`p-3 rounded-lg text-sm md:text-base ${
                     message.role === 'user' 
-                      ? 'bg-blue-600 ml-auto max-w-[80%]' 
+                      ? 'bg-blue-600 ml-auto max-w-[85%] md:max-w-[75%]' 
                       : message.role === 'error'
-                      ? 'bg-red-500 mr-auto max-w-[80%]'
-                      : 'bg-gray-700 mr-auto max-w-[80%]'
+                      ? 'bg-red-500 mr-auto max-w-[85%] md:max-w-[75%]'
+                      : 'bg-gray-700 mr-auto max-w-[85%] md:max-w-[75%]'
                   }`}
                 >
                   {message.content}
                 </div>
               ))
             )}
+            
             {isTyping && (
-              <div className="bg-gray-700 p-4 rounded-lg mr-auto">
-                Escribiendo...
+              <div className="bg-gray-700 p-3 rounded-lg mr-auto max-w-[85%] md:max-w-[75%] text-sm md:text-base">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-100"></div>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-200"></div>
+                </div>
               </div>
             )}
+            
+            {/* Elemento invisible para scroll */}
+            <div ref={messagesEndRef} />
           </div>
           
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Escribe tu mensaje..."
-              className="flex-1 p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-              disabled={isTyping}
-            >
-              Enviar
-            </button>
-          </form>
+          {/* Formulario de entrada */}
+          <div className="border-t border-gray-700 p-3">
+            <form onSubmit={handleSubmit} className="flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Escribe tu mensaje..."
+                className="flex-1 p-2 rounded-lg bg-gray-700 text-white text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="submit"
+                className="px-3 md:px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base flex-shrink-0"
+                disabled={isTyping}
+              >
+                {isTyping ? '...' : 'Enviar'}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
