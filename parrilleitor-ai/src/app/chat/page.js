@@ -263,6 +263,17 @@ export default function Chat() {
     setError(null)
 
     try {
+      // Crear un controlador de aborto para el timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 60000); // 60 segundos de timeout
+      
+      console.log('Enviando mensaje al servidor:', {
+        messageLength: input.length,
+        preview: input.substring(0, 50) + (input.length > 50 ? '...' : '')
+      });
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -272,7 +283,11 @@ export default function Chat() {
         },
         credentials: 'include',
         body: JSON.stringify({ message: input }),
-      })
+        signal: controller.signal
+      });
+      
+      // Limpiar el timeout una vez que se recibe la respuesta
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json()
@@ -286,18 +301,54 @@ export default function Chat() {
       }
 
       const data = await response.json()
-      const finalMessages = [...updatedMessages, { role: 'assistant', content: data.message }]
+      console.log('Respuesta de la API de chat:', data)
+      
+      // Verificar si hay una respuesta válida
+      if (!data.response) {
+        console.error('Respuesta de API sin mensaje:', data)
+        throw new Error('No se recibió respuesta del servidor')
+      }
+      
+      const finalMessages = [...updatedMessages, { role: 'assistant', content: data.response }]
       setMessages(finalMessages)
+      
+      // Si hay una advertencia, mostrarla como error pero no interrumpir el flujo
+      if (data.warning) {
+        console.warn('Advertencia del servidor:', data.warning)
+        setError(`Nota: ${data.warning}`)
+      }
+      
       saveMessages(finalMessages)
     } catch (error) {
       console.error('Error in chat:', error)
+      
+      // Determinar el mensaje de error apropiado para el usuario
+      let errorMessage = 'Lo siento, ha ocurrido un error. Por favor, intenta de nuevo.'
+      
+      if (error.name === 'AbortError') {
+        console.error('La solicitud fue abortada por timeout');
+        errorMessage = 'La solicitud ha tardado demasiado tiempo. Por favor, intenta con un mensaje más corto o inténtalo más tarde.'
+      } else if (error.message.includes('timeout') || error.message.includes('tiempo')) {
+        errorMessage = 'La solicitud ha tardado demasiado tiempo. Por favor, intenta con un mensaje más corto o inténtalo más tarde.'
+      } else if (error.message.includes('No se recibió respuesta')) {
+        errorMessage = 'No se pudo obtener una respuesta del asistente. Por favor, intenta de nuevo.'
+      } else if (error.message.includes('sesión')) {
+        errorMessage = 'Tu sesión ha expirado. Por favor, recarga la página para iniciar sesión de nuevo.'
+      }
+      
       setError(error.message)
       const errorMessages = [...updatedMessages, { 
         role: 'error', 
-        content: 'Lo siento, ha ocurrido un error. Por favor, intenta de nuevo.' 
+        content: errorMessage
       }]
       setMessages(errorMessages)
-      saveMessages(errorMessages)
+      
+      // Intentar guardar el mensaje de error en el historial
+      try {
+        saveMessages(errorMessages)
+      } catch (saveError) {
+        console.error('Error al guardar mensaje de error:', saveError)
+      }
     } finally {
       setIsTyping(false)
     }
