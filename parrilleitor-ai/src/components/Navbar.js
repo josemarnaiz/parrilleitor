@@ -1,136 +1,64 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useUser } from '@auth0/nextjs-auth0/client'
-import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 
 export default function Navbar() {
-  const { user, isLoading } = useUser()
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const mobileMenuRef = useRef(null)
+  const { user } = useUser()
+  const pathname = usePathname()
+  const [pageTitle, setPageTitle] = useState('ParrilleitorAI')
   
-  // Detect scroll to change navbar styles
+  // Set page title based on current path
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10)
+    if (pathname === '/') {
+      setPageTitle('ParrilleitorAI')
+    } else if (pathname === '/chat') {
+      setPageTitle('Chat con AI')
+    } else if (pathname === '/profile') {
+      setPageTitle('Mi Perfil')
+    } else {
+      setPageTitle('ParrilleitorAI')
     }
-    
-    // Throttle for better performance
-    let timeoutId
-    const throttledScroll = () => {
-      if (!timeoutId) {
-        timeoutId = setTimeout(() => {
-          handleScroll()
-          timeoutId = null
-        }, 100)
-      }
-    }
-    
-    window.addEventListener('scroll', throttledScroll)
-    return () => {
-      window.removeEventListener('scroll', throttledScroll)
-      clearTimeout(timeoutId)
-    }
-  }, [])
+  }, [pathname])
   
-  // Detect clicks outside mobile menu to close it
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (isMobileMenuOpen && mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
-        setIsMobileMenuOpen(false)
-      }
-    }
-    
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isMobileMenuOpen])
+  // Show back button on pages other than home
+  const showBackButton = pathname !== '/'
   
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-black/80 backdrop-blur-sm' : 'bg-transparent'}`}>
-      <div className="container mx-auto">
-        <nav className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <Image 
-              src="/images/logo.svg" 
-              alt="ParrilleitorAI" 
-              width={28} 
-              height={28} 
-              className="w-7 h-7"
-            />
-            <span className="text-lg font-medium">ParrilleitorAI</span>
-          </Link>
-          
-          {/* Navigation */}
-          <div className="flex items-center space-x-6">
-            <Link href="/chat" className="hidden md:block text-sm text-gray-300 hover:text-white transition-colors">
-              Chat
-            </Link>
-            
-            {!isLoading && (
-              <>
-                {user ? (
-                  <div className="flex items-center">
-                    <Link href="/chat" className="mr-4 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-full px-4 py-1.5 transition-colors">
-                      Iniciar Chat
-                    </Link>
-                    <button 
-                      onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                      className="flex items-center space-x-1 text-gray-300 hover:text-white"
-                    >
-                      <span className="hidden md:block text-sm">{user.name?.split(' ')[0]}</span>
-                      <div className="w-7 h-7 rounded-full overflow-hidden border border-primary-500/50">
-                        <Image 
-                          src={user.picture || 'https://via.placeholder.com/40'} 
-                          alt={user.name || 'Usuario'} 
-                          width={28} 
-                          height={28} 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </button>
-                  </div>
-                ) : (
-                  <Link 
-                    href="/api/auth/login" 
-                    className="text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-full px-4 py-1.5 transition-colors"
-                  >
-                    Iniciar Sesión
-                  </Link>
-                )}
-              </>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-primary text-white">
+      <div className="container">
+        <div className="flex items-center justify-between h-14">
+          <div className="flex items-center">
+            {showBackButton && (
+              <Link href="/" className="mr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </Link>
             )}
+            <h1 className="text-lg font-medium">{pageTitle}</h1>
           </div>
-        </nav>
-      </div>
-      
-      {/* Mobile Menu (Simplified) */}
-      {isMobileMenuOpen && (
-        <div 
-          ref={mobileMenuRef}
-          className="absolute right-0 mt-2 w-48 bg-black border border-gray-800 rounded-md shadow-lg overflow-hidden z-10"
-        >
-          <div className="py-1">
-            <Link href="/chat" className="block px-4 py-2 text-sm text-gray-300 hover:bg-primary-700 hover:text-white">
-              Chat con IA
-            </Link>
-            {user && (
-              <>
-                <Link href="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-primary-700 hover:text-white">
-                  Mi Perfil
-                </Link>
-                <Link href="/api/auth/logout" className="block px-4 py-2 text-sm text-gray-300 hover:bg-primary-700 hover:text-white">
-                  Cerrar Sesión
-                </Link>
-              </>
+          
+          <div className="flex items-center space-x-3">
+            {!user ? (
+              <Link 
+                href="/api/auth/login" 
+                className="text-xs bg-white text-primary rounded-md px-3 py-1.5"
+              >
+                Iniciar Sesión
+              </Link>
+            ) : (
+              <Link href="/profile">
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                  {user.name?.charAt(0) || 'U'}
+                </div>
+              </Link>
             )}
           </div>
         </div>
-      )}
+      </div>
     </header>
   )
 }
