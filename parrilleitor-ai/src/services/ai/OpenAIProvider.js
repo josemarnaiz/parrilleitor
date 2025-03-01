@@ -10,11 +10,11 @@ export class OpenAIProvider extends IAIProvider {
         console.error('OPENAI_API_KEY no está configurada en las variables de entorno')
       }
       
-      // Inicializar el cliente con timeout y manejo de errores mejorado
+      // Inicializar el cliente con timeout reducido para evitar FUNCTION_INVOCATION_TIMEOUT en Vercel
       this.client = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
-        timeout: 60000, // 60 segundos de timeout
-        maxRetries: 3, // Intentar hasta 3 veces
+        timeout: 25000, // 25 segundos de timeout (reducido para evitar timeout en Vercel)
+        maxRetries: 2, // Reducir a 2 reintentos para evitar exceder el tiempo total
       })
       
       console.log('Cliente OpenAI inicializado correctamente')
@@ -37,11 +37,13 @@ export class OpenAIProvider extends IAIProvider {
         throw new Error('El formato de mensajes es inválido')
       }
       
+      // Reducir el número de tokens y la temperatura para obtener respuestas más rápidas
       const completion = await this.client.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-3.5-turbo", // Usar gpt-3.5-turbo que es más rápido
         messages: messages,
-        temperature: 0.7,
-        max_tokens: 800,
+        temperature: 0.5, // Reducir temperatura para respuestas más deterministas
+        max_tokens: 500, // Reducir tokens para respuestas más cortas y rápidas
+        timeout: 25000, // Asegurar que el timeout se aplica también a nivel de solicitud
       })
       
       if (!completion.choices || completion.choices.length === 0) {
@@ -59,14 +61,17 @@ export class OpenAIProvider extends IAIProvider {
       
       // Proporcionar mensajes de error más descriptivos
       if (error.message.includes('timeout')) {
-        throw new Error('La solicitud a OpenAI excedió el tiempo de espera. Por favor, inténtalo de nuevo.')
+        return "Lo siento, la solicitud a OpenAI excedió el tiempo de espera. Por favor, intenta enviar un mensaje más corto o inténtalo de nuevo más tarde."
       } else if (error.message.includes('API key')) {
-        throw new Error('Error de autenticación con OpenAI. Verifica la API key.')
+        return "Error de autenticación con OpenAI. Por favor, contacta al administrador para verificar la configuración de la API key."
       } else if (error.message.includes('rate limit')) {
-        throw new Error('Se ha excedido el límite de solicitudes a OpenAI. Por favor, espera un momento e inténtalo de nuevo.')
+        return "Se ha excedido el límite de solicitudes a OpenAI. Por favor, espera un momento e inténtalo de nuevo."
+      } else if (error.message.includes('project')) {
+        return "Hay un problema con la clave de proyecto de OpenAI. Por favor, contacta al administrador para verificar la configuración."
       }
       
-      throw new Error(`Error al procesar la solicitud: ${error.message}`)
+      // En lugar de lanzar un error, devolver un mensaje amigable
+      return `Lo siento, ocurrió un error al procesar tu solicitud. Por favor, inténtalo de nuevo más tarde. (${error.message.substring(0, 100)}...)`
     }
   }
 
