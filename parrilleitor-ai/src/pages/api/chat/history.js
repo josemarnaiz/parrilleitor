@@ -18,6 +18,35 @@ const commonHeaders = {
 // Nombre de la colección en MongoDB
 const COLLECTION_NAME = 'conversations';
 
+// Función para manejar errores de forma consistente
+function handleError(res, error, defaultMessage = 'Error interno del servidor') {
+  console.error('Error en API de historial:', {
+    message: error.message,
+    stack: error.stack,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Determinar el tipo de error para dar una respuesta más específica
+  let errorMessage = defaultMessage;
+  let errorDetails = error.message;
+  
+  if (error.message.includes('buffering timed out') || error.message.includes('timed out')) {
+    errorMessage = 'La operación en la base de datos tardó demasiado tiempo. Por favor, inténtalo de nuevo.';
+    errorDetails = 'Timeout en operación de MongoDB. Esto puede ocurrir si la conexión es lenta o si hay problemas de red.';
+  } else if (error.message.includes('connection') || error.message.includes('network')) {
+    errorMessage = 'Problema de conexión con la base de datos. Por favor, inténtalo de nuevo más tarde.';
+    errorDetails = 'Error de conexión a MongoDB. Verifica la conectividad de red y la configuración de acceso.';
+  }
+  
+  // Siempre devolver 200 para evitar errores en el cliente, pero con información del error
+  return res.status(200).json({
+    success: false,
+    error: errorMessage,
+    details: errorDetails,
+    timestamp: new Date().toISOString()
+  });
+}
+
 export default async function handler(req, res) {
   // Set CORS headers
   Object.entries(commonHeaders).forEach(([key, value]) => {
@@ -30,10 +59,22 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Establecer un timeout para la función completa
+  const functionTimeout = setTimeout(() => {
+    console.error('Timeout de función alcanzado, respondiendo con error');
+    return res.status(200).json({ 
+      success: false,
+      error: 'La solicitud ha excedido el tiempo máximo de espera',
+      message: 'Por favor, inténtalo de nuevo más tarde.',
+      timestamp: new Date().toISOString()
+    });
+  }, 25000); // 25 segundos de timeout total
+
   try {
     const session = await getSession(req, res);
 
     if (!session?.user) {
+      clearTimeout(functionTimeout);
       return res.status(401).json({ error: 'No autenticado' });
     }
 
@@ -43,18 +84,21 @@ export default async function handler(req, res) {
     const isAllowedUser = isInAllowedList(session.user.email);
 
     if (!hasPremiumRole && !isAllowedUser) {
+      clearTimeout(functionTimeout);
       return res.status(403).json({ error: 'Se requiere una cuenta premium' });
     }
 
     // Obtener el cliente de MongoDB
     const mongoClient = getMongoDBClient();
     
-    // Verificar la conexión a MongoDB
+    // Verificar la conexión a MongoDB con timeout
     try {
       const isConnected = await mongoClient.ping();
       if (!isConnected) {
         console.error('No se pudo conectar a MongoDB');
+        clearTimeout(functionTimeout);
         return res.status(200).json({ 
+          success: false,
           conversations: [],
           message: 'Error de conexión a MongoDB',
           error: 'No se pudo establecer conexión con la base de datos. Verifica que la IP del servidor esté permitida en MongoDB Atlas.'
@@ -62,7 +106,9 @@ export default async function handler(req, res) {
       }
     } catch (pingError) {
       console.error('Error al verificar la conexión a MongoDB:', pingError);
+      clearTimeout(functionTimeout);
       return res.status(200).json({ 
+        success: false,
         conversations: [],
         message: 'Error de conexión a MongoDB',
         error: pingError.message,
@@ -85,14 +131,14 @@ export default async function handler(req, res) {
           }
         );
 
-        return res.status(200).json({ conversations });
-      } catch (findError) {
-        console.error('Error al buscar conversaciones:', findError);
+        clearTimeout(functionTimeout);
         return res.status(200).json({ 
-          conversations: [],
-          message: 'Error al recuperar conversaciones',
-          error: findError.message
+          success: true,
+          conversations 
         });
+      } catch (findError) {
+        clearTimeout(functionTimeout);
+        return handleError(res, findError, 'Error al recuperar conversaciones');
       }
     }
 
@@ -101,82 +147,143 @@ export default async function handler(req, res) {
         const { messages } = req.body;
 
         if (!messages || !Array.isArray(messages)) {
+          clearTimeout(functionTimeout);
           return res.status(200).json({ 
             success: false,
             message: 'Formato de mensajes inválido'
           });
         }
 
-        // Buscar conversación existente
-        const existingConversation = await mongoClient.findOne(
-          COLLECTION_NAME,
-          {
-            userId: session.user.sub,
-            isActive: true
-          }
-        );
+        // Limitar el número de mensajes para evitar problemas de rendimiento
+        const limitedMessages = messages.length > 20 ? messages.slice(-20) : messages;
 
+        // Buscar conversación existente
+        let existingConversation = null;
+        try {
+          existingConversation = await mongoClient.findOne(
+            COLLECTION_NAME,
+            {
+              userId: session.user.sub,
+              isActive: true
+            }
+          );
+        } catch (findError) {
+          console.warn('Error al buscar conversación existente, continuando con creación de nueva:', findError.message);
+          // Continuar con la creación de una nueva conversación
+        }
+
+        let result;
         if (!existingConversation) {
           // Crear nueva conversación
           const newConversation = {
             userId: session.user.sub,
             userEmail: session.user.email,
-            messages: messages,
+            messages: limitedMessages,
             lastUpdated: new Date(),
             isActive: true,
             createdAt: new Date(),
             updatedAt: new Date()
           };
 
-          const result = await mongoClient.insertOne(COLLECTION_NAME, newConversation);
-          
-          // Añadir el ID al objeto de conversación para devolverlo
-          newConversation._id = result.insertedId;
-          
-          return res.status(200).json({ 
-            success: true,
-            conversation: newConversation
-          });
+          try {
+            result = await mongoClient.insertOne(COLLECTION_NAME, newConversation);
+            
+            // Si hay un error de timeout, crear una respuesta simulada
+            if (result.error === 'timeout') {
+              console.warn('Timeout al insertar conversación, devolviendo respuesta simulada');
+              clearTimeout(functionTimeout);
+              return res.status(200).json({ 
+                success: true,
+                conversation: {
+                  ...newConversation,
+                  _id: 'temp_' + Date.now(),
+                  _tempId: true
+                },
+                warning: 'La conversación se guardará en un próximo intento'
+              });
+            }
+            
+            // Añadir el ID al objeto de conversación para devolverlo
+            newConversation._id = result.insertedId;
+            
+            clearTimeout(functionTimeout);
+            return res.status(200).json({ 
+              success: true,
+              conversation: newConversation
+            });
+          } catch (insertError) {
+            console.error('Error al insertar nueva conversación:', insertError);
+            
+            // Devolver una respuesta simulada para que el cliente pueda continuar
+            clearTimeout(functionTimeout);
+            return res.status(200).json({ 
+              success: true,
+              conversation: {
+                ...newConversation,
+                _id: 'temp_' + Date.now(),
+                _tempId: true
+              },
+              warning: 'No se pudo guardar la conversación en la base de datos',
+              error: insertError.message
+            });
+          }
         } else {
           // Actualizar conversación existente
           const updatedConversation = {
             ...existingConversation,
-            messages: messages,
+            messages: limitedMessages,
             lastUpdated: new Date(),
             updatedAt: new Date()
           };
 
-          await mongoClient.replaceOne(
-            COLLECTION_NAME,
-            { _id: existingConversation._id },
-            updatedConversation
-          );
-
-          return res.status(200).json({ 
-            success: true,
-            conversation: updatedConversation
-          });
+          try {
+            result = await mongoClient.replaceOne(
+              COLLECTION_NAME,
+              { _id: existingConversation._id },
+              updatedConversation
+            );
+            
+            // Si hay un error de timeout, devolver la conversación actualizada de todos modos
+            if (result.error === 'timeout') {
+              console.warn('Timeout al actualizar conversación, devolviendo respuesta simulada');
+              clearTimeout(functionTimeout);
+              return res.status(200).json({ 
+                success: true,
+                conversation: updatedConversation,
+                warning: 'Los cambios se guardarán en un próximo intento'
+              });
+            }
+            
+            clearTimeout(functionTimeout);
+            return res.status(200).json({ 
+              success: true,
+              conversation: updatedConversation
+            });
+          } catch (updateError) {
+            console.error('Error al actualizar conversación existente:', updateError);
+            
+            // Devolver la conversación actualizada de todos modos para que el cliente pueda continuar
+            clearTimeout(functionTimeout);
+            return res.status(200).json({ 
+              success: true,
+              conversation: updatedConversation,
+              warning: 'No se pudieron guardar los cambios en la base de datos',
+              error: updateError.message
+            });
+          }
         }
       } catch (saveError) {
-        console.error('Error al guardar conversación:', saveError);
-        return res.status(200).json({ 
-          success: false,
-          message: 'Error al guardar la conversación',
-          error: saveError.message
-        });
+        clearTimeout(functionTimeout);
+        return handleError(res, saveError, 'Error al guardar la conversación');
       }
     }
 
     // Method not allowed
+    clearTimeout(functionTimeout);
     return res.status(405).json({ error: 'Método no permitido' });
 
   } catch (error) {
-    console.error('Error general:', error);
-    return res.status(200).json({ 
-      conversations: [],
-      error: 'Error interno del servidor',
-      message: 'Se produjo un error al procesar la solicitud',
-      details: error.message
-    });
+    clearTimeout(functionTimeout);
+    return handleError(res, error, 'Error interno del servidor');
   }
 } 

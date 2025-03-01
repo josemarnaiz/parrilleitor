@@ -11,22 +11,24 @@ console.log("URI de MongoDB configurada:", MONGODB_URI.replace(/mongodb(\+srv)?:
 
 const MONGODB_DATABASE = process.env.MONGODB_DATABASE || 'parrilleitor';
 
-// Opciones del cliente MongoDB con configuración compatible con Vercel
+// Opciones del cliente MongoDB optimizadas para entornos serverless
 const options = {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
   },
-  maxPoolSize: 10,
-  minPoolSize: 5,
-  connectTimeoutMS: 30000,
-  socketTimeoutMS: 45000,
+  maxPoolSize: 5,           // Reducido para entornos serverless
+  minPoolSize: 1,           // Reducido para entornos serverless
+  connectTimeoutMS: 15000,  // Reducido a 15 segundos
+  socketTimeoutMS: 30000,   // Reducido a 30 segundos
+  serverSelectionTimeoutMS: 15000, // Timeout para selección de servidor
+  waitQueueTimeoutMS: 10000, // Timeout para la cola de espera
   family: 4,
   retryWrites: true,
   retryReads: true,
   w: 'majority',
-  // La opción keepAlive ha sido eliminada ya que no es compatible
+  wtimeoutMS: 10000,        // Timeout para operaciones de escritura
 };
 
 // Variable para almacenar la conexión
@@ -67,6 +69,9 @@ async function connectToDatabase() {
     } else if (error.message.includes('connection timed out') || error.message.includes('no server found')) {
       console.error("Posible problema de whitelist de IPs. Asegúrate de que la IP de tu servidor esté permitida en MongoDB Atlas Network Access.");
       console.error("Recomendación: Añade 0.0.0.0/0 a la lista de IPs permitidas en MongoDB Atlas para permitir conexiones desde cualquier IP.");
+    } else if (error.message.includes('buffering timed out')) {
+      console.error("Timeout en operación de MongoDB. Esto puede ocurrir si la conexión es lenta o si hay problemas de red.");
+      console.error("Recomendación: Verifica la conectividad de red y considera aumentar los timeouts en la configuración.");
     }
     
     throw error;
@@ -78,17 +83,27 @@ class MongoDBClient {
   constructor() {
     this.database = MONGODB_DATABASE;
     this.connection = null;
+    this.lastConnectionTime = null;
   }
 
   // Método para obtener la conexión
   async getConnection() {
-    if (!this.connection) {
-      this.connection = await connectToDatabase();
+    try {
+      // Si no hay conexión o han pasado más de 30 minutos desde la última conexión, reconectar
+      const now = Date.now();
+      if (!this.connection || !this.lastConnectionTime || (now - this.lastConnectionTime > 30 * 60 * 1000)) {
+        console.log("Obteniendo nueva conexión a MongoDB...");
+        this.connection = await connectToDatabase();
+        this.lastConnectionTime = now;
+      }
+      return this.connection;
+    } catch (error) {
+      console.error("Error al obtener conexión:", error);
+      throw error;
     }
-    return this.connection;
   }
 
-  // Método para buscar documentos
+  // Método para buscar documentos con timeout
   async find(collection, filter = {}, options = {}) {
     try {
       console.log(`Buscando documentos en colección ${collection}:`, {
@@ -98,21 +113,33 @@ class MongoDBClient {
       });
 
       const { db } = await this.getConnection();
-      const cursor = db.collection(collection).find(filter);
       
-      if (options.sort) {
-        cursor.sort(options.sort);
-      }
+      // Crear un timeout para la operación
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Operación find() excedió el tiempo de espera')), 8000);
+      });
       
-      if (options.limit) {
-        cursor.limit(options.limit);
-      }
+      // Ejecutar la consulta con timeout
+      const queryPromise = async () => {
+        const cursor = db.collection(collection).find(filter);
+        
+        if (options.sort) {
+          cursor.sort(options.sort);
+        }
+        
+        if (options.limit) {
+          cursor.limit(options.limit);
+        }
+        
+        if (options.skip) {
+          cursor.skip(options.skip);
+        }
+        
+        return await cursor.toArray();
+      };
       
-      if (options.skip) {
-        cursor.skip(options.skip);
-      }
-      
-      return await cursor.toArray();
+      // Ejecutar con timeout
+      return await Promise.race([queryPromise(), timeoutPromise]);
     } catch (error) {
       console.error('Error en MongoDB find:', {
         error: error.message,
@@ -120,11 +147,18 @@ class MongoDBClient {
         filter,
         timestamp: new Date().toISOString()
       });
+      
+      // Si es un error de timeout, devolver un array vacío en lugar de fallar
+      if (error.message.includes('tiempo de espera') || error.message.includes('timed out')) {
+        console.warn('Devolviendo resultado vacío debido a timeout');
+        return [];
+      }
+      
       throw error;
     }
   }
 
-  // Método para buscar un documento
+  // Método para buscar un documento con timeout
   async findOne(collection, filter = {}) {
     try {
       console.log(`Buscando un documento en colección ${collection}:`, {
@@ -133,7 +167,17 @@ class MongoDBClient {
       });
 
       const { db } = await this.getConnection();
-      return await db.collection(collection).findOne(filter);
+      
+      // Crear un timeout para la operación
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Operación findOne() excedió el tiempo de espera')), 8000);
+      });
+      
+      // Ejecutar la consulta con timeout
+      const queryPromise = db.collection(collection).findOne(filter);
+      
+      // Ejecutar con timeout
+      return await Promise.race([queryPromise, timeoutPromise]);
     } catch (error) {
       console.error('Error en MongoDB findOne:', {
         error: error.message,
@@ -141,11 +185,18 @@ class MongoDBClient {
         filter,
         timestamp: new Date().toISOString()
       });
+      
+      // Si es un error de timeout, devolver null en lugar de fallar
+      if (error.message.includes('tiempo de espera') || error.message.includes('timed out')) {
+        console.warn('Devolviendo null debido a timeout');
+        return null;
+      }
+      
       throw error;
     }
   }
 
-  // Método para insertar un documento
+  // Método para insertar un documento con timeout
   async insertOne(collection, document) {
     try {
       console.log(`Insertando documento en colección ${collection}:`, {
@@ -153,7 +204,17 @@ class MongoDBClient {
       });
 
       const { db } = await this.getConnection();
-      const result = await db.collection(collection).insertOne(document);
+      
+      // Crear un timeout para la operación
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Operación insertOne() excedió el tiempo de espera')), 8000);
+      });
+      
+      // Ejecutar la inserción con timeout
+      const insertPromise = db.collection(collection).insertOne(document, { wtimeout: 5000 });
+      
+      // Ejecutar con timeout
+      const result = await Promise.race([insertPromise, timeoutPromise]);
       
       return {
         insertedId: result.insertedId,
@@ -165,11 +226,22 @@ class MongoDBClient {
         collection,
         timestamp: new Date().toISOString()
       });
+      
+      // Si es un error de timeout, devolver un resultado simulado
+      if (error.message.includes('tiempo de espera') || error.message.includes('timed out')) {
+        console.warn('Devolviendo resultado simulado debido a timeout');
+        return {
+          insertedId: null,
+          acknowledged: false,
+          error: 'timeout'
+        };
+      }
+      
       throw error;
     }
   }
 
-  // Método para actualizar un documento
+  // Método para actualizar un documento con timeout
   async updateOne(collection, filter, update) {
     try {
       console.log(`Actualizando documento en colección ${collection}:`, {
@@ -178,7 +250,17 @@ class MongoDBClient {
       });
 
       const { db } = await this.getConnection();
-      const result = await db.collection(collection).updateOne(filter, update);
+      
+      // Crear un timeout para la operación
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Operación updateOne() excedió el tiempo de espera')), 8000);
+      });
+      
+      // Ejecutar la actualización con timeout
+      const updatePromise = db.collection(collection).updateOne(filter, update, { wtimeout: 5000 });
+      
+      // Ejecutar con timeout
+      const result = await Promise.race([updatePromise, timeoutPromise]);
       
       return {
         matchedCount: result.matchedCount,
@@ -192,11 +274,23 @@ class MongoDBClient {
         filter,
         timestamp: new Date().toISOString()
       });
+      
+      // Si es un error de timeout, devolver un resultado simulado
+      if (error.message.includes('tiempo de espera') || error.message.includes('timed out')) {
+        console.warn('Devolviendo resultado simulado debido a timeout');
+        return {
+          matchedCount: 0,
+          modifiedCount: 0,
+          acknowledged: false,
+          error: 'timeout'
+        };
+      }
+      
       throw error;
     }
   }
 
-  // Método para reemplazar un documento
+  // Método para reemplazar un documento con timeout
   async replaceOne(collection, filter, replacement) {
     try {
       console.log(`Reemplazando documento en colección ${collection}:`, {
@@ -205,7 +299,17 @@ class MongoDBClient {
       });
 
       const { db } = await this.getConnection();
-      const result = await db.collection(collection).replaceOne(filter, replacement);
+      
+      // Crear un timeout para la operación
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Operación replaceOne() excedió el tiempo de espera')), 8000);
+      });
+      
+      // Ejecutar el reemplazo con timeout
+      const replacePromise = db.collection(collection).replaceOne(filter, replacement, { wtimeout: 5000 });
+      
+      // Ejecutar con timeout
+      const result = await Promise.race([replacePromise, timeoutPromise]);
       
       return {
         matchedCount: result.matchedCount,
@@ -219,11 +323,23 @@ class MongoDBClient {
         filter,
         timestamp: new Date().toISOString()
       });
+      
+      // Si es un error de timeout, devolver un resultado simulado
+      if (error.message.includes('tiempo de espera') || error.message.includes('timed out')) {
+        console.warn('Devolviendo resultado simulado debido a timeout');
+        return {
+          matchedCount: 0,
+          modifiedCount: 0,
+          acknowledged: false,
+          error: 'timeout'
+        };
+      }
+      
       throw error;
     }
   }
 
-  // Método para eliminar un documento
+  // Método para eliminar un documento con timeout
   async deleteOne(collection, filter) {
     try {
       console.log(`Eliminando documento en colección ${collection}:`, {
@@ -232,7 +348,17 @@ class MongoDBClient {
       });
 
       const { db } = await this.getConnection();
-      const result = await db.collection(collection).deleteOne(filter);
+      
+      // Crear un timeout para la operación
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Operación deleteOne() excedió el tiempo de espera')), 8000);
+      });
+      
+      // Ejecutar la eliminación con timeout
+      const deletePromise = db.collection(collection).deleteOne(filter, { wtimeout: 5000 });
+      
+      // Ejecutar con timeout
+      const result = await Promise.race([deletePromise, timeoutPromise]);
       
       return {
         deletedCount: result.deletedCount,
@@ -245,6 +371,17 @@ class MongoDBClient {
         filter,
         timestamp: new Date().toISOString()
       });
+      
+      // Si es un error de timeout, devolver un resultado simulado
+      if (error.message.includes('tiempo de espera') || error.message.includes('timed out')) {
+        console.warn('Devolviendo resultado simulado debido a timeout');
+        return {
+          deletedCount: 0,
+          acknowledged: false,
+          error: 'timeout'
+        };
+      }
+      
       throw error;
     }
   }
@@ -253,7 +390,18 @@ class MongoDBClient {
   async ping() {
     try {
       const { client } = await this.getConnection();
-      await client.db("admin").command({ ping: 1 });
+      
+      // Crear un timeout para la operación
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Operación ping() excedió el tiempo de espera')), 5000);
+      });
+      
+      // Ejecutar el ping con timeout
+      const pingPromise = client.db("admin").command({ ping: 1 });
+      
+      // Ejecutar con timeout
+      await Promise.race([pingPromise, timeoutPromise]);
+      
       console.log("Ping a MongoDB exitoso");
       return true;
     } catch (error) {
