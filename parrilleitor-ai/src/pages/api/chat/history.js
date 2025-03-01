@@ -1,7 +1,6 @@
 import { getSession } from '@auth0/nextjs-auth0';
 import { isInAllowedList } from '@/config/allowedUsers';
-import connectDB from '@/lib/mongodb';
-import mongoose from 'mongoose';
+import getMongoDBClient from '@/lib/mongodb';
 
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles';
 const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS';
@@ -16,55 +15,8 @@ const commonHeaders = {
   'Access-Control-Allow-Credentials': 'true',
 };
 
-// Definir el esquema de mensajes y conversaciones directamente aquí para evitar problemas de importación
-const messageSchema = new mongoose.Schema({
-  role: {
-    type: String,
-    enum: ['user', 'assistant', 'error'],
-    required: true
-  },
-  content: {
-    type: String,
-    required: true
-  },
-  timestamp: {
-    type: Date,
-    default: Date.now
-  }
-});
-
-const conversationSchema = new mongoose.Schema({
-  userId: {
-    type: String,
-    required: true,
-    index: true
-  },
-  userEmail: {
-    type: String,
-    required: true
-  },
-  messages: [messageSchema],
-  lastUpdated: {
-    type: Date,
-    default: Date.now
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  }
-}, {
-  timestamps: true
-});
-
-// Crear el modelo de Conversation
-let Conversation;
-try {
-  // Intentar obtener el modelo existente
-  Conversation = mongoose.models.Conversation;
-} catch (error) {
-  // Si no existe, crearlo
-  Conversation = mongoose.model('Conversation', conversationSchema);
-}
+// Nombre de la colección en MongoDB
+const COLLECTION_NAME = 'conversations';
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -94,33 +46,44 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Se requiere una cuenta premium' });
     }
 
+    // Obtener el cliente de MongoDB
+    const mongoClient = getMongoDBClient();
+    
+    // Verificar la conexión a MongoDB
     try {
-      // Conectar a MongoDB
-      await connectDB();
-      console.log('Conexión a MongoDB establecida para el historial de chat');
-    } catch (dbError) {
-      console.error('Error de conexión a MongoDB:', dbError);
-      // Devolver una respuesta vacía en lugar de un error
+      const isConnected = await mongoClient.ping();
+      if (!isConnected) {
+        console.error('No se pudo conectar a MongoDB');
+        return res.status(200).json({ 
+          conversations: [],
+          message: 'Error de conexión a MongoDB',
+          error: 'No se pudo establecer conexión con la base de datos. Verifica que la IP del servidor esté permitida en MongoDB Atlas.'
+        });
+      }
+    } catch (pingError) {
+      console.error('Error al verificar la conexión a MongoDB:', pingError);
       return res.status(200).json({ 
         conversations: [],
-        message: 'No se pudo conectar a la base de datos',
-        error: dbError.message
+        message: 'Error de conexión a MongoDB',
+        error: pingError.message,
+        details: 'Es posible que necesites configurar el acceso desde cualquier IP (0.0.0.0/0) en MongoDB Atlas Network Access.'
       });
     }
-
+    
     if (req.method === 'GET') {
       try {
-        // Asegurarse de que el modelo esté definido
-        if (!Conversation) {
-          Conversation = mongoose.model('Conversation', conversationSchema);
-        }
-        
-        const conversations = await Conversation.find({
-          userId: session.user.sub,
-          isActive: true
-        })
-        .sort({ lastUpdated: -1 })
-        .limit(10);
+        // Buscar conversaciones usando MongoDB
+        const conversations = await mongoClient.find(
+          COLLECTION_NAME,
+          {
+            userId: session.user.sub,
+            isActive: true
+          },
+          {
+            sort: { lastUpdated: -1 },
+            limit: 10
+          }
+        );
 
         return res.status(200).json({ conversations });
       } catch (findError) {
@@ -144,35 +107,56 @@ export default async function handler(req, res) {
           });
         }
 
-        // Asegurarse de que el modelo esté definido
-        if (!Conversation) {
-          Conversation = mongoose.model('Conversation', conversationSchema);
-        }
+        // Buscar conversación existente
+        const existingConversation = await mongoClient.findOne(
+          COLLECTION_NAME,
+          {
+            userId: session.user.sub,
+            isActive: true
+          }
+        );
 
-        // Buscar conversación existente o crear una nueva
-        let conversation = await Conversation.findOne({
-          userId: session.user.sub,
-          isActive: true
-        }).sort({ lastUpdated: -1 });
-
-        if (!conversation) {
-          conversation = new Conversation({
+        if (!existingConversation) {
+          // Crear nueva conversación
+          const newConversation = {
             userId: session.user.sub,
             userEmail: session.user.email,
             messages: messages,
             lastUpdated: new Date(),
-            isActive: true
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+
+          const result = await mongoClient.insertOne(COLLECTION_NAME, newConversation);
+          
+          // Añadir el ID al objeto de conversación para devolverlo
+          newConversation._id = result.insertedId;
+          
+          return res.status(200).json({ 
+            success: true,
+            conversation: newConversation
           });
         } else {
-          conversation.messages = messages;
-          conversation.lastUpdated = new Date();
-        }
+          // Actualizar conversación existente
+          const updatedConversation = {
+            ...existingConversation,
+            messages: messages,
+            lastUpdated: new Date(),
+            updatedAt: new Date()
+          };
 
-        await conversation.save();
-        return res.status(200).json({ 
-          success: true,
-          conversation
-        });
+          await mongoClient.replaceOne(
+            COLLECTION_NAME,
+            { _id: existingConversation._id },
+            updatedConversation
+          );
+
+          return res.status(200).json({ 
+            success: true,
+            conversation: updatedConversation
+          });
+        }
       } catch (saveError) {
         console.error('Error al guardar conversación:', saveError);
         return res.status(200).json({ 
