@@ -6,6 +6,9 @@ import Conversation from '@/models/Conversation';
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles';
 const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS';
 
+// URI de MongoDB hardcodeada como fallback
+const MONGODB_URI_FALLBACK = 'mongodb+srv://jmam:jmamadmin@cluster0.pogiz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+
 // Common headers
 const commonHeaders = {
   'Cache-Control': 'no-store, max-age=0',
@@ -45,8 +48,17 @@ export default async function handler(req, res) {
     }
 
     // Verificar si la URI de MongoDB está configurada correctamente
-    const mongoUri = process.env.MONGODB_URI;
-    if (!mongoUri || !mongoUri.startsWith('mongodb')) {
+    // Usar la URI del .env.local o el fallback si no está disponible
+    const mongoUri = process.env.MONGODB_URI || MONGODB_URI_FALLBACK;
+    
+    console.log('MongoDB URI utilizada:', {
+      uri: mongoUri.substring(0, mongoUri.indexOf('@') + 1) + '***', // Ocultar credenciales
+      fromEnv: !!process.env.MONGODB_URI,
+      usingFallback: !process.env.MONGODB_URI,
+      timestamp: new Date().toISOString()
+    });
+    
+    if (!mongoUri || (!mongoUri.startsWith('mongodb://') && !mongoUri.startsWith('mongodb+srv://'))) {
       console.error('MongoDB URI no válida:', mongoUri);
       // Devolver una respuesta vacía en lugar de un error
       return res.status(200).json({ 

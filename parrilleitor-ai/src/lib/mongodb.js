@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI;
+// URI de MongoDB hardcodeada como fallback
+const MONGODB_URI_FALLBACK = 'mongodb+srv://jmam:jmamadmin@cluster0.pogiz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+
+// Obtener la URI de MongoDB de las variables de entorno o usar el fallback
+const MONGODB_URI = process.env.MONGODB_URI || MONGODB_URI_FALLBACK;
 
 // Función para verificar la URI de MongoDB
 function validateMongoURI(uri) {
@@ -30,9 +34,16 @@ const cache = {
 };
 
 async function connectDB() {
-  // Si la URI no es válida, lanzar un error descriptivo
-  if (!validateMongoURI(MONGODB_URI)) {
-    throw new Error('MongoDB URI no válida o no configurada correctamente');
+  // Si la URI no es válida, intentar usar el fallback
+  let uriToUse = MONGODB_URI;
+  
+  if (!validateMongoURI(uriToUse)) {
+    console.log('Intentando usar URI de fallback');
+    uriToUse = MONGODB_URI_FALLBACK;
+    
+    if (!validateMongoURI(uriToUse)) {
+      throw new Error('MongoDB URI no válida o no configurada correctamente');
+    }
   }
 
   // If we have a connection, return it
@@ -43,7 +54,7 @@ async function connectDB() {
   // If we don't have a connection but have a connecting promise, wait for it
   if (!cache.promise) {
     console.log('Iniciando conexión a MongoDB:', {
-      uri: MONGODB_URI.substring(0, MONGODB_URI.indexOf('@') + 1) + '***', // Ocultar credenciales
+      uri: uriToUse.substring(0, uriToUse.indexOf('@') + 1) + '***', // Ocultar credenciales
       timestamp: new Date().toISOString()
     });
     
@@ -54,7 +65,7 @@ async function connectDB() {
       socketTimeoutMS: 45000,
     };
 
-    cache.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cache.promise = mongoose.connect(uriToUse, opts).then((mongoose) => {
       console.log('Conexión a MongoDB establecida correctamente');
       return mongoose;
     });
