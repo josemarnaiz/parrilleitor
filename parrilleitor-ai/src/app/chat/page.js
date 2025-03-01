@@ -141,78 +141,65 @@ export default function Chat() {
 
   const loadChatHistory = async () => {
     try {
-      setIsLoadingHistory(true)
+      setIsLoadingHistory(true);
       const response = await fetch('/api/chat/history', {
-        credentials: 'include',
+        method: 'GET',
         headers: {
-          'Cache-Control': 'no-store, max-age=0',
-          'Authorization': `Bearer ${user.accessToken || ''}`
-        }
-      })
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
 
-      // Siempre procesamos la respuesta, incluso si no es 200
-      const data = await response.json()
-      
-      console.log('Chat history response:', {
-        status: response.status,
-        data: data
-      })
-      
-      // Verificar si tenemos conversaciones
-      if (data.conversations && Array.isArray(data.conversations) && data.conversations.length > 0) {
-        // Usar la primera conversación
-        const conversation = data.conversations[0]
-        if (conversation.messages && Array.isArray(conversation.messages)) {
-          setMessages(conversation.messages)
+      const data = await response.json();
+      console.log('Chat history response:', data);
+
+      if (response.ok) {
+        if (data.conversations && data.conversations.length > 0) {
+          // Usar la conversación más reciente
+          const latestConversation = data.conversations[0];
+          setMessages(latestConversation.messages || []);
+          console.log('Conversación cargada:', latestConversation);
         } else {
-          console.log('No hay mensajes en la conversación')
-          setMessages([])
+          console.log('No hay conversaciones disponibles');
+          // No mostrar error al usuario, simplemente iniciar con mensajes vacíos
+          setMessages([]);
         }
       } else {
-        console.log('No hay conversaciones disponibles')
-        setMessages([])
-        
-        // Si hay un mensaje de error, mostrarlo
-        if (data.message) {
-          console.log('Mensaje del servidor:', data.message)
-          // No mostrar errores de base de datos al usuario
-          if (!data.message.includes('base de datos')) {
-            setError(data.message)
-          }
-        }
+        console.error('Error al cargar el historial:', data.error || 'Error desconocido');
+        // No mostrar error al usuario, simplemente iniciar con mensajes vacíos
+        setMessages([]);
       }
     } catch (error) {
-      console.error('Error loading chat history:', error)
-      // No mostrar el error al usuario, solo iniciar con un chat vacío
-      setMessages([])
+      console.error('Error al cargar el historial de chat:', error);
+      // No mostrar error al usuario, simplemente iniciar con mensajes vacíos
+      setMessages([]);
     } finally {
-      setIsLoadingHistory(false)
+      setIsLoadingHistory(false);
     }
-  }
+  };
 
-  const saveMessages = async (newMessages) => {
+  const saveMessages = async (updatedMessages) => {
     try {
       const response = await fetch('/api/chat/history', {
         method: 'POST',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-store, max-age=0',
-          'Authorization': `Bearer ${user.accessToken || ''}`
         },
-        body: JSON.stringify({ messages: newMessages })
-      })
+        body: JSON.stringify({ messages: updatedMessages }),
+        credentials: 'include',
+      });
 
-      const data = await response.json()
-      
-      if (!data.success) {
-        console.log('Error al guardar mensajes:', data.message)
+      const data = await response.json();
+      console.log('Respuesta al guardar mensajes:', data);
+
+      if (!data.success && data.message) {
+        console.warn('Advertencia al guardar mensajes:', data.message);
       }
     } catch (error) {
-      console.error('Error saving chat history:', error)
-      // No mostrar el error al usuario para no interrumpir la experiencia
+      console.error('Error al guardar mensajes:', error);
+      // No mostrar error al usuario, continuar con la conversación
     }
-  }
+  };
 
   if (isUserLoading || isCheckingAccess) {
     return (

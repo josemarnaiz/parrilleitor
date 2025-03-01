@@ -1,13 +1,10 @@
 import { getSession } from '@auth0/nextjs-auth0';
 import { isInAllowedList } from '@/config/allowedUsers';
 import connectDB from '@/lib/mongodb';
-import Conversation from '@/models/Conversation';
+import mongoose from 'mongoose';
 
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles';
 const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS';
-
-// URI de MongoDB hardcodeada como fallback
-const MONGODB_URI_FALLBACK = 'mongodb+srv://jmam:jmamadmin@cluster0.pogiz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
 // Common headers
 const commonHeaders = {
@@ -18,6 +15,56 @@ const commonHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Credentials': 'true',
 };
+
+// Definir el esquema de mensajes y conversaciones directamente aquí para evitar problemas de importación
+const messageSchema = new mongoose.Schema({
+  role: {
+    type: String,
+    enum: ['user', 'assistant', 'error'],
+    required: true
+  },
+  content: {
+    type: String,
+    required: true
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const conversationSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    required: true,
+    index: true
+  },
+  userEmail: {
+    type: String,
+    required: true
+  },
+  messages: [messageSchema],
+  lastUpdated: {
+    type: Date,
+    default: Date.now
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  }
+}, {
+  timestamps: true
+});
+
+// Crear el modelo de Conversation
+let Conversation;
+try {
+  // Intentar obtener el modelo existente
+  Conversation = mongoose.models.Conversation;
+} catch (error) {
+  // Si no existe, crearlo
+  Conversation = mongoose.model('Conversation', conversationSchema);
+}
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -47,39 +94,27 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Se requiere una cuenta premium' });
     }
 
-    // Verificar si la URI de MongoDB está configurada correctamente
-    // Usar la URI del .env.local o el fallback si no está disponible
-    const mongoUri = process.env.MONGODB_URI || MONGODB_URI_FALLBACK;
-    
-    console.log('MongoDB URI utilizada:', {
-      uri: mongoUri.substring(0, mongoUri.indexOf('@') + 1) + '***', // Ocultar credenciales
-      fromEnv: !!process.env.MONGODB_URI,
-      usingFallback: !process.env.MONGODB_URI,
-      timestamp: new Date().toISOString()
-    });
-    
-    if (!mongoUri || (!mongoUri.startsWith('mongodb://') && !mongoUri.startsWith('mongodb+srv://'))) {
-      console.error('MongoDB URI no válida:', mongoUri);
-      // Devolver una respuesta vacía en lugar de un error
-      return res.status(200).json({ 
-        conversations: [],
-        message: 'Base de datos no configurada correctamente'
-      });
-    }
-
     try {
+      // Conectar a MongoDB
       await connectDB();
+      console.log('Conexión a MongoDB establecida para el historial de chat');
     } catch (dbError) {
       console.error('Error de conexión a MongoDB:', dbError);
       // Devolver una respuesta vacía en lugar de un error
       return res.status(200).json({ 
         conversations: [],
-        message: 'No se pudo conectar a la base de datos'
+        message: 'No se pudo conectar a la base de datos',
+        error: dbError.message
       });
     }
 
     if (req.method === 'GET') {
       try {
+        // Asegurarse de que el modelo esté definido
+        if (!Conversation) {
+          Conversation = mongoose.model('Conversation', conversationSchema);
+        }
+        
         const conversations = await Conversation.find({
           userId: session.user.sub,
           isActive: true
@@ -92,7 +127,8 @@ export default async function handler(req, res) {
         console.error('Error al buscar conversaciones:', findError);
         return res.status(200).json({ 
           conversations: [],
-          message: 'Error al recuperar conversaciones'
+          message: 'Error al recuperar conversaciones',
+          error: findError.message
         });
       }
     }
@@ -108,6 +144,11 @@ export default async function handler(req, res) {
           });
         }
 
+        // Asegurarse de que el modelo esté definido
+        if (!Conversation) {
+          Conversation = mongoose.model('Conversation', conversationSchema);
+        }
+
         // Buscar conversación existente o crear una nueva
         let conversation = await Conversation.findOne({
           userId: session.user.sub,
@@ -118,7 +159,6 @@ export default async function handler(req, res) {
           conversation = new Conversation({
             userId: session.user.sub,
             userEmail: session.user.email,
-            title: 'Nueva conversación',
             messages: messages,
             lastUpdated: new Date(),
             isActive: true
@@ -137,7 +177,8 @@ export default async function handler(req, res) {
         console.error('Error al guardar conversación:', saveError);
         return res.status(200).json({ 
           success: false,
-          message: 'Error al guardar la conversación'
+          message: 'Error al guardar la conversación',
+          error: saveError.message
         });
       }
     }
@@ -150,7 +191,8 @@ export default async function handler(req, res) {
     return res.status(200).json({ 
       conversations: [],
       error: 'Error interno del servidor',
-      message: 'Se produjo un error al procesar la solicitud'
+      message: 'Se produjo un error al procesar la solicitud',
+      details: error.message
     });
   }
 } 
