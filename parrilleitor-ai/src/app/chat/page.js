@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import ConversationList from '@/components/ConversationList'
+import ChatMessage from '@/components/ChatMessage'
 
 export default function Chat() {
   const { user, isLoading: isUserLoading } = useUser()
@@ -17,13 +19,13 @@ export default function Chat() {
   const [retryCount, setRetryCount] = useState(0)
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
   const messagesEndRef = useRef(null)
-  // Nuevos estados para manejar las conversaciones y el panel lateral
+  // Estados para manejar las conversaciones y el panel lateral
   const [allConversations, setAllConversations] = useState([])
   const [selectedConversationId, setSelectedConversationId] = useState(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [conversationSummaries, setConversationSummaries] = useState({})
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
-  // Nuevos estados para manejo de eliminación
+  // Estados para manejo de eliminación
   const [isDeletingConversation, setIsDeletingConversation] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [conversationToDelete, setConversationToDelete] = useState(null)
@@ -248,470 +250,399 @@ export default function Chat() {
   const startNewConversation = () => {
     setMessages([]);
     setSelectedConversationId(null);
-    setInput('');
   };
 
   const saveMessages = async (updatedMessages) => {
     try {
-      const response = await fetch('/api/chat/history', {
+      setIsLoading(true);
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ messages: updatedMessages }),
+        body: JSON.stringify({
+          messages: updatedMessages,
+          conversationId: selectedConversationId,
+        }),
         credentials: 'include',
       });
 
       const data = await response.json();
-      console.log('Respuesta al guardar mensajes:', data);
 
-      if (data.success && data.conversation) {
-        // Si es una conversación nueva, actualizar el ID seleccionado
-        if (!selectedConversationId) {
-          setSelectedConversationId(data.conversation._id);
+      if (response.ok) {
+        console.log('Mensajes guardados con éxito');
+        // Si es una nueva conversación, establecer el ID de la conversación recién creada
+        if (!selectedConversationId && data.conversationId) {
+          setSelectedConversationId(data.conversationId);
         }
         
         // Actualizar la lista de conversaciones
         loadChatHistory();
         
-        // Generar resumen si hay suficientes mensajes
-        if (updatedMessages.length >= 3 && !conversationSummaries[data.conversation._id]) {
-          generateSummary(data.conversation._id, updatedMessages);
+        // Si hay suficientes mensajes, generar un resumen
+        if (updatedMessages.length >= 3) {
+          generateSummary(data.conversationId || selectedConversationId, updatedMessages);
         }
-      }
-
-      if (!data.success && data.message) {
-        console.warn('Advertencia al guardar mensajes:', data.message);
+        
+        return true;
+      } else {
+        throw new Error(data.error || 'Error al guardar los mensajes');
       }
     } catch (error) {
-      console.error('Error al guardar mensajes:', error);
+      console.error('Error al guardar los mensajes:', error);
+      setError(`Error al guardar: ${error.message}`);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Nueva función para eliminar una conversación individual
   const deleteConversation = async (conversationId) => {
     try {
       setIsDeletingConversation(true);
-      setIsLoading(true);
-      
-      const response = await fetch(`/api/chat/history?conversationId=${conversationId}`, {
+      const response = await fetch(`/api/chat?conversationId=${conversationId}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         credentials: 'include',
       });
 
       const data = await response.json();
-      
-      if (response.ok && data.success) {
-        // Actualizar el estado local eliminando la conversación borrada
+
+      if (response.ok) {
+        // Eliminar la conversación de allConversations
         setAllConversations(prev => prev.filter(conv => conv._id !== conversationId));
         
-        // Si la conversación actual es la que se eliminó, cargar otra conversación
+        // Si la conversación eliminada es la seleccionada actualmente
         if (selectedConversationId === conversationId) {
-          const nextConversation = allConversations.find(conv => conv._id !== conversationId);
-          if (nextConversation) {
-            setMessages(nextConversation.messages || []);
-            setSelectedConversationId(nextConversation._id);
+          // Cargar la primera conversación si hay alguna, o crear una nueva
+          if (allConversations.length > 1) {
+            const nextConversation = allConversations.find(conv => conv._id !== conversationId);
+            if (nextConversation) {
+              loadConversation(nextConversation._id);
+            } else {
+              startNewConversation();
+            }
           } else {
-            // Si no hay más conversaciones, iniciar una nueva
             startNewConversation();
           }
         }
         
-        // Eliminar el resumen de la conversación
-        setConversationSummaries(prev => {
-          const updated = { ...prev };
-          delete updated[conversationId];
-          return updated;
-        });
-        
-        setError(null);
+        console.log('Conversación eliminada con éxito');
+        return true;
       } else {
-        console.error('Error al eliminar la conversación:', data.message || 'Error desconocido');
-        setError('No se pudo eliminar la conversación. Intenta de nuevo.');
+        throw new Error(data.error || 'Error al eliminar la conversación');
       }
     } catch (error) {
       console.error('Error al eliminar la conversación:', error);
-      setError('Error de conexión al intentar eliminar la conversación.');
+      setError(`Error al eliminar: ${error.message}`);
+      return false;
     } finally {
       setIsDeletingConversation(false);
-      setIsLoading(false);
       setShowDeleteConfirm(false);
       setConversationToDelete(null);
     }
   };
 
-  // Nueva función para eliminar todas las conversaciones
   const deleteAllConversations = async () => {
     try {
-      setIsLoading(true);
-      
-      const response = await fetch('/api/chat/history?deleteAll=true', {
+      setIsDeletingConversation(true);
+      const response = await fetch('/api/chat/all', {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         credentials: 'include',
       });
 
       const data = await response.json();
-      
-      if (response.ok && data.success) {
-        // Limpiar todos los estados
+
+      if (response.ok) {
+        // Limpiar las conversaciones y mensajes
         setAllConversations([]);
         startNewConversation();
-        setConversationSummaries({});
-        setError(null);
+        
+        console.log('Todas las conversaciones eliminadas con éxito');
+        return true;
       } else {
-        console.error('Error al eliminar todas las conversaciones:', data.message || 'Error desconocido');
-        setError('No se pudieron eliminar las conversaciones. Intenta de nuevo.');
+        throw new Error(data.error || 'Error al eliminar todas las conversaciones');
       }
     } catch (error) {
       console.error('Error al eliminar todas las conversaciones:', error);
-      setError('Error de conexión al intentar eliminar las conversaciones.');
+      setError(`Error al eliminar: ${error.message}`);
+      return false;
     } finally {
-      setIsLoading(false);
+      setIsDeletingConversation(false);
       setShowDeleteAllConfirm(false);
     }
   };
 
-  // Función para confirmar la eliminación de una conversación
   const confirmDeleteConversation = (conversationId, e) => {
-    e.stopPropagation(); // Evitar que se cargue la conversación al hacer clic en el botón de eliminar
+    e.stopPropagation(); // Evitar que se active loadConversation
     setConversationToDelete(conversationId);
     setShowDeleteConfirm(true);
   };
 
-  // Función para cancelar la eliminación
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
     setShowDeleteAllConfirm(false);
     setConversationToDelete(null);
   };
 
-  if (isUserLoading || isCheckingAccess) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white px-2 py-4 flex items-center justify-center">
-        <div className="text-lg md:text-2xl font-semibold text-center">
-          <div className="w-8 h-8 md:w-12 md:h-12 border-t-2 border-blue-500 border-solid rounded-full animate-spin mx-auto mb-3"></div>
-          Verificando acceso...
-        </div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-4 flex flex-col items-center justify-center">
-        <div className="max-w-md w-full bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 className="text-xl md:text-2xl font-bold mb-4 text-center text-gradient-sport">Acceso al Chat</h2>
-          <p className="text-sm md:text-base text-gray-300 mb-6">
-            Para acceder al chat, necesitas iniciar sesión con tu cuenta.
-          </p>
-          <div className="flex flex-col space-y-3">
-            <a
-              href="/api/auth/login"
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg text-center font-medium hover:bg-blue-700 transition-colors"
-            >
-              Iniciar Sesión
-            </a>
-            <Link
-              href="/"
-              className="w-full py-2 px-4 bg-gray-700 text-white rounded-lg text-center font-medium hover:bg-gray-600 transition-colors"
-            >
-              Volver al Inicio
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!isPremium) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-4 flex flex-col items-center justify-center">
-        <div className="max-w-md w-full bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 className="text-xl md:text-2xl font-bold mb-4 text-center text-gradient-sport">Acceso Premium Requerido</h2>
-          <p className="text-sm md:text-base text-gray-300 mb-6">
-            Lo sentimos, el acceso al chat está disponible solo para usuarios premium.
-          </p>
-          <div className="flex flex-col space-y-3">
-            <Link
-              href="/"
-              className="w-full py-2 px-4 bg-gray-700 text-white rounded-lg text-center font-medium hover:bg-gray-600 transition-colors"
-            >
-              Volver al Inicio
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     
-    if (!input.trim()) return
+    if (!input.trim() || isTyping) return;
+    
+    const userMessage = {
+      role: 'user',
+      content: input.trim(),
+    };
+    
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    setInput('');
+    setIsTyping(true);
     
     try {
-      setIsTyping(true)
+      // Guardar el mensaje del usuario
+      const saved = await saveMessages(updatedMessages);
       
-      // Crear una copia de los mensajes actuales con el nuevo mensaje
-      const updatedMessages = [
-        ...messages,
-        { role: 'user', content: input.trim() }
-      ]
-      
-      // Actualizar la UI inmediatamente
-      setMessages(updatedMessages)
-      
-      // Limpiar el input
-      setInput('')
-      
-      // Async function to avoid blocking UI
-      const sendMessageAsync = async () => {
-        // Crear un controlador de aborto para el timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => {
-          controller.abort();
-        }, 60000); // 60 segundos de timeout
-        
-        console.log('Enviando mensaje al servidor:', {
-          messageLength: input.length,
-          preview: input.substring(0, 50) + (input.length > 50 ? '...' : '')
-        });
-        
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store, max-age=0',
-            'Authorization': `Bearer ${user.accessToken || ''}`
-          },
-          credentials: 'include',
-          body: JSON.stringify({ message: input }),
-          signal: controller.signal
-        });
-        
-        // Limpiar el timeout una vez que se recibe la respuesta
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error('Chat API error:', errorData)
-          
-          if (response.status === 401) {
-            throw new Error('Error de sesión. Por favor, recarga la página.')
-          }
-          
-          throw new Error(errorData.error || 'Error en la respuesta del servidor')
-        }
-
-        const data = await response.json()
-        console.log('Respuesta de la API de chat:', data)
-        
-        // Verificar si hay una respuesta válida
-        if (!data.response) {
-          console.error('Respuesta de API sin mensaje:', data)
-          throw new Error('No se recibió respuesta del servidor')
-        }
-        
-        const finalMessages = [...updatedMessages, { role: 'assistant', content: data.response }]
-        setMessages(finalMessages)
-        
-        // Si hay una advertencia, mostrarla como error pero no interrumpir el flujo
-        if (data.warning) {
-          console.warn('Advertencia del servidor:', data.warning)
-          setError(`Nota: ${data.warning}`)
-        }
-        
-        saveMessages(finalMessages)
+      if (!saved) {
+        throw new Error('Error al guardar el mensaje');
       }
       
-      sendMessageAsync()
+      // Simular envío al servicio de AI y respuesta
+      const sendMessageAsync = async () => {
+        try {
+          const response = await fetch('/api/chat', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: userMessage.content,
+              conversationId: selectedConversationId,
+            }),
+            credentials: 'include',
+          });
+          
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.error || 'Error en la respuesta del asistente');
+          }
+          
+          // Añadir respuesta al chat
+          const assistantMessage = {
+            role: 'assistant',
+            content: data.reply,
+          };
+          
+          const newMessages = [...updatedMessages, assistantMessage];
+          setMessages(newMessages);
+          
+          // Guardar la respuesta
+          await saveMessages(newMessages);
+          
+        } catch (error) {
+          console.error('Error al procesar el mensaje:', error);
+          
+          // Mostrar mensaje de error en el chat
+          const errorMessage = {
+            role: 'error',
+            content: `Error: ${error.message}. Por favor, intenta de nuevo.`,
+          };
+          
+          setMessages([...updatedMessages, errorMessage]);
+          setError(error.message);
+        } finally {
+          setIsTyping(false);
+        }
+      };
+      
+      sendMessageAsync();
+      
     } catch (error) {
-      console.error('Error al enviar mensaje:', error)
-    } finally {
-      setIsTyping(false)
+      console.error('Error en el envío del mensaje:', error);
+      setIsTyping(false);
+      setError(error.message);
     }
+  };
+
+  // Loading state
+  if (isUserLoading || isCheckingAccess) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="w-10 h-10 border-t-2 border-primary rounded-full animate-spin"></div>
+      </div>
+    )
+  }
+
+  // Ensure user is logged in
+  if (!user && !isUserLoading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-white p-4 text-center">
+        <h1 className="text-2xl font-semibold mb-4 text-gray-800">Necesitas iniciar sesión</h1>
+        <p className="mb-6 text-gray-600">Para utilizar el chat, debes iniciar sesión primero</p>
+        <Link 
+          href="/api/auth/login" 
+          className="btn btn-primary"
+        >
+          Iniciar Sesión
+        </Link>
+        <Link 
+          href="/" 
+          className="mt-4 text-primary hover:underline"
+        >
+          Volver al inicio
+        </Link>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white overflow-hidden flex flex-col">
-      <div className="flex flex-col h-screen">
-        {/* Cabecera */}
-        <header className="bg-gray-800 p-2 md:p-3 flex items-center justify-between shadow-md">
+    <div className="flex h-screen bg-white text-gray-800">
+      {/* Sidebar */}
+      <aside className={`${isSidebarOpen ? 'flex' : 'hidden'} w-72 border-r border-gray-300 flex-col h-full overflow-hidden bg-gray-100`}>
+        <div className="py-3 px-3 border-b border-gray-300 flex items-center justify-between">
           <div className="flex items-center">
+            <span className="font-medium text-gray-700">ChatGPT</span>
+          </div>
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="p-3 border-b border-gray-300">
+          <button 
+            onClick={startNewConversation}
+            className="w-full p-2 rounded-md border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors flex items-center justify-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Nueva conversación
+          </button>
+        </div>
+        
+        {/* History list using component */}
+        <ConversationList 
+          conversations={allConversations}
+          selectedConversationId={selectedConversationId}
+          conversationSummaries={conversationSummaries}
+          loadConversation={loadConversation}
+          isLoading={isLoadingHistory}
+        />
+      </aside>
+      
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* Header */}
+        <header className="h-14 border-b border-gray-300 flex items-center justify-between px-4">
+          {!isSidebarOpen && (
             <button 
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="mr-2 p-1 hover:bg-gray-700 rounded"
-              aria-label={isSidebarOpen ? "Cerrar historial" : "Abrir historial"}
+              onClick={() => setIsSidebarOpen(true)}
+              className="text-gray-600 hover:text-gray-800"
             >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className="h-5 w-5" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d={isSidebarOpen ? "M4 6h16M4 12h8m-8 6h16" : "M4 6h16M4 12h16M4 18h16"} 
-                />
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <h1 className="text-gradient-sport text-base md:text-xl font-bold">ParrilleitorAI Chat</h1>
+          )}
+          <div className="text-xl font-medium text-gray-800">
+            {isSidebarOpen ? '' : 'ChatGPT'}
           </div>
-          <Link 
-            href="/" 
-            className="text-xs md:text-sm text-gray-300 hover:text-white transition-colors"
-          >
-            Volver al inicio
-          </Link>
+          <div className="w-6"></div> {/* Spacer for alignment */}
         </header>
         
-        {/* Contenedor principal con sidebar y chat */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar con conversaciones anteriores */}
-          {isSidebarOpen && (
-            <div className="w-64 md:w-80 bg-gray-800 border-r border-gray-700 flex-shrink-0 overflow-hidden flex flex-col">
-              <div className="p-2 border-b border-gray-700">
-                <button 
-                  onClick={startNewConversation}
-                  className="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded flex items-center justify-center text-sm font-medium transition-colors"
-                >
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className="h-4 w-4 mr-1" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6" 
-                    />
-                  </svg>
-                  Nueva conversación
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto custom-scrollbar">
-                {isLoadingHistory ? (
-                  <div className="flex justify-center items-center h-20">
-                    <div className="w-6 h-6 border-t-2 border-blue-500 border-solid rounded-full animate-spin"></div>
-                  </div>
-                ) : allConversations.length === 0 ? (
-                  <div className="text-center p-4 text-gray-400 text-sm">
-                    No hay conversaciones guardadas
-                  </div>
-                ) : (
-                  <div className="space-y-1 p-2">
-                    {allConversations.map((conv) => (
-                      <button
-                        key={conv._id}
-                        onClick={() => loadConversation(conv._id)}
-                        className={`w-full p-2 rounded text-left hover:bg-gray-700 transition-colors text-sm ${
-                          selectedConversationId === conv._id ? 'bg-gray-700' : ''
-                        }`}
-                      >
-                        <div className="font-medium truncate">
-                          {new Date(conv.lastUpdated || conv.createdAt).toLocaleDateString()}
-                        </div>
-                        <div className="text-xs text-gray-400 truncate">
-                          {conversationSummaries[conv._id] 
-                            ? conversationSummaries[conv._id]
-                            : conv.messages && conv.messages.length > 0 
-                              ? conv.messages[0].content.substring(0, 40) + '...'
-                              : 'Conversación vacía'}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+        {/* Messages Container */}
+        <div className="flex-1 overflow-y-auto px-4 py-6 bg-white">
+          {error && (
+            <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm">
+              {error}
+              <button 
+                onClick={() => setError(null)} 
+                className="ml-2 font-bold hover:text-red-900"
+              >
+                ×
+              </button>
             </div>
           )}
           
-          {/* Chat principal */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Mensajes */}
-            <div className="flex-1 p-2 md:p-4 overflow-y-auto custom-scrollbar space-y-3">
-              {error && (
-                <div className="bg-red-500 text-white p-2 md:p-3 rounded-lg mb-3 text-xs md:text-sm max-w-full mx-auto text-center">
-                  {error}
-                  <button 
-                    onClick={() => setError(null)} 
-                    className="ml-2 font-bold hover:text-gray-200"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-              
-              {/* Mostrar resumen si existe */}
-              {selectedConversationId && conversationSummaries[selectedConversationId] && (
-                <div className="bg-gray-800 border border-gray-700 p-3 rounded-lg mb-4 text-xs md:text-sm">
-                  <h3 className="font-medium text-blue-400 mb-1">Resumen de la conversación:</h3>
-                  <p className="text-gray-300">{conversationSummaries[selectedConversationId]}</p>
-                </div>
-              )}
-              
-              {messages.length === 0 ? (
-                <div className="text-center py-6 md:py-8 text-gray-400 text-xs md:text-base">
-                  <p className="mb-2 md:mb-3">👋 ¡Hola! Soy tu asistente de nutrición y ejercicio.</p>
-                  <p>¿En qué puedo ayudarte hoy?</p>
-                </div>
-              ) : (
-                messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`p-2 md:p-3 rounded-lg text-xs md:text-base mb-1 md:mb-2 ${
-                      message.role === 'user' 
-                        ? 'bg-blue-600 ml-auto max-w-[80%] md:max-w-[75%]' 
-                        : message.role === 'error'
-                        ? 'bg-red-500 mr-auto max-w-[80%] md:max-w-[75%]'
-                        : 'bg-gray-700 mr-auto max-w-[80%] md:max-w-[75%]'
-                    }`}
-                  >
-                    {message.content}
-                  </div>
-                ))
-              )}
+          {messages.length === 0 ? (
+            <div className="text-center py-20 text-gray-500">
+              <p className="text-xl">¿En qué puedo ayudarte?</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {messages.map((message, index) => (
+                <ChatMessage 
+                  key={index} 
+                  message={message} 
+                  isLast={index === messages.length - 1}
+                />
+              ))}
               
               {isTyping && (
-                <div className="bg-gray-700 p-2 md:p-3 rounded-lg mr-auto max-w-[80%] md:max-w-[75%] text-xs md:text-base">
-                  <div className="flex space-x-1">
-                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce delay-100"></div>
-                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce delay-200"></div>
+                <div className="max-w-3xl mx-auto pr-10">
+                  <div className="p-4 rounded-lg bg-gray-100">
+                    <div className="flex space-x-2">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                    </div>
                   </div>
                 </div>
               )}
               
-              {/* Elemento invisible para scroll */}
               <div ref={messagesEndRef} />
             </div>
-            
-            {/* Formulario de entrada */}
-            <div className="border-t border-gray-700 p-2 md:p-3">
-              <form onSubmit={handleSubmit} className="flex gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Escribe tu mensaje..."
-                  className="flex-1 p-2 rounded-lg bg-gray-700 text-white text-xs md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="submit"
-                  className="px-3 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors text-xs md:text-base flex-shrink-0 font-medium"
-                  disabled={isTyping}
-                >
-                  {isTyping ? '...' : 'Enviar'}
-                </button>
-              </form>
-            </div>
-          </div>
+          )}
+        </div>
+        
+        {/* Input Area */}
+        <div className="border-t border-gray-300 p-4 bg-white">
+          <form onSubmit={handleSubmit} className="flex items-center">
+            <button
+              type="button"
+              className="p-2 text-gray-500 rounded-full hover:bg-gray-100 mr-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+            </button>
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Pregunta lo que quieras"
+              className="flex-1 py-2 px-4 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white text-gray-800"
+            />
+            <button
+              type="button"
+              className="p-2 text-gray-500 rounded-full hover:bg-gray-100 ml-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </button>
+            <button
+              type="submit"
+              className="ml-2 p-2 bg-primary text-white rounded-full hover:bg-primary-dark disabled:opacity-50"
+              disabled={isTyping || !input.trim()}
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
+              </svg>
+            </button>
+          </form>
         </div>
       </div>
     </div>
