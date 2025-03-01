@@ -17,6 +17,12 @@ export default function Chat() {
   const [retryCount, setRetryCount] = useState(0)
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
   const messagesEndRef = useRef(null)
+  // Nuevos estados para manejar las conversaciones y el panel lateral
+  const [allConversations, setAllConversations] = useState([])
+  const [selectedConversationId, setSelectedConversationId] = useState(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [conversationSummaries, setConversationSummaries] = useState({})
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
 
   // Función para hacer scroll al fondo cuando hay nuevos mensajes
   const scrollToBottom = () => {
@@ -48,8 +54,8 @@ export default function Chat() {
         }
 
         console.log('Checking premium status for:', {
-          email: user.email,
-          retryCount,
+          user: user.email,
+          sub: user.sub,
           timestamp: new Date().toISOString()
         })
 
@@ -57,52 +63,26 @@ export default function Chat() {
           method: 'GET',
           credentials: 'include',
           headers: {
-            'Cache-Control': 'no-store, max-age=0',
-            'Authorization': `Bearer ${user.accessToken || ''}`
+            'Cache-Control': 'no-store, max-age=0'
           }
         })
         
-        // Siempre procesamos la respuesta, incluso si no es 200
         const data = await response.json()
+        console.log('Premium verification response:', data)
         
-        console.log('Premium status response:', {
-          status: response.status,
-          data,
-          retryCount,
-          timestamp: new Date().toISOString()
-        })
-        
-        // Si tenemos datos de usuario, los usamos
-        if (data.user) {
-          if (data.user.isTemporary) {
-            console.log('Temporary user session detected')
-            // Si es una sesión temporal, no redirigimos, solo mostramos un mensaje
-            if (isMounted) {
-              setError('Sesión temporal. Por favor recarga la página si necesitas acceso completo.')
-              setIsCheckingAccess(false)
-            }
-            return
-          }
+        if (response.ok && data.user) {
+          setIsPremium(data.user.isPremium)
+          console.log('Premium status set:', {
+            isPremium: data.user.isPremium,
+            timestamp: new Date().toISOString()
+          })
           
-          if (!data.user.isPremium) {
-            console.log('User not premium, showing message instead of redirecting')
-            // En lugar de redirigir, mostramos un mensaje
-            if (isMounted) {
-              setError('Se requiere una cuenta premium para acceder al chat. Por favor, contacta al administrador.')
-              setIsCheckingAccess(false)
-            }
-            return
-          }
-          
-          if (isMounted) {
-            setIsPremium(true)
-            setRetryCount(0)
-            loadChatHistory() // Load chat history after confirming premium status
+          if (data.user.isPremium) {
+            loadChatHistory() // Cargar historial después de confirmar estado premium
           }
           return
         }
         
-        // Si hay un error en la respuesta pero no es crítico
         if (!response.ok && retryCount < 3) {
           if (isMounted) {
             setRetryCount(prev => prev + 1)
@@ -114,7 +94,6 @@ export default function Chat() {
           return
         }
         
-        // Si llegamos aquí, hay un problema con la sesión
         throw new Error(data.error || 'Error checking premium status')
       } catch (err) {
         console.error('Premium check error:', {
@@ -125,7 +104,6 @@ export default function Chat() {
         })
         if (isMounted) {
           setError(err.message)
-          // No redirigimos automáticamente, solo mostramos el error
         }
       } finally {
         if (isMounted) {
@@ -134,11 +112,9 @@ export default function Chat() {
       }
     }
 
-    // Solo iniciamos la verificación si tenemos datos de usuario
     if (!isUserLoading && user) {
       checkPremiumStatus()
     } else if (!isUserLoading && !user) {
-      // Si no hay usuario y no está cargando, mostramos un mensaje
       setError('Necesitas iniciar sesión para acceder al chat.')
       setIsCheckingAccess(false)
     }
@@ -149,7 +125,7 @@ export default function Chat() {
         clearTimeout(retryTimeout)
       }
     }
-  }, [user, isUserLoading, router, retryCount])
+  }, [user, isUserLoading, retryCount])
 
   const loadChatHistory = async () => {
     try {
@@ -167,27 +143,106 @@ export default function Chat() {
 
       if (response.ok) {
         if (data.conversations && data.conversations.length > 0) {
-          // Usar la conversación más reciente
+          // Guardar todas las conversaciones
+          setAllConversations(data.conversations);
+          
+          // Cargar la conversación más reciente
           const latestConversation = data.conversations[0];
           setMessages(latestConversation.messages || []);
+          setSelectedConversationId(latestConversation._id);
+          
+          // Inicializar el objeto de resúmenes con los resúmenes existentes
+          const summaries = {};
+          data.conversations.forEach(conv => {
+            if (conv.summary) {
+              summaries[conv._id] = conv.summary;
+            }
+          });
+          setConversationSummaries(summaries);
+          
+          // Si la conversación más reciente no tiene resumen, generarlo
+          if (!latestConversation.summary) {
+            generateSummary(latestConversation._id, latestConversation.messages);
+          }
+          
           console.log('Conversación cargada:', latestConversation);
         } else {
           console.log('No hay conversaciones disponibles');
-          // No mostrar error al usuario, simplemente iniciar con mensajes vacíos
           setMessages([]);
+          setAllConversations([]);
         }
       } else {
         console.error('Error al cargar el historial:', data.error || 'Error desconocido');
-        // No mostrar error al usuario, simplemente iniciar con mensajes vacíos
         setMessages([]);
+        setAllConversations([]);
       }
     } catch (error) {
       console.error('Error al cargar el historial de chat:', error);
-      // No mostrar error al usuario, simplemente iniciar con mensajes vacíos
       setMessages([]);
+      setAllConversations([]);
     } finally {
       setIsLoadingHistory(false);
     }
+  };
+
+  const generateSummary = async (conversationId, messagesData) => {
+    try {
+      setIsGeneratingSummary(true);
+      
+      // Solo generar resumen si hay suficientes mensajes (al menos 3)
+      if (!messagesData || messagesData.length < 3) {
+        console.log('No hay suficientes mensajes para generar un resumen');
+        return;
+      }
+      
+      const response = await fetch('/api/chat/summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          conversationId, 
+          messages: messagesData 
+        }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.summary) {
+        // Actualizar el estado de resúmenes
+        setConversationSummaries(prev => ({
+          ...prev,
+          [conversationId]: data.summary
+        }));
+        console.log('Resumen generado con éxito:', data.summary);
+      } else {
+        console.error('Error al generar el resumen:', data.error || 'Error desconocido');
+      }
+    } catch (error) {
+      console.error('Error al generar el resumen:', error);
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
+
+  const loadConversation = (conversationId) => {
+    const conversation = allConversations.find(conv => conv._id === conversationId);
+    if (conversation) {
+      setMessages(conversation.messages || []);
+      setSelectedConversationId(conversationId);
+      
+      // Si no hay resumen para esta conversación, generarlo
+      if (!conversationSummaries[conversationId]) {
+        generateSummary(conversationId, conversation.messages);
+      }
+    }
+  };
+
+  const startNewConversation = () => {
+    setMessages([]);
+    setSelectedConversationId(null);
+    setInput('');
   };
 
   const saveMessages = async (updatedMessages) => {
@@ -204,12 +259,26 @@ export default function Chat() {
       const data = await response.json();
       console.log('Respuesta al guardar mensajes:', data);
 
+      if (data.success && data.conversation) {
+        // Si es una conversación nueva, actualizar el ID seleccionado
+        if (!selectedConversationId) {
+          setSelectedConversationId(data.conversation._id);
+        }
+        
+        // Actualizar la lista de conversaciones
+        loadChatHistory();
+        
+        // Generar resumen si hay suficientes mensajes
+        if (updatedMessages.length >= 3 && !conversationSummaries[data.conversation._id]) {
+          generateSummary(data.conversation._id, updatedMessages);
+        }
+      }
+
       if (!data.success && data.message) {
         console.warn('Advertencia al guardar mensajes:', data.message);
       }
     } catch (error) {
       console.error('Error al guardar mensajes:', error);
-      // No mostrar error al usuario, continuar con la conversación
     }
   };
 
@@ -218,47 +287,55 @@ export default function Chat() {
       <div className="min-h-screen bg-gray-900 text-white px-2 py-4 flex items-center justify-center">
         <div className="text-lg md:text-2xl font-semibold text-center">
           <div className="w-8 h-8 md:w-12 md:h-12 border-t-2 border-blue-500 border-solid rounded-full animate-spin mx-auto mb-3"></div>
-          {retryCount > 0 ? `Verificando acceso (intento ${retryCount}/3)...` : 'Cargando...'}
+          Verificando acceso...
         </div>
       </div>
     )
   }
 
-  if (!user || !isPremium) {
+  if (!user) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white p-3 md:p-4 flex flex-col items-center justify-center">
-        <div className="bg-gray-800 rounded-lg p-4 md:p-8 max-w-md w-full text-center shadow-lg">
-          <h1 className="text-lg md:text-2xl font-bold mb-3 md:mb-4 text-gradient-sport">Acceso al Chat</h1>
-          
-          {error && (
-            <div className="bg-red-500 text-white p-2 md:p-3 rounded-lg mb-3 md:mb-4 text-xs md:text-base">
-              {error}
-            </div>
-          )}
-          
-          {!user && (
-            <>
-              <p className="mb-4 md:mb-6 text-xs md:text-base">Para acceder al chat, necesitas iniciar sesión con tu cuenta.</p>
-              <Link 
-                href="/api/auth/login" 
-                className="btn-sport px-4 py-2 text-sm md:text-base"
-              >
-                Iniciar Sesión
-              </Link>
-            </>
-          )}
-          
-          {user && !isPremium && (
-            <>
-              <p className="mb-6 text-sm md:text-base">Tu cuenta no tiene acceso premium. Por favor, contacta al administrador para obtener acceso.</p>
-              <Link 
-                href="/" 
-                className="btn-sport px-5 py-2 text-sm md:text-base"
-              >
-                Volver al Inicio
-              </Link>
-            </>
-          )}
+      <div className="min-h-screen bg-gray-900 text-white p-4 flex flex-col items-center justify-center">
+        <div className="max-w-md w-full bg-gray-800 p-6 rounded-lg shadow-lg">
+          <h2 className="text-xl md:text-2xl font-bold mb-4 text-center text-gradient-sport">Acceso al Chat</h2>
+          <p className="text-sm md:text-base text-gray-300 mb-6">
+            Para acceder al chat, necesitas iniciar sesión con tu cuenta.
+          </p>
+          <div className="flex flex-col space-y-3">
+            <a
+              href="/api/auth/login"
+              className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg text-center font-medium hover:bg-blue-700 transition-colors"
+            >
+              Iniciar Sesión
+            </a>
+            <Link
+              href="/"
+              className="w-full py-2 px-4 bg-gray-700 text-white rounded-lg text-center font-medium hover:bg-gray-600 transition-colors"
+            >
+              Volver al Inicio
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isPremium) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-4 flex flex-col items-center justify-center">
+        <div className="max-w-md w-full bg-gray-800 p-6 rounded-lg shadow-lg">
+          <h2 className="text-xl md:text-2xl font-bold mb-4 text-center text-gradient-sport">Acceso Premium Requerido</h2>
+          <p className="text-sm md:text-base text-gray-300 mb-6">
+            Lo sentimos, el acceso al chat está disponible solo para usuarios premium.
+          </p>
+          <div className="flex flex-col space-y-3">
+            <Link
+              href="/"
+              className="w-full py-2 px-4 bg-gray-700 text-white rounded-lg text-center font-medium hover:bg-gray-600 transition-colors"
+            >
+              Volver al Inicio
+            </Link>
+          </div>
         </div>
       </div>
     )
@@ -266,102 +343,87 @@ export default function Chat() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
     if (!input.trim()) return
-
-    const newMessage = { role: 'user', content: input }
-    const updatedMessages = [...messages, newMessage]
-    setMessages(updatedMessages)
-    setInput('')
-    setIsTyping(true)
-    setError(null)
-
+    
     try {
-      // Crear un controlador de aborto para el timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-      }, 60000); // 60 segundos de timeout
+      setIsTyping(true)
       
-      console.log('Enviando mensaje al servidor:', {
-        messageLength: input.length,
-        preview: input.substring(0, 50) + (input.length > 50 ? '...' : '')
-      });
+      // Crear una copia de los mensajes actuales con el nuevo mensaje
+      const updatedMessages = [
+        ...messages,
+        { role: 'user', content: input.trim() }
+      ]
       
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store, max-age=0',
-          'Authorization': `Bearer ${user.accessToken || ''}`
-        },
-        credentials: 'include',
-        body: JSON.stringify({ message: input }),
-        signal: controller.signal
-      });
+      // Actualizar la UI inmediatamente
+      setMessages(updatedMessages)
       
-      // Limpiar el timeout una vez que se recibe la respuesta
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error('Chat API error:', errorData)
+      // Limpiar el input
+      setInput('')
+      
+      // Async function to avoid blocking UI
+      const sendMessageAsync = async () => {
+        // Crear un controlador de aborto para el timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          controller.abort();
+        }, 60000); // 60 segundos de timeout
         
-        if (response.status === 401) {
-          throw new Error('Error de sesión. Por favor, recarga la página.')
+        console.log('Enviando mensaje al servidor:', {
+          messageLength: input.length,
+          preview: input.substring(0, 50) + (input.length > 50 ? '...' : '')
+        });
+        
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store, max-age=0',
+            'Authorization': `Bearer ${user.accessToken || ''}`
+          },
+          credentials: 'include',
+          body: JSON.stringify({ message: input }),
+          signal: controller.signal
+        });
+        
+        // Limpiar el timeout una vez que se recibe la respuesta
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error('Chat API error:', errorData)
+          
+          if (response.status === 401) {
+            throw new Error('Error de sesión. Por favor, recarga la página.')
+          }
+          
+          throw new Error(errorData.error || 'Error en la respuesta del servidor')
+        }
+
+        const data = await response.json()
+        console.log('Respuesta de la API de chat:', data)
+        
+        // Verificar si hay una respuesta válida
+        if (!data.response) {
+          console.error('Respuesta de API sin mensaje:', data)
+          throw new Error('No se recibió respuesta del servidor')
         }
         
-        throw new Error(errorData.error || 'Error en la respuesta del servidor')
-      }
-
-      const data = await response.json()
-      console.log('Respuesta de la API de chat:', data)
-      
-      // Verificar si hay una respuesta válida
-      if (!data.response) {
-        console.error('Respuesta de API sin mensaje:', data)
-        throw new Error('No se recibió respuesta del servidor')
-      }
-      
-      const finalMessages = [...updatedMessages, { role: 'assistant', content: data.response }]
-      setMessages(finalMessages)
-      
-      // Si hay una advertencia, mostrarla como error pero no interrumpir el flujo
-      if (data.warning) {
-        console.warn('Advertencia del servidor:', data.warning)
-        setError(`Nota: ${data.warning}`)
+        const finalMessages = [...updatedMessages, { role: 'assistant', content: data.response }]
+        setMessages(finalMessages)
+        
+        // Si hay una advertencia, mostrarla como error pero no interrumpir el flujo
+        if (data.warning) {
+          console.warn('Advertencia del servidor:', data.warning)
+          setError(`Nota: ${data.warning}`)
+        }
+        
+        saveMessages(finalMessages)
       }
       
-      saveMessages(finalMessages)
+      sendMessageAsync()
     } catch (error) {
-      console.error('Error in chat:', error)
-      
-      // Determinar el mensaje de error apropiado para el usuario
-      let errorMessage = 'Lo siento, ha ocurrido un error. Por favor, intenta de nuevo.'
-      
-      if (error.name === 'AbortError') {
-        console.error('La solicitud fue abortada por timeout');
-        errorMessage = 'La solicitud ha tardado demasiado tiempo. Por favor, intenta con un mensaje más corto o inténtalo más tarde.'
-      } else if (error.message.includes('timeout') || error.message.includes('tiempo')) {
-        errorMessage = 'La solicitud ha tardado demasiado tiempo. Por favor, intenta con un mensaje más corto o inténtalo más tarde.'
-      } else if (error.message.includes('No se recibió respuesta')) {
-        errorMessage = 'No se pudo obtener una respuesta del asistente. Por favor, intenta de nuevo.'
-      } else if (error.message.includes('sesión')) {
-        errorMessage = 'Tu sesión ha expirado. Por favor, recarga la página para iniciar sesión de nuevo.'
-      }
-      
-      setError(error.message)
-      const errorMessages = [...updatedMessages, { 
-        role: 'error', 
-        content: errorMessage
-      }]
-      setMessages(errorMessages)
-      
-      // Intentar guardar el mensaje de error en el historial
-      try {
-        saveMessages(errorMessages)
-      } catch (saveError) {
-        console.error('Error al guardar mensaje de error:', saveError)
-      }
+      console.error('Error al enviar mensaje:', error)
     } finally {
       setIsTyping(false)
     }
@@ -372,7 +434,29 @@ export default function Chat() {
       <div className="flex flex-col h-screen">
         {/* Cabecera */}
         <header className="bg-gray-800 p-2 md:p-3 flex items-center justify-between shadow-md">
-          <h1 className="text-gradient-sport text-base md:text-xl font-bold">ParrilleitorAI Chat</h1>
+          <div className="flex items-center">
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="mr-2 p-1 hover:bg-gray-700 rounded"
+              aria-label={isSidebarOpen ? "Cerrar historial" : "Abrir historial"}
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className="h-5 w-5" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d={isSidebarOpen ? "M4 6h16M4 12h8m-8 6h16" : "M4 6h16M4 12h16M4 18h16"} 
+                />
+              </svg>
+            </button>
+            <h1 className="text-gradient-sport text-base md:text-xl font-bold">ParrilleitorAI Chat</h1>
+          </div>
           <Link 
             href="/" 
             className="text-xs md:text-sm text-gray-300 hover:text-white transition-colors"
@@ -381,76 +465,149 @@ export default function Chat() {
           </Link>
         </header>
         
-        {/* Contenedor principal */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Mensajes */}
-          <div className="flex-1 p-2 md:p-4 overflow-y-auto custom-scrollbar space-y-3">
-            {error && (
-              <div className="bg-red-500 text-white p-2 md:p-3 rounded-lg mb-3 text-xs md:text-sm max-w-full mx-auto text-center">
-                {error}
+        {/* Contenedor principal con sidebar y chat */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Sidebar con conversaciones anteriores */}
+          {isSidebarOpen && (
+            <div className="w-64 md:w-80 bg-gray-800 border-r border-gray-700 flex-shrink-0 overflow-hidden flex flex-col">
+              <div className="p-2 border-b border-gray-700">
                 <button 
-                  onClick={() => setError(null)} 
-                  className="ml-2 font-bold hover:text-gray-200"
+                  onClick={startNewConversation}
+                  className="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded flex items-center justify-center text-sm font-medium transition-colors"
                 >
-                  ×
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className="h-4 w-4 mr-1" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6" 
+                    />
+                  </svg>
+                  Nueva conversación
                 </button>
               </div>
-            )}
-            
-            {messages.length === 0 ? (
-              <div className="text-center py-6 md:py-8 text-gray-400 text-xs md:text-base">
-                <p className="mb-2 md:mb-3">👋 ¡Hola! Soy tu asistente de nutrición y ejercicio.</p>
-                <p>¿En qué puedo ayudarte hoy?</p>
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                {isLoadingHistory ? (
+                  <div className="flex justify-center items-center h-20">
+                    <div className="w-6 h-6 border-t-2 border-blue-500 border-solid rounded-full animate-spin"></div>
+                  </div>
+                ) : allConversations.length === 0 ? (
+                  <div className="text-center p-4 text-gray-400 text-sm">
+                    No hay conversaciones guardadas
+                  </div>
+                ) : (
+                  <div className="space-y-1 p-2">
+                    {allConversations.map((conv) => (
+                      <button
+                        key={conv._id}
+                        onClick={() => loadConversation(conv._id)}
+                        className={`w-full p-2 rounded text-left hover:bg-gray-700 transition-colors text-sm ${
+                          selectedConversationId === conv._id ? 'bg-gray-700' : ''
+                        }`}
+                      >
+                        <div className="font-medium truncate">
+                          {new Date(conv.lastUpdated || conv.createdAt).toLocaleDateString()}
+                        </div>
+                        <div className="text-xs text-gray-400 truncate">
+                          {conversationSummaries[conv._id] 
+                            ? conversationSummaries[conv._id]
+                            : conv.messages && conv.messages.length > 0 
+                              ? conv.messages[0].content.substring(0, 40) + '...'
+                              : 'Conversación vacía'}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : (
-              messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`p-2 md:p-3 rounded-lg text-xs md:text-base mb-1 md:mb-2 ${
-                    message.role === 'user' 
-                      ? 'bg-blue-600 ml-auto max-w-[80%] md:max-w-[75%]' 
-                      : message.role === 'error'
-                      ? 'bg-red-500 mr-auto max-w-[80%] md:max-w-[75%]'
-                      : 'bg-gray-700 mr-auto max-w-[80%] md:max-w-[75%]'
-                  }`}
-                >
-                  {message.content}
-                </div>
-              ))
-            )}
-            
-            {isTyping && (
-              <div className="bg-gray-700 p-2 md:p-3 rounded-lg mr-auto max-w-[80%] md:max-w-[75%] text-xs md:text-base">
-                <div className="flex space-x-1">
-                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce delay-100"></div>
-                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce delay-200"></div>
-                </div>
-              </div>
-            )}
-            
-            {/* Elemento invisible para scroll */}
-            <div ref={messagesEndRef} />
-          </div>
+            </div>
+          )}
           
-          {/* Formulario de entrada */}
-          <div className="border-t border-gray-700 p-2 md:p-3">
-            <form onSubmit={handleSubmit} className="flex gap-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Escribe tu mensaje..."
-                className="flex-1 p-2 rounded-lg bg-gray-700 text-white text-xs md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="submit"
-                className="px-3 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors text-xs md:text-base flex-shrink-0 font-medium"
-                disabled={isTyping}
-              >
-                {isTyping ? '...' : 'Enviar'}
-              </button>
-            </form>
+          {/* Chat principal */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Mensajes */}
+            <div className="flex-1 p-2 md:p-4 overflow-y-auto custom-scrollbar space-y-3">
+              {error && (
+                <div className="bg-red-500 text-white p-2 md:p-3 rounded-lg mb-3 text-xs md:text-sm max-w-full mx-auto text-center">
+                  {error}
+                  <button 
+                    onClick={() => setError(null)} 
+                    className="ml-2 font-bold hover:text-gray-200"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+              
+              {/* Mostrar resumen si existe */}
+              {selectedConversationId && conversationSummaries[selectedConversationId] && (
+                <div className="bg-gray-800 border border-gray-700 p-3 rounded-lg mb-4 text-xs md:text-sm">
+                  <h3 className="font-medium text-blue-400 mb-1">Resumen de la conversación:</h3>
+                  <p className="text-gray-300">{conversationSummaries[selectedConversationId]}</p>
+                </div>
+              )}
+              
+              {messages.length === 0 ? (
+                <div className="text-center py-6 md:py-8 text-gray-400 text-xs md:text-base">
+                  <p className="mb-2 md:mb-3">👋 ¡Hola! Soy tu asistente de nutrición y ejercicio.</p>
+                  <p>¿En qué puedo ayudarte hoy?</p>
+                </div>
+              ) : (
+                messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`p-2 md:p-3 rounded-lg text-xs md:text-base mb-1 md:mb-2 ${
+                      message.role === 'user' 
+                        ? 'bg-blue-600 ml-auto max-w-[80%] md:max-w-[75%]' 
+                        : message.role === 'error'
+                        ? 'bg-red-500 mr-auto max-w-[80%] md:max-w-[75%]'
+                        : 'bg-gray-700 mr-auto max-w-[80%] md:max-w-[75%]'
+                    }`}
+                  >
+                    {message.content}
+                  </div>
+                ))
+              )}
+              
+              {isTyping && (
+                <div className="bg-gray-700 p-2 md:p-3 rounded-lg mr-auto max-w-[80%] md:max-w-[75%] text-xs md:text-base">
+                  <div className="flex space-x-1">
+                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce delay-100"></div>
+                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce delay-200"></div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Elemento invisible para scroll */}
+              <div ref={messagesEndRef} />
+            </div>
+            
+            {/* Formulario de entrada */}
+            <div className="border-t border-gray-700 p-2 md:p-3">
+              <form onSubmit={handleSubmit} className="flex gap-2">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Escribe tu mensaje..."
+                  className="flex-1 p-2 rounded-lg bg-gray-700 text-white text-xs md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors text-xs md:text-base flex-shrink-0 font-medium"
+                  disabled={isTyping}
+                >
+                  {isTyping ? '...' : 'Enviar'}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

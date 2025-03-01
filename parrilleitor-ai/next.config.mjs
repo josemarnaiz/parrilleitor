@@ -53,41 +53,32 @@ const nextConfig = {
       },
     ];
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.experiments = {
       ...config.experiments,
       topLevelAwait: true,
     };
     
-    // Optimizaciones adicionales
-    if (process.env.NODE_ENV === 'production') {
-      // Optimiza los chunks para mejor carga en dispositivos móviles
+    // Solo aplicar optimizaciones de chunks al código del cliente, no al servidor
+    if (!isServer && process.env.NODE_ENV === 'production') {
+      // Configuración más segura para splitChunks en el cliente
       config.optimization.splitChunks = {
         chunks: 'all',
         cacheGroups: {
           default: false,
           vendors: false,
-          framework: {
-            name: 'framework',
-            test: /[\\/]node_modules[\\/](@next|next|react|react-dom)[\\/]/,
-            priority: 40,
-            chunks: 'all',
-          },
+          // Componentes comunes que se reutilizan
           commons: {
             name: 'commons',
             minChunks: 2,
             priority: 20,
           },
-          lib: {
+          // Librerías de node_modules
+          libs: {
             test: /[\\/]node_modules[\\/]/,
-            name(module) {
-              const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)[1];
-              return `lib.${packageName.replace('@', '')}`;
-            },
             priority: 10,
-            minChunks: 1,
             chunks: 'async',
-          },
+          }
         },
       };
     }
