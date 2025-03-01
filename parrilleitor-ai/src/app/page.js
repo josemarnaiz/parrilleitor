@@ -9,14 +9,14 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen pt-16">
-        <div className="container-custom mx-auto px-3 py-8 flex justify-center items-center">
+      <main className="min-h-screen pt-12 md:pt-16">
+        <div className="container-custom mx-auto px-3 py-6 md:py-8 flex justify-center items-center">
           <div className="animate-pulse flex flex-col items-center">
-            <div className="w-14 h-14 md:w-16 md:h-16 bg-sport-500/30 rounded-full mb-4 md:mb-6 flex items-center justify-center">
-              <div className="w-7 h-7 md:w-8 md:h-8 bg-sport-500/50 rounded-full"></div>
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-sport-500/30 rounded-full mb-4 md:mb-6 flex items-center justify-center">
+              <div className="w-6 h-6 md:w-8 md:h-8 bg-sport-500/50 rounded-full"></div>
             </div>
             <div className="h-4 md:h-5 w-36 md:w-48 bg-gray-700 rounded mb-3"></div>
-            <div className="h-3 w-24 md:w-32 bg-gray-700 rounded"></div>
+            <div className="h-2 md:h-3 w-24 md:w-32 bg-gray-700 rounded"></div>
           </div>
         </div>
       </main>
@@ -24,16 +24,16 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen overflow-hidden">
       {/* Hero Section con imagen de fondo */}
-      <section className="hero-section pt-16 md:pt-24">
+      <section className="hero-section pt-12 md:pt-16 lg:pt-24">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/50 to-gray-900"></div>
-        <div className="container-custom mx-auto px-4 py-6 md:py-12 lg:py-16 relative z-10">
-          <div className="max-w-4xl mx-auto text-center mb-6 md:mb-12">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-5 leading-tight">
+        <div className="container-custom px-3 py-6 md:py-16 relative z-10">
+          <div className="max-w-4xl mx-auto text-center mb-6 md:mb-16">
+            <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold text-white mb-3 md:mb-6 leading-tight">
               <span className="text-gradient-sport">ParrilleitorAI</span>
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-5 max-w-3xl mx-auto px-2">
+            <p className="text-base md:text-lg lg:text-xl text-gray-300 mb-6 md:mb-8 max-w-3xl mx-auto">
               Tu asistente personal de nutrición y ejercicio potenciado por IA, diseñado para ayudarte a alcanzar tus objetivos fitness.
             </p>
             
@@ -41,7 +41,7 @@ export default function Home() {
               {user ? (
                 <Link
                   href="/chat"
-                  className="btn-sport text-sm sm:text-base py-2 px-5 md:py-3 md:px-6"
+                  className="btn-sport text-sm md:text-base py-2 px-4 md:py-3 md:px-6"
                 >
                   <span className="mr-2">Ir al Chat</span>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -51,7 +51,7 @@ export default function Home() {
               ) : (
                 <Link 
                   href="/api/auth/login"
-                  className="btn-sport text-sm sm:text-base py-2 px-5 md:py-3 md:px-6"
+                  className="btn-sport text-sm md:text-base py-2 px-4 md:py-3 md:px-6"
                 >
                   <span className="mr-2">Iniciar Sesión</span>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -66,7 +66,7 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto">
             <FeatureCard 
               title="Planes Nutricionales"
-              description="Recomendaciones específicas basadas en tus objetivos y preferencias."
+              description="Recomendaciones específicas basadas en tus objetivos y preferencias alimenticias."
               icon="/images/nutrition.svg"
               variant="nutrition"
             />
@@ -87,17 +87,17 @@ export default function Home() {
       </section>
       
       {/* Sección de Beneficios */}
-      <section className="py-10 md:py-16 lg:py-24 bg-gray-800">
-        <div className="container-custom mx-auto px-4">
-          <div className="text-center mb-6 md:mb-10">
-            <h2 className="heading-sport text-2xl sm:text-3xl md:text-4xl">Beneficios de ParrilleitorAI</h2>
-            <p className="text-gray-300 max-w-3xl mx-auto mt-3 md:mt-4 text-sm md:text-base px-2">
+      <section className="py-8 md:py-16 bg-gray-800">
+        <div className="container-custom px-3">
+          <div className="text-center mb-6 md:mb-12">
+            <h2 className="heading-sport text-2xl md:text-3xl lg:text-4xl">Beneficios de ParrilleitorAI</h2>
+            <p className="text-gray-300 max-w-3xl mx-auto mt-4 text-xs md:text-sm lg:text-base">
               Nuestro asistente de IA está especializado en nutrición deportiva y entrenamiento, 
               ofreciéndote asesoramiento de calidad respaldado por conocimientos científicos.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             <BenefitCard 
               title="Asesoramiento Personalizado"
               description="Adaptado a tus necesidades específicas y objetivos personales."
@@ -128,16 +128,16 @@ export default function Home() {
       
       {/* Sección CTA */}
       {!user && (
-        <section className="section-sport-gradient clip-polygon py-10 md:py-16">
-          <div className="container-custom mx-auto px-4">
+        <section className="section-sport-gradient clip-polygon py-8 md:py-16">
+          <div className="container-custom px-3">
             <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 md:mb-5">¿Listo para alcanzar tus objetivos fitness?</h2>
-              <p className="text-sm sm:text-base md:text-lg mb-5 md:mb-8 max-w-3xl mx-auto px-2">
+              <h2 className="text-xl md:text-3xl font-bold mb-3 md:mb-6">¿Listo para alcanzar tus objetivos fitness?</h2>
+              <p className="text-sm md:text-base mb-4 md:mb-8 max-w-3xl mx-auto">
                 Únete ahora y comienza a recibir asesoramiento personalizado.
               </p>
               <Link 
                 href="/api/auth/login"
-                className="btn-energy text-sm sm:text-base py-2 px-5 md:py-3 md:px-6"
+                className="btn-energy text-sm md:text-base py-2 px-4 md:py-3 md:px-6"
               >
                 Empezar Ahora
               </Link>
@@ -148,14 +148,14 @@ export default function Home() {
       
       {/* Footer simplificado */}
       <footer className="bg-gray-900 text-white py-6 md:py-8">
-        <div className="container-custom mx-auto px-4">
-          <div className="flex flex-col sm:flex-row justify-between items-center">
-            <div className="mb-3 sm:mb-0 flex items-center">
+        <div className="container-custom px-3">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-3 md:mb-0 flex items-center">
               <Image 
                 src="/images/logo.svg" 
                 alt="ParrilleitorAI Logo" 
-                width={28} 
-                height={28} 
+                width={24} 
+                height={24} 
                 className="mr-2 rounded-full"
               />
               <span className="text-base md:text-lg font-bold">ParrilleitorAI</span>
@@ -171,41 +171,49 @@ export default function Home() {
 }
 
 function FeatureCard({ title, description, icon, variant }) {
-  const cardClasses = {
-    nutrition: "nutrition-card",
-    sport: "sport-card",
-    energy: "energy-card"
-  }
-
   return (
-    <div className={`${cardClasses[variant]} relative p-4 md:p-5`}>
-      <div className="feature-icon w-7 h-7 md:w-8 md:h-8 mb-2 md:mb-3">
-        <Image src={icon} alt={title} width={32} height={32} className="w-full h-full" />
+    <div className={`rounded-xl bg-gray-800 border-${variant}-500/30 border p-3 md:p-6 h-full transform transition-transform hover:scale-105 hover:shadow-${variant}-glow overflow-hidden`}>
+      <div className="flex items-start">
+        <div className={`rounded-full p-2 mr-3 bg-${variant}-500/20 flex-shrink-0`}>
+          <div className={`text-${variant}-400 w-6 h-6 md:w-10 md:h-10`}>
+            <Image 
+              src={icon} 
+              alt={title} 
+              width={24} 
+              height={24} 
+              className="w-full h-full"
+            />
+          </div>
+        </div>
+        <div>
+          <h3 className={`text-${variant}-400 font-bold text-base md:text-xl mb-1.5`}>{title}</h3>
+          <p className="text-gray-300 text-xs md:text-sm">{description}</p>
+        </div>
       </div>
-      <h3 className="text-base md:text-lg font-semibold text-white mb-1 md:mb-2">{title}</h3>
-      <p className="text-gray-300 text-xs sm:text-sm md:text-base">{description}</p>
     </div>
   )
 }
 
 function BenefitCard({ title, description, iconPath, color }) {
-  const colors = {
-    sport: "text-sport-500",
-    nutrition: "text-nutrition-500",
-    energy: "text-energy-500",
-    muscle: "text-muscle-500",
-    progress: "text-progress-500"
-  }
-
   return (
-    <div className="p-3 sm:p-4 md:p-5 bg-gray-800 border border-gray-700 rounded-xl hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-      <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mb-2 md:mb-3 ${colors[color]} bg-gray-700`}>
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={iconPath} />
-        </svg>
+    <div className="rounded-xl bg-gray-800 border-gray-700 border p-3 md:p-6 h-full transform transition-transform hover:scale-105 overflow-hidden">
+      <div className="flex flex-col h-full">
+        <div className={`rounded-full p-2 mb-3 bg-${color}-500/20 w-fit`}>
+          <div className={`text-${color}-400 w-6 h-6 md:w-8 md:h-8`}>
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor" 
+              className="w-full h-full"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={iconPath} />
+            </svg>
+          </div>
+        </div>
+        <h3 className={`text-${color}-400 font-bold text-base md:text-lg mb-1.5`}>{title}</h3>
+        <p className="text-gray-300 text-xs md:text-sm flex-grow">{description}</p>
       </div>
-      <h3 className="text-base md:text-lg font-semibold mb-1 md:mb-2">{title}</h3>
-      <p className="text-gray-400 text-xs sm:text-sm md:text-base">{description}</p>
     </div>
   )
 }

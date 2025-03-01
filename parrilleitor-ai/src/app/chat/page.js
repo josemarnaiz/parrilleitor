@@ -215,9 +215,9 @@ export default function Chat() {
 
   if (isUserLoading || isCheckingAccess) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white px-3 py-6 flex items-center justify-center">
-        <div className="text-xl md:text-2xl font-semibold text-center">
-          <div className="w-10 h-10 md:w-12 md:h-12 border-t-2 border-blue-500 border-solid rounded-full animate-spin mx-auto mb-4"></div>
+      <div className="min-h-screen bg-gray-900 text-white px-2 py-4 flex items-center justify-center">
+        <div className="text-lg md:text-2xl font-semibold text-center">
+          <div className="w-8 h-8 md:w-12 md:h-12 border-t-2 border-blue-500 border-solid rounded-full animate-spin mx-auto mb-3"></div>
           {retryCount > 0 ? `Verificando acceso (intento ${retryCount}/3)...` : 'Cargando...'}
         </div>
       </div>
@@ -226,22 +226,22 @@ export default function Chat() {
 
   if (!user || !isPremium) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white p-4 flex flex-col items-center justify-center">
-        <div className="bg-gray-800 rounded-lg p-5 md:p-8 max-w-md w-full text-center shadow-lg">
-          <h1 className="text-xl md:text-2xl font-bold mb-4 text-gradient-sport">Acceso al Chat</h1>
+      <div className="min-h-screen bg-gray-900 text-white p-3 md:p-4 flex flex-col items-center justify-center">
+        <div className="bg-gray-800 rounded-lg p-4 md:p-8 max-w-md w-full text-center shadow-lg">
+          <h1 className="text-lg md:text-2xl font-bold mb-3 md:mb-4 text-gradient-sport">Acceso al Chat</h1>
           
           {error && (
-            <div className="bg-red-500 text-white p-3 rounded-lg mb-4 text-sm md:text-base">
+            <div className="bg-red-500 text-white p-2 md:p-3 rounded-lg mb-3 md:mb-4 text-xs md:text-base">
               {error}
             </div>
           )}
           
           {!user && (
             <>
-              <p className="mb-6 text-sm md:text-base">Para acceder al chat, necesitas iniciar sesión con tu cuenta.</p>
+              <p className="mb-4 md:mb-6 text-xs md:text-base">Para acceder al chat, necesitas iniciar sesión con tu cuenta.</p>
               <Link 
                 href="/api/auth/login" 
-                className="btn-sport px-5 py-2 text-sm md:text-base"
+                className="btn-sport px-4 py-2 text-sm md:text-base"
               >
                 Iniciar Sesión
               </Link>
@@ -368,49 +368,50 @@ export default function Chat() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
-      <div className="w-full max-w-4xl mx-auto flex-1 flex flex-col p-3 md:p-4">
-        <div className="bg-gray-800 rounded-lg shadow-lg flex-1 flex flex-col overflow-hidden">
-          {/* Encabezado del chat */}
-          <div className="bg-gray-800 border-b border-gray-700 p-3 md:p-4">
-            <h1 className="text-lg md:text-xl font-bold text-gradient-sport">ParrilleitorAI Chat</h1>
-            <p className="text-xs md:text-sm text-gray-400">Tu asistente personal de nutrición y ejercicio</p>
-          </div>
-
-          {/* Área de mensajes */}
-          <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4">
+    <div className="min-h-screen bg-gray-900 text-white overflow-hidden flex flex-col">
+      <div className="flex flex-col h-screen">
+        {/* Cabecera */}
+        <header className="bg-gray-800 p-2 md:p-3 flex items-center justify-between shadow-md">
+          <h1 className="text-gradient-sport text-base md:text-xl font-bold">ParrilleitorAI Chat</h1>
+          <Link 
+            href="/" 
+            className="text-xs md:text-sm text-gray-300 hover:text-white transition-colors"
+          >
+            Volver al inicio
+          </Link>
+        </header>
+        
+        {/* Contenedor principal */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Mensajes */}
+          <div className="flex-1 p-2 md:p-4 overflow-y-auto custom-scrollbar space-y-3">
             {error && (
-              <div className="bg-red-500 text-white p-3 rounded-lg mb-3 text-sm">
+              <div className="bg-red-500 text-white p-2 md:p-3 rounded-lg mb-3 text-xs md:text-sm max-w-full mx-auto text-center">
                 {error}
                 <button 
-                  className="ml-2 text-white underline text-xs"
-                  onClick={() => setError(null)}
+                  onClick={() => setError(null)} 
+                  className="ml-2 font-bold hover:text-gray-200"
                 >
-                  Cerrar
+                  ×
                 </button>
               </div>
             )}
             
-            {isLoadingHistory ? (
-              <div className="text-center py-4 text-sm md:text-base">
-                <div className="w-8 h-8 border-t-2 border-blue-500 border-solid rounded-full animate-spin mx-auto mb-2"></div>
-                Cargando historial...
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="text-center py-8 text-gray-400 text-sm md:text-base">
-                <p className="mb-3">👋 ¡Hola! Soy tu asistente de nutrición y ejercicio.</p>
+            {messages.length === 0 ? (
+              <div className="text-center py-6 md:py-8 text-gray-400 text-xs md:text-base">
+                <p className="mb-2 md:mb-3">👋 ¡Hola! Soy tu asistente de nutrición y ejercicio.</p>
                 <p>¿En qué puedo ayudarte hoy?</p>
               </div>
             ) : (
               messages.map((message, index) => (
                 <div
                   key={index}
-                  className={`p-3 rounded-lg text-sm md:text-base ${
+                  className={`p-2 md:p-3 rounded-lg text-xs md:text-base mb-1 md:mb-2 ${
                     message.role === 'user' 
-                      ? 'bg-blue-600 ml-auto max-w-[85%] md:max-w-[75%]' 
+                      ? 'bg-blue-600 ml-auto max-w-[80%] md:max-w-[75%]' 
                       : message.role === 'error'
-                      ? 'bg-red-500 mr-auto max-w-[85%] md:max-w-[75%]'
-                      : 'bg-gray-700 mr-auto max-w-[85%] md:max-w-[75%]'
+                      ? 'bg-red-500 mr-auto max-w-[80%] md:max-w-[75%]'
+                      : 'bg-gray-700 mr-auto max-w-[80%] md:max-w-[75%]'
                   }`}
                 >
                   {message.content}
@@ -419,11 +420,11 @@ export default function Chat() {
             )}
             
             {isTyping && (
-              <div className="bg-gray-700 p-3 rounded-lg mr-auto max-w-[85%] md:max-w-[75%] text-sm md:text-base">
+              <div className="bg-gray-700 p-2 md:p-3 rounded-lg mr-auto max-w-[80%] md:max-w-[75%] text-xs md:text-base">
                 <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-100"></div>
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-200"></div>
+                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce delay-100"></div>
+                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce delay-200"></div>
                 </div>
               </div>
             )}
@@ -433,18 +434,18 @@ export default function Chat() {
           </div>
           
           {/* Formulario de entrada */}
-          <div className="border-t border-gray-700 p-3">
+          <div className="border-t border-gray-700 p-2 md:p-3">
             <form onSubmit={handleSubmit} className="flex gap-2">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Escribe tu mensaje..."
-                className="flex-1 p-2 rounded-lg bg-gray-700 text-white text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 p-2 rounded-lg bg-gray-700 text-white text-xs md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 type="submit"
-                className="px-3 md:px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base flex-shrink-0"
+                className="px-3 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors text-xs md:text-base flex-shrink-0 font-medium"
                 disabled={isTyping}
               >
                 {isTyping ? '...' : 'Enviar'}

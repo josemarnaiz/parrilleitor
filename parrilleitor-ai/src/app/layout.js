@@ -16,16 +16,16 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="es" className={`${inter.variable} h-full antialiased`}>
+    <html lang="es" className={`${inter.variable} h-full antialiased overflow-x-hidden`}>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
       </head>
-      <body className="min-h-screen bg-gray-900 text-white font-sans">
+      <body className="min-h-screen bg-gray-900 text-white font-sans overflow-x-hidden">
         <AuthProvider>
-          <div className="flex min-h-screen flex-col">
+          <div className="flex min-h-screen flex-col overflow-x-hidden">
             <Navbar />
-            <main className="flex-1">
-              <div className="container-custom py-6">
+            <main className="flex-1 overflow-x-hidden w-full">
+              <div className="container-custom mx-auto w-full">
                 {children}
               </div>
             </main>

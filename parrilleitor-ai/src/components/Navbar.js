@@ -48,7 +48,7 @@ export default function Navbar() {
 
   return (
     <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-gray-900/95 shadow-lg backdrop-blur-sm' : 'bg-transparent'}`}>
-      <div className="container-custom mx-auto px-4 py-3 md:py-4">
+      <div className="container-custom px-3 py-2 md:py-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <div className="flex items-center">
@@ -56,11 +56,11 @@ export default function Navbar() {
               <Image 
                 src="/images/logo.svg" 
                 alt="ParrilleitorAI Logo" 
-                width={32} 
-                height={32} 
+                width={24} 
+                height={24} 
                 className="rounded-full mr-2"
               />
-              <span className={`text-lg md:text-xl font-bold transition-all ${isScrolled ? 'text-white' : 'text-white'}`}>
+              <span className={`text-base md:text-xl font-bold transition-all ${isScrolled ? 'text-white' : 'text-white'}`}>
                 ParrilleitorAI
               </span>
             </Link>
@@ -85,8 +85,8 @@ export default function Navbar() {
                       <Image 
                         src={user.picture || "https://via.placeholder.com/32"} 
                         alt={user.name || "Usuario"} 
-                        width={32} 
-                        height={32} 
+                        width={28} 
+                        height={28} 
                         className="rounded-full"
                       />
                     </div>
@@ -128,17 +128,17 @@ export default function Navbar() {
           <div className="md:hidden flex items-center">
             <button
               onClick={toggleMobileMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-gray-800 focus:outline-none"
+              className="inline-flex items-center justify-center p-1 rounded-md text-white hover:bg-gray-800 focus:outline-none"
               aria-expanded={isMobileMenuOpen}
             >
               <span className="sr-only">Abrir menú principal</span>
               {/* Icono de menú hamburguesa o X */}
               {isMobileMenuOpen ? (
-                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               ) : (
-                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               )}
@@ -150,43 +150,43 @@ export default function Navbar() {
       {/* Menú móvil */}
       {isMobileMenuOpen && (
         <div className="md:hidden bg-gray-900/95 shadow-lg backdrop-blur-sm animate-fadeIn">
-          <div className="px-4 pt-2 pb-4 space-y-2">
+          <div className="px-3 pt-2 pb-3 space-y-1">
             {user ? (
               <>
-                <div className="flex items-center p-3 border-b border-gray-800">
+                <div className="flex items-center p-2 border-b border-gray-800">
                   <Image 
                     src={user.picture || "https://via.placeholder.com/32"} 
                     alt={user.name || "Usuario"} 
-                    width={28} 
-                    height={28} 
+                    width={24} 
+                    height={24} 
                     className="rounded-full mr-2"
                   />
                   <div>
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-xs font-medium text-white">
                       {user.name || user.email?.split('@')[0] || "Usuario"}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 truncate max-w-[150px]">
                       {user.email}
                     </p>
                   </div>
                 </div>
                 <Link 
                   href="/chat" 
-                  className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-800"
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-gray-800"
                   onClick={closeMenu}
                 >
                   Chat
                 </Link>
                 <Link 
                   href="/admin/users" 
-                  className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-800"
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-gray-800"
                   onClick={closeMenu}
                 >
                   Mi Cuenta
                 </Link>
                 <button 
                   onClick={handleLogout}
-                  className="w-full text-left block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-800"
+                  className="w-full text-left block rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-gray-800"
                 >
                   Cerrar Sesión
                 </button>
@@ -194,7 +194,7 @@ export default function Navbar() {
             ) : (
               <Link 
                 href="/api/auth/login" 
-                className="flex justify-center rounded-md px-3 py-2 text-base font-medium bg-sport-500 text-white hover:bg-sport-600"
+                className="flex justify-center rounded-md px-3 py-2 text-sm font-medium bg-sport-500 text-white hover:bg-sport-600"
                 onClick={closeMenu}
               >
                 Iniciar Sesión
