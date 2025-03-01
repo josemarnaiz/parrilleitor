@@ -11,7 +11,7 @@ console.log("URI de MongoDB configurada:", MONGODB_URI.replace(/mongodb(\+srv)?:
 
 const MONGODB_DATABASE = process.env.MONGODB_DATABASE || 'parrilleitor';
 
-// Opciones del cliente MongoDB con configuración mejorada para mayor tolerancia a fallos
+// Opciones del cliente MongoDB con configuración compatible con Vercel
 const options = {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -26,7 +26,7 @@ const options = {
   retryWrites: true,
   retryReads: true,
   w: 'majority',
-  keepAlive: true,
+  // La opción keepAlive ha sido eliminada ya que no es compatible
 };
 
 // Variable para almacenar la conexión
