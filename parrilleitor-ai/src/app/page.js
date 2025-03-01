@@ -172,21 +172,21 @@ export default function Home() {
 
 function FeatureCard({ title, description, icon, variant }) {
   return (
-    <div className={`rounded-xl bg-gray-800 border-${variant}-500/30 border p-3 md:p-6 h-full transform transition-transform hover:scale-105 hover:shadow-${variant}-glow overflow-hidden`}>
+    <div className={`feature-card rounded-xl bg-gray-800 border-${variant}-500/30 border p-2 md:p-4 h-full transform transition-transform hover:scale-105 hover:shadow-${variant}-glow overflow-hidden`}>
       <div className="flex items-start">
-        <div className={`rounded-full p-2 mr-3 bg-${variant}-500/20 flex-shrink-0`}>
-          <div className={`text-${variant}-400 w-6 h-6 md:w-10 md:h-10`}>
+        <div className={`rounded-full p-1.5 md:p-2 mr-2 md:mr-3 bg-${variant}-500/20 flex-shrink-0`}>
+          <div className={`text-${variant}-400 w-5 h-5 md:w-8 md:h-8`}>
             <Image 
               src={icon} 
               alt={title} 
-              width={24} 
-              height={24} 
+              width={20} 
+              height={20} 
               className="w-full h-full"
             />
           </div>
         </div>
         <div>
-          <h3 className={`text-${variant}-400 font-bold text-base md:text-xl mb-1.5`}>{title}</h3>
+          <h3 className={`text-${variant}-400 font-bold text-sm md:text-lg mb-1 md:mb-1.5`}>{title}</h3>
           <p className="text-gray-300 text-xs md:text-sm">{description}</p>
         </div>
       </div>
@@ -196,10 +196,10 @@ function FeatureCard({ title, description, icon, variant }) {
 
 function BenefitCard({ title, description, iconPath, color }) {
   return (
-    <div className="rounded-xl bg-gray-800 border-gray-700 border p-3 md:p-6 h-full transform transition-transform hover:scale-105 overflow-hidden">
+    <div className="benefit-card rounded-xl bg-gray-800 border-gray-700 border p-2 md:p-4 h-full transform transition-transform hover:scale-105 overflow-hidden">
       <div className="flex flex-col h-full">
-        <div className={`rounded-full p-2 mb-3 bg-${color}-500/20 w-fit`}>
-          <div className={`text-${color}-400 w-6 h-6 md:w-8 md:h-8`}>
+        <div className={`rounded-full p-1.5 md:p-2 mb-2 md:mb-3 bg-${color}-500/20 w-fit`}>
+          <div className={`text-${color}-400 w-5 h-5 md:w-7 md:h-7`}>
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
               fill="none" 
@@ -211,7 +211,7 @@ function BenefitCard({ title, description, iconPath, color }) {
             </svg>
           </div>
         </div>
-        <h3 className={`text-${color}-400 font-bold text-base md:text-lg mb-1.5`}>{title}</h3>
+        <h3 className={`text-${color}-400 font-bold text-sm md:text-lg mb-1 md:mb-1.5`}>{title}</h3>
         <p className="text-gray-300 text-xs md:text-sm flex-grow">{description}</p>
       </div>
     </div>

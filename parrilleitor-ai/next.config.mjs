@@ -4,6 +4,40 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['mongoose']
   },
+  images: {
+    domains: ['lh3.googleusercontent.com', 's.gravatar.com'],
+    unoptimized: true
+  },
+  async headers() {
+    return [
+      {
+        // Aplica estos headers a todas las rutas
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, max-age=0',
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'X-Requested-With, Content-Type, Authorization, x-next-router-state-tree, x-next-url',
+          },
+          {
+            key: 'Access-Control-Allow-Credentials',
+            value: 'true',
+          },
+        ],
+      },
+    ];
+  },
   webpack: (config) => {
     config.experiments = {
       ...config.experiments,

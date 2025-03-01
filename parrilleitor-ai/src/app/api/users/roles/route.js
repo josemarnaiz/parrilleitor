@@ -11,9 +11,9 @@ const AUTH0_BASE_URL = process.env.AUTH0_BASE_URL || 'https://parrilleitorai.ver
 const commonHeaders = {
   'Cache-Control': 'no-store, max-age=0',
   'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': 'https://parrilleitorai.vercel.app',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS, POST',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-next-router-state-tree, x-next-url, x-auth-token, x-client-version',
   'Access-Control-Allow-Credentials': 'true',
 }
 

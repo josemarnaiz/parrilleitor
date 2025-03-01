@@ -15,16 +15,34 @@ const publicPaths = [
   '/unauthorized'
 ]
 
+// Configuración CORS común
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS,PUT,DELETE',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-next-router-state-tree, x-next-url, x-auth-token, x-client-version',
+  'Access-Control-Allow-Credentials': 'true',
+  'Cache-Control': 'no-store, max-age=0'
+}
+
 export default async function middleware(req) {
   try {
+    // Manejar solicitudes OPTIONS (preflight) con CORS adecuado
+    if (req.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          ...corsHeaders,
+          'Access-Control-Max-Age': '86400'
+        }
+      });
+    }
+
     // No aplicar middleware a rutas públicas
     const path = req.nextUrl.pathname
     if (publicPaths.some(p => path.startsWith(p))) {
       return new Response(null, {
         status: 200,
-        headers: {
-          'Cache-Control': 'no-store, max-age=0'
-        }
+        headers: corsHeaders
       })
     }
 
@@ -49,9 +67,7 @@ export default async function middleware(req) {
       })
       return new Response(null, {
         status: 200,
-        headers: {
-          'Cache-Control': 'no-store, max-age=0'
-        }
+        headers: corsHeaders
       })
     }
 
@@ -86,9 +102,7 @@ export default async function middleware(req) {
     // Allow the request to proceed
     return new Response(null, {
       status: 200,
-      headers: {
-        'Cache-Control': 'no-store, max-age=0'
-      }
+      headers: corsHeaders
     })
     
   } catch (error) {
@@ -103,9 +117,7 @@ export default async function middleware(req) {
     // En caso de error, permitir que la solicitud continúe
     return new Response(null, {
       status: 200,
-      headers: {
-        'Cache-Control': 'no-store, max-age=0'
-      }
+      headers: corsHeaders
     })
   }
 }

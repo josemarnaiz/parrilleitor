@@ -6,9 +6,9 @@ const auth0Config = getAuth0Config()
 
 // Configuración común de CORS y seguridad
 const commonHeaders = {
-  'Access-Control-Allow-Origin': 'https://parrilleitorai.vercel.app',
-  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-next-router-state-tree, x-next-url',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS,PUT,DELETE',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-next-router-state-tree, x-next-url, x-auth-token, x-client-version',
   'Access-Control-Allow-Credentials': 'true',
   'Cache-Control': 'no-store, max-age=0',
 }
@@ -129,9 +129,72 @@ const authConfig = {
   })
 }
 
-export const GET = handleAuth(authConfig)
+export const GET = async (req, context) => {
+  try {
+    // Verificar si es una solicitud OPTIONS
+    if (req.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 200,
+        headers: commonHeaders
+      });
+    }
+    
+    const handler = handleAuth(authConfig);
+    return await handler(req, context);
+  } catch (error) {
+    console.error('Auth route error:', {
+      message: error.message,
+      stack: error.stack,
+      url: req.url,
+      method: req.method,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Devolver respuesta amigable con errores
+    return new Response(
+      JSON.stringify({
+        error: 'Authentication error',
+        details: error.message,
+        timestamp: new Date().toISOString()
+      }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          ...commonHeaders
+        }
+      }
+    );
+  }
+}
 
-export const POST = handleAuth(authConfig)
+export const POST = async (req, context) => {
+  try {
+    const handler = handleAuth(authConfig);
+    return await handler(req, context);
+  } catch (error) {
+    console.error('Auth route error (POST):', {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+    
+    return new Response(
+      JSON.stringify({
+        error: 'Authentication error',
+        details: error.message,
+        timestamp: new Date().toISOString()
+      }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          ...commonHeaders
+        }
+      }
+    );
+  }
+}
 
 // Configure preflight requests
 export async function OPTIONS(request) {

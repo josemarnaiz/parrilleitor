@@ -86,23 +86,31 @@
   --progress-800: 21, 94, 117;
   --progress-900: 22, 78, 99;
   --progress-950: 8, 51, 68;
+
+  --background: #000000;
+  --foreground: #ffffff;
+  --border: #333333;
+  --primary: #0ea5e9;
+  --radius: 0.5rem;
 }
 
 /* Configuración base para todo el documento */
 html, body {
-  overflow-x: hidden;
+  @apply h-full bg-background text-foreground overflow-x-hidden;
   max-width: 100vw;
-  box-sizing: border-box;
 }
 
 *, *::before, *::after {
-  box-sizing: inherit;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 /* Estilos para imágenes y SVG para hacerlos responsivos */
 img, svg {
   max-width: 100%;
   height: auto;
+  display: block;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -114,16 +122,12 @@ img, svg {
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-  background-color: rgb(var(--gray-900));
-  min-height: 100vh;
+  @apply flex min-h-screen flex-col;
+  font-family: var(--font-inter), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  width: 100%;
 }
 
 /* Contenedor personalizado con padding responsivo */
@@ -132,6 +136,8 @@ body {
   max-width: 1280px;
   margin-left: auto;
   margin-right: auto;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
 }
 
 /* Clases para manejar overflow */
@@ -144,12 +150,12 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgb(var(--gray-800));
+  background: #1f2937;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgb(var(--gray-600));
-  border-radius: 3px;
+  background-color: #4b5563;
+  border-radius: 20px;
 }
 
 /* Utilities for animations */
@@ -163,20 +169,18 @@ body {
 
 /* Hero Section con imagen de fondo */
 .hero-section {
-  background-image: url('/images/hero-bg.jpg');
+  background-color: #0f172a;
+  background-image: url('/images/hero-bg.svg');
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   position: relative;
   color: white;
 }
 
 /* Gradient text */
 .text-gradient-sport {
-  background: linear-gradient(
-    90deg, 
-    rgb(var(--sport-400)) 0%, 
-    rgb(var(--sport-600)) 100%
-  );
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -184,11 +188,7 @@ body {
 }
 
 .text-gradient-nutrition {
-  background: linear-gradient(
-    90deg, 
-    rgb(var(--nutrition-400)) 0%, 
-    rgb(var(--nutrition-600)) 100%
-  );
+  background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -196,11 +196,7 @@ body {
 }
 
 .text-gradient-energy {
-  background: linear-gradient(
-    90deg, 
-    rgb(var(--energy-400)) 0%, 
-    rgb(var(--energy-600)) 100%
-  );
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -211,167 +207,144 @@ body {
 .heading-sport {
   position: relative;
   display: inline-block;
-  padding-bottom: 0.5rem;
 }
 
 .heading-sport::after {
   content: '';
   position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%);
-  width: 50px;
-  height: 3px;
-  background: linear-gradient(
-    90deg, 
-    rgb(var(--sport-400)) 0%, 
-    rgb(var(--sport-600)) 100%
-  );
-  border-radius: 1.5px;
+  bottom: -8px;
+  left: 0;
+  width: 40%;
+  height: 4px;
+  background: linear-gradient(90deg, #38bdf8, transparent);
+  border-radius: 2px;
 }
 
 .section-sport-gradient {
-  background: linear-gradient(
-    135deg, 
-    rgb(var(--sport-900)) 0%, 
-    rgb(var(--sport-800)) 50%,
-    rgb(var(--sport-700)) 100%
-  );
+  background: linear-gradient(180deg, 
+    rgba(56, 189, 248, 0.1) 0%, 
+    rgba(56, 189, 248, 0.05) 30%, 
+    rgba(56, 189, 248, 0) 100%);
   color: white;
 }
 
 /* Polygon clip for section */
 .clip-polygon {
-  clip-path: polygon(0 5%, 100% 0, 100% 95%, 0 100%);
+  clip-path: polygon(0% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%);
 }
 
 /* Buttons */
 .btn-sport {
-  background: linear-gradient(
-    90deg, 
-    rgb(var(--sport-500)) 0%, 
-    rgb(var(--sport-600)) 100%
-  );
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
   color: white;
-  border-radius: 0.375rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
   font-weight: 500;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(var(--sport-500), 0.25);
+  border: none;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  text-align: center;
 }
 
 .btn-sport:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 8px rgba(var(--sport-500), 0.3);
+  box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.5);
 }
 
 .btn-nutrition {
-  background: linear-gradient(
-    90deg, 
-    rgb(var(--nutrition-500)) 0%, 
-    rgb(var(--nutrition-600)) 100%
-  );
+  background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
   color: white;
-  border-radius: 0.375rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
   font-weight: 500;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(var(--nutrition-500), 0.25);
+  border: none;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  text-align: center;
 }
 
 .btn-nutrition:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 8px rgba(var(--nutrition-500), 0.3);
+  box-shadow: 0 10px 25px -5px rgba(74, 222, 128, 0.5);
 }
 
 .btn-energy {
-  background: linear-gradient(
-    90deg, 
-    rgb(var(--energy-500)) 0%, 
-    rgb(var(--energy-600)) 100%
-  );
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
   color: white;
-  border-radius: 0.375rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
   font-weight: 500;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(var(--energy-500), 0.25);
+  border: none;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  text-align: center;
 }
 
 .btn-energy:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 8px rgba(var(--energy-500), 0.3);
+  box-shadow: 0 10px 25px -5px rgba(167, 139, 250, 0.5);
 }
 
 /* Tarjetas temáticas */
 .sport-card {
-  background: linear-gradient(
-    145deg, 
-    rgb(var(--gray-800)) 0%, 
-    rgb(var(--gray-900)) 100%
-  );
-  border-radius: 0.75rem;
-  border-left: 3px solid rgb(var(--sport-500));
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(56, 189, 248, 0.2);
+  border-radius: 1rem;
   transition: all 0.3s ease;
+  background: rgba(56, 189, 248, 0.05);
+  overflow: hidden;
+  height: 100%;
 }
 
 .sport-card:hover {
+  border-color: rgba(56, 189, 248, 0.5);
   transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(var(--sport-500), 0.1);
 }
 
 .nutrition-card {
-  background: linear-gradient(
-    145deg, 
-    rgb(var(--gray-800)) 0%, 
-    rgb(var(--gray-900)) 100%
-  );
-  border-radius: 0.75rem;
-  border-left: 3px solid rgb(var(--nutrition-500));
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(74, 222, 128, 0.2);
+  border-radius: 1rem;
   transition: all 0.3s ease;
+  background: rgba(74, 222, 128, 0.05);
+  overflow: hidden;
+  height: 100%;
 }
 
 .nutrition-card:hover {
+  border-color: rgba(74, 222, 128, 0.5);
   transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(var(--nutrition-500), 0.1);
 }
 
 .energy-card {
-  background: linear-gradient(
-    145deg, 
-    rgb(var(--gray-800)) 0%, 
-    rgb(var(--gray-900)) 100%
-  );
-  border-radius: 0.75rem;
-  border-left: 3px solid rgb(var(--energy-500));
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(167, 139, 250, 0.2);
+  border-radius: 1rem;
   transition: all 0.3s ease;
+  background: rgba(167, 139, 250, 0.05);
+  overflow: hidden;
+  height: 100%;
 }
 
 .energy-card:hover {
+  border-color: rgba(167, 139, 250, 0.5);
   transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(var(--energy-500), 0.1);
 }
 
 /* Glows para hover effects */
 .hover\:shadow-sport-glow:hover {
-  box-shadow: 0 5px 15px rgba(var(--sport-500), 0.4);
+  box-shadow: 0 0 30px -5px rgba(56, 189, 248, 0.5);
 }
 
 .hover\:shadow-nutrition-glow:hover {
-  box-shadow: 0 5px 15px rgba(var(--nutrition-500), 0.4);
+  box-shadow: 0 0 30px -5px rgba(74, 222, 128, 0.5);
 }
 
 .hover\:shadow-energy-glow:hover {
-  box-shadow: 0 5px 15px rgba(var(--energy-500), 0.4);
+  box-shadow: 0 0 30px -5px rgba(167, 139, 250, 0.5);
 }
 
 /* Media queries específicas para mejorar la experiencia móvil */
@@ -379,18 +352,87 @@ body {
   .container-custom {
     padding-left: 0.75rem;
     padding-right: 0.75rem;
+    width: 100%;
   }
   
   .hero-section {
-    background-position: 70% center;
+    padding-top: 4rem;
   }
   
   .btn-sport, .btn-nutrition, .btn-energy {
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.8rem;
     font-size: 0.875rem;
   }
   
   .clip-polygon {
-    clip-path: polygon(0 2%, 100% 0, 100% 98%, 0 100%);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 90%, 90% 100%, 0% 100%);
+  }
+
+  /* Corregir elementos descuadrados */
+  .feature-card, .benefit-card {
+    max-width: 100%;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Reducir tamaños de iconos */
+  .feature-card img, .benefit-card img {
+    width: 24px !important;
+    height: 24px !important;
+    max-width: 24px !important;
+    max-height: 24px !important;
+  }
+
+  /* Ajustar tamaños de texto */
+  h1, h2, h3 {
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  /* Ajustar espaciado vertical */
+  .py-16, .py-12, .py-10 {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  .mt-16, .mt-12, .mt-10 {
+    margin-top: 2rem;
+  }
+
+  /* Reducir padding horizontal */
+  .px-8, .px-6 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Ajustes para pantallas extra pequeñas */
+@media (max-width: 360px) {
+  /* Reducir aún más los tamaños de texto */
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+  }
+  
+  p {
+    font-size: 0.875rem;
+  }
+
+  /* Iconos aún más pequeños */
+  .feature-card img, .benefit-card img {
+    width: 20px !important;
+    height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+  }
+
+  /* Espaciado mínimo */
+  .px-4 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
 }
