@@ -1,7 +1,14 @@
 import { MongoClient, ServerApiVersion } from 'mongodb';
 
 // Configuración de conexión a MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://jmam:jmamadmin@cluster0.pogiz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+// Asegurarse de que la URI siempre tenga el formato correcto
+const DEFAULT_URI = "mongodb+srv://jmam:jmamadmin@cluster0.pogiz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const MONGODB_URI = process.env.MONGODB_URI && process.env.MONGODB_URI.startsWith('mongodb') 
+  ? process.env.MONGODB_URI 
+  : DEFAULT_URI;
+
+console.log("URI de MongoDB configurada:", MONGODB_URI.replace(/mongodb(\+srv)?:\/\/[^:]+:[^@]+@/, 'mongodb$1://****:****@'));
+
 const MONGODB_DATABASE = process.env.MONGODB_DATABASE || 'parrilleitor';
 
 // Opciones del cliente MongoDB con configuración mejorada para mayor tolerancia a fallos
@@ -31,6 +38,12 @@ async function connectToDatabase() {
   try {
     if (!client) {
       console.log("Iniciando conexión a MongoDB...");
+      
+      // Verificar que la URI tenga el formato correcto
+      if (!MONGODB_URI.startsWith('mongodb://') && !MONGODB_URI.startsWith('mongodb+srv://')) {
+        throw new Error('URI de MongoDB inválida. Debe comenzar con "mongodb://" o "mongodb+srv://"');
+      }
+      
       client = new MongoClient(MONGODB_URI, options);
       await client.connect();
       console.log("Conexión a MongoDB establecida correctamente");
@@ -48,7 +61,10 @@ async function connectToDatabase() {
     });
     
     // Proporcionar información útil sobre posibles problemas de conexión
-    if (error.message.includes('connection timed out') || error.message.includes('no server found')) {
+    if (error.message.includes('Invalid scheme') || error.message.includes('URI de MongoDB inválida')) {
+      console.error("La URI de MongoDB no tiene el formato correcto. Asegúrate de que comience con 'mongodb://' o 'mongodb+srv://'");
+      console.error("URI actual (ofuscada):", MONGODB_URI.replace(/mongodb(\+srv)?:\/\/[^:]+:[^@]+@/, 'mongodb$1://****:****@'));
+    } else if (error.message.includes('connection timed out') || error.message.includes('no server found')) {
       console.error("Posible problema de whitelist de IPs. Asegúrate de que la IP de tu servidor esté permitida en MongoDB Atlas Network Access.");
       console.error("Recomendación: Añade 0.0.0.0/0 a la lista de IPs permitidas en MongoDB Atlas para permitir conexiones desde cualquier IP.");
     }
