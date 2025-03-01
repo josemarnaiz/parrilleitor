@@ -102,59 +102,12 @@ export default async function handler(req, res) {
       ? message.substring(0, 1000) + "... (mensaje truncado para mejorar el rendimiento)"
       : message;
 
-    // Intentar conectar a MongoDB pero no fallar si hay error
-    let dbConnected = false;
-    try {
-      await connectDB();
-      dbConnected = true;
-      console.log('Conexión a MongoDB establecida correctamente');
-    } catch (dbError) {
-      console.error('Error al conectar a MongoDB:', dbError);
-      // No fallamos aquí, continuamos con la petición a OpenAI
-      console.log('Continuando sin conexión a MongoDB, se intentará guardar después de obtener respuesta de OpenAI');
-    }
-
-    // Cargar conversación existente si hay un ID
-    let conversation = null;
-    let existingMessages = [];
-    
-    if (dbConnected && conversationId) {
-      try {
-        conversation = await Conversation.findOne({
-          _id: conversationId,
-          userId: session.user.sub,
-          isActive: true
-        });
-        
-        if (conversation) {
-          existingMessages = [...conversation.messages];
-          console.log(`Conversación existente cargada, ID: ${conversationId}, mensajes: ${existingMessages.length}`);
-        } else {
-          console.log('Conversación no encontrada, se creará una nueva después de obtener respuesta de OpenAI');
-        }
-      } catch (findError) {
-        console.error('Error al buscar conversación existente:', findError);
-        // No fallamos aquí, continuamos con la petición a OpenAI
-      }
-    }
-
-    // Preparar mensajes para OpenAI
-    // Si tenemos conversación existente, usamos sus mensajes, si no, solo el mensaje actual
+    // PASO 1: Obtener respuesta de OpenAI primero, sin guardar nada en MongoDB
+    // Preparar mensajes para OpenAI con el contexto mínimo necesario
     const messagesForAI = [
-      { role: 'system', content: SYSTEM_PROMPT }
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: truncatedMessage }
     ];
-    
-    if (existingMessages.length > 0) {
-      // Limitar a los últimos 10 mensajes para mejorar rendimiento
-      const limitedExistingMessages = existingMessages.slice(-9); // Dejamos espacio para el nuevo mensaje
-      messagesForAI.push(...limitedExistingMessages.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      })));
-    }
-    
-    // Añadir el mensaje actual del usuario
-    messagesForAI.push({ role: 'user', content: truncatedMessage });
 
     let aiResponse;
     try {
@@ -172,59 +125,52 @@ export default async function handler(req, res) {
       return res.status(200).json({
         response: errorMessage,
         error: aiError.message,
-        conversation: conversation // Devolvemos la conversación sin modificar
+        conversation: null
       });
     }
 
-    // Solo después de recibir respuesta de OpenAI, guardamos en MongoDB
-    if (dbConnected) {
-      try {
-        // Si no teníamos conversación o no se encontró, creamos una nueva
-        if (!conversation) {
-          conversation = new Conversation({
-            userId: session.user.sub,
-            userEmail: session.user.email,
-            messages: [],
-            lastUpdated: new Date(),
-            isActive: true
-          });
-        }
+    // PASO 2: Solo después de tener la respuesta de OpenAI, intentamos guardar en MongoDB
+    let conversation = null;
+    let dbError = null;
 
-        // Añadir mensaje del usuario
-        await conversation.addMessage('user', truncatedMessage);
-        
-        // Añadir respuesta de OpenAI
-        await conversation.addMessage('assistant', aiResponse);
-        
-        console.log('Conversación guardada correctamente en MongoDB');
-      } catch (saveError) {
-        console.error('Error al guardar conversación en MongoDB:', saveError);
-        
-        // Creamos un objeto de conversación temporal para devolver al cliente
-        if (!conversation) {
-          conversation = {
-            _id: 'temp_' + Date.now(),
-            userId: session.user.sub,
-            userEmail: session.user.email,
-            messages: [
-              { role: 'user', content: truncatedMessage, timestamp: new Date() },
-              { role: 'assistant', content: aiResponse, timestamp: new Date() }
-            ],
-            lastUpdated: new Date(),
-            isActive: true,
-            _tempId: true // Marcamos como temporal
-          };
-        }
-        
-        clearTimeout(functionTimeout);
-        return res.status(200).json({
-          response: aiResponse,
-          conversation: conversation,
-          warning: "Se obtuvo respuesta de OpenAI pero no se pudo guardar en la base de datos. La conversación continuará pero podría no persistir."
+    try {
+      // Intentar conectar a MongoDB
+      await connectDB();
+      console.log('Conexión a MongoDB establecida correctamente');
+      
+      // Buscar o crear conversación
+      if (conversationId) {
+        conversation = await Conversation.findOne({
+          _id: conversationId,
+          userId: session.user.sub,
+          isActive: true
         });
       }
-    } else {
-      // Si no pudimos conectar a MongoDB, creamos un objeto de conversación temporal
+      
+      if (!conversation) {
+        // Crear nueva conversación
+        conversation = new Conversation({
+          userId: session.user.sub,
+          userEmail: session.user.email,
+          messages: [],
+          lastUpdated: new Date(),
+          isActive: true
+        });
+      }
+      
+      // Usar el nuevo método addMessages para añadir ambos mensajes a la vez
+      // Esto es más eficiente que hacer dos operaciones de guardado separadas
+      await conversation.addMessages([
+        { role: 'user', content: truncatedMessage, timestamp: new Date() },
+        { role: 'assistant', content: aiResponse, timestamp: new Date() }
+      ]);
+      
+      console.log('Conversación guardada correctamente en MongoDB');
+    } catch (error) {
+      dbError = error;
+      console.error('Error al guardar en MongoDB:', error);
+      
+      // Crear un objeto de conversación temporal para devolver al cliente
       conversation = {
         _id: 'temp_' + Date.now(),
         userId: session.user.sub,
@@ -237,14 +183,18 @@ export default async function handler(req, res) {
         isActive: true,
         _tempId: true // Marcamos como temporal
       };
-      
-      console.log('Devolviendo conversación temporal sin guardar en MongoDB');
     }
 
+    // PASO 3: Devolver la respuesta al cliente, independientemente de si se guardó en MongoDB
     clearTimeout(functionTimeout);
     return res.status(200).json({
       response: aiResponse,
-      conversation: conversation
+      conversation: conversation,
+      // Si hubo error de MongoDB, incluir una advertencia
+      ...(dbError && {
+        warning: "Se obtuvo respuesta de OpenAI pero no se pudo guardar en la base de datos. La conversación continuará pero podría no persistir.",
+        dbError: dbError.message
+      })
     });
   } catch (error) {
     console.error('Error general:', {

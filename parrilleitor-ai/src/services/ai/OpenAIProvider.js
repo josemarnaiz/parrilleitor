@@ -8,6 +8,9 @@ export class OpenAIProvider extends IAIProvider {
       // Verificar que la API key esté configurada
       if (!process.env.OPENAI_API_KEY) {
         console.error('OPENAI_API_KEY no está configurada en las variables de entorno')
+      } else {
+        // Mostrar los primeros 5 caracteres de la API key para verificar que está cargada correctamente
+        console.log(`OPENAI_API_KEY configurada correctamente (comienza con: ${process.env.OPENAI_API_KEY.substring(0, 5)}...)`)
       }
       
       // Inicializar el cliente con timeout reducido para evitar FUNCTION_INVOCATION_TIMEOUT en Vercel
@@ -32,10 +35,17 @@ export class OpenAIProvider extends IAIProvider {
     try {
       console.log('Solicitando respuesta a OpenAI con', messages.length, 'mensajes')
       
+      // Log detallado de los mensajes que se envían a OpenAI
+      console.log('Contenido de los mensajes enviados a OpenAI:', 
+        messages.map(m => ({ role: m.role, content_length: m.content.length, content_preview: m.content.substring(0, 50) + '...' }))
+      )
+      
       // Verificar que los mensajes tengan el formato correcto
       if (!Array.isArray(messages) || messages.length === 0) {
         throw new Error('El formato de mensajes es inválido')
       }
+      
+      console.log('Enviando solicitud a OpenAI API...')
       
       // Reducir el número de tokens y la temperatura para obtener respuestas más rápidas
       const completion = await this.client.chat.completions.create({
@@ -47,18 +57,42 @@ export class OpenAIProvider extends IAIProvider {
         // y estaba causando el error 400
       })
       
+      console.log('Respuesta recibida de OpenAI API')
+      
       if (!completion.choices || completion.choices.length === 0) {
+        console.error('OpenAI devolvió una respuesta sin choices:', completion)
         throw new Error('OpenAI no devolvió respuestas válidas')
       }
       
-      console.log('Respuesta de OpenAI recibida correctamente')
-      return completion.choices[0].message.content
+      const responseContent = completion.choices[0].message.content
+      
+      // Log detallado de la respuesta recibida
+      console.log('Respuesta de OpenAI recibida correctamente:', {
+        content_length: responseContent.length,
+        content_preview: responseContent.substring(0, 100) + '...',
+        finish_reason: completion.choices[0].finish_reason,
+        model: completion.model,
+        usage: completion.usage
+      })
+      
+      return responseContent
     } catch (error) {
       console.error('Error al obtener respuesta de OpenAI:', {
         error: error.message,
+        name: error.name,
+        status: error.status,
         stack: error.stack,
         timestamp: new Date().toISOString()
       })
+      
+      // Si es un error de la API de OpenAI, mostrar más detalles
+      if (error.response) {
+        console.error('Detalles del error de OpenAI API:', {
+          status: error.response.status,
+          headers: error.response.headers,
+          data: error.response.data
+        })
+      }
       
       // Proporcionar mensajes de error más descriptivos
       if (error.message.includes('timeout')) {
