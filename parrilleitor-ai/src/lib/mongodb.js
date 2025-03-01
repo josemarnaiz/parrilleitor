@@ -1,4 +1,4 @@
-import { MongoClient, ServerApiVersion } from 'mongodb';
+import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
 
 // Configuración de conexión a MongoDB
 // Asegurarse de que la URI siempre tenga el formato correcto
@@ -84,6 +84,7 @@ class MongoDBClient {
     this.database = MONGODB_DATABASE;
     this.connection = null;
     this.lastConnectionTime = null;
+    this.ObjectId = ObjectId;
   }
 
   // Método para obtener la conexión

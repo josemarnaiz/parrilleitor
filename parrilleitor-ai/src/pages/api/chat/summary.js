@@ -28,8 +28,15 @@ function generateConversationSummary(messages) {
       return "No hay suficientes mensajes para generar un resumen.";
     }
 
+    // Filtrar mensajes con contenido válido
+    const validMessages = messages.filter(msg => msg && typeof msg.content === 'string' && msg.content.trim() !== '');
+    
+    if (validMessages.length < 2) {
+      return "No hay suficientes mensajes válidos para generar un resumen.";
+    }
+
     // Extraer preguntas del usuario (primeras 2-3 palabras de cada mensaje)
-    const userQuestions = messages
+    const userQuestions = validMessages
       .filter(msg => msg.role === 'user')
       .map(msg => {
         const content = msg.content.trim();
@@ -40,7 +47,7 @@ function generateConversationSummary(messages) {
       .slice(0, 3); // Limitar a 3 preguntas principales
 
     // Extraer temas principales (basado en frecuencia de palabras)
-    const allContent = messages
+    const allContent = validMessages
       .map(msg => msg.content.toLowerCase())
       .join(' ');
     
@@ -120,6 +127,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Datos incompletos o formato incorrecto' });
     }
 
+    // Validar que conversationId sea una cadena válida
+    if (typeof conversationId !== 'string' || conversationId.trim() === '') {
+      return res.status(400).json({ error: 'ID de conversación inválido' });
+    }
+
     // Generar el resumen
     const summary = generateConversationSummary(messages);
 
@@ -128,23 +140,48 @@ export default async function handler(req, res) {
 
     try {
       // Intentar actualizar la conversación con el resumen
-      const result = await mongoClient.updateOne(
-        COLLECTION_NAME,
-        { _id: mongoClient.ObjectId(conversationId), userId: session.user.sub },
-        { $set: { summary, updatedAt: new Date() } }
-      );
+      try {
+        const result = await mongoClient.updateOne(
+          COLLECTION_NAME,
+          { _id: mongoClient.ObjectId(conversationId), userId: session.user.sub },
+          { $set: { summary, updatedAt: new Date() } }
+        );
 
-      // Verificar si se actualizó correctamente
-      if (result.matchedCount === 0) {
-        return res.status(404).json({ error: 'Conversación no encontrada' });
+        // Verificar si se actualizó correctamente
+        if (result.matchedCount === 0) {
+          return res.status(404).json({ error: 'Conversación no encontrada' });
+        }
+
+        // Devolver el resumen generado
+        return res.status(200).json({
+          success: true,
+          summary,
+          message: 'Resumen guardado correctamente'
+        });
+      } catch (objectIdError) {
+        console.error('Error al convertir ObjectId:', objectIdError);
+        
+        // Intentar actualizar sin convertir a ObjectId (por si el ID ya es un objeto)
+        try {
+          const result = await mongoClient.updateOne(
+            COLLECTION_NAME,
+            { _id: conversationId, userId: session.user.sub },
+            { $set: { summary, updatedAt: new Date() } }
+          );
+          
+          if (result.matchedCount === 0) {
+            return res.status(404).json({ error: 'Conversación no encontrada' });
+          }
+          
+          return res.status(200).json({
+            success: true,
+            summary,
+            message: 'Resumen guardado correctamente'
+          });
+        } catch (fallbackError) {
+          throw new Error(`Error al actualizar: ${objectIdError.message}, fallback: ${fallbackError.message}`);
+        }
       }
-
-      // Devolver el resumen generado
-      return res.status(200).json({
-        success: true,
-        summary,
-        message: 'Resumen guardado correctamente'
-      });
     } catch (dbError) {
       console.error('Error al guardar el resumen:', dbError);
       
