@@ -43,7 +43,8 @@ export class OpenAIProvider extends IAIProvider {
         messages: messages,
         temperature: 0.5, // Reducir temperatura para respuestas más deterministas
         max_tokens: 500, // Reducir tokens para respuestas más cortas y rápidas
-        timeout: 25000, // Asegurar que el timeout se aplica también a nivel de solicitud
+        // El parámetro timeout no es soportado en la API de chat.completions.create
+        // y estaba causando el error 400
       })
       
       if (!completion.choices || completion.choices.length === 0) {
