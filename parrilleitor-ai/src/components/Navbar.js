@@ -11,13 +11,13 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const mobileMenuRef = useRef(null)
   
-  // Detectar scroll para cambiar estilos del navbar
+  // Detect scroll to change navbar styles
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10)
     }
     
-    // Throttle para mejor rendimiento
+    // Throttle for better performance
     let timeoutId
     const throttledScroll = () => {
       if (!timeoutId) {
@@ -35,7 +35,7 @@ export default function Navbar() {
     }
   }, [])
   
-  // Detectar clics fuera del menú móvil para cerrarlo
+  // Detect clicks outside mobile menu to close it
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isMobileMenuOpen && mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
@@ -49,221 +49,212 @@ export default function Navbar() {
     }
   }, [isMobileMenuOpen])
   
-  // Prevenir scroll cuando el menú móvil está abierto
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isMobileMenuOpen])
-  
+  // Close mobile menu
   const closeMenu = () => {
     setIsMobileMenuOpen(false)
   }
-
+  
+  // Handle logout
   const handleLogout = (e) => {
     e.preventDefault()
     window.location.href = '/api/auth/logout'
   }
   
+  // Toggle mobile menu
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
   }
-
+  
   return (
-    <nav 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-black/90 shadow-lg backdrop-blur-md py-2' 
-          : 'bg-transparent py-3'
-      }`}
-    >
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-12">
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-[#0a0a0a]/90 backdrop-blur-md shadow-md' : 'bg-transparent'}`}>
+      <div className="container mx-auto">
+        <nav className="flex items-center justify-between py-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 focus-visible:outline-none" onClick={closeMenu}>
+          <Link href="/" className="flex items-center space-x-2">
             <Image 
               src="/images/logo.svg" 
               alt="ParrilleitorAI Logo" 
-              width={28} 
-              height={28} 
-              className="rounded-full"
+              width={32} 
+              height={32} 
+              className="w-8 h-8"
             />
-            <span className="font-semibold text-lg md:text-xl">
-              ParrilleitorAI
-            </span>
+            <span className="text-xl font-bold">ParrilleitorAI</span>
           </Link>
           
-          {/* Navegación de escritorio */}
-          <div className="hidden md:flex items-center space-x-1">
-            {isLoading ? (
-              <div className="animate-pulse h-8 w-24 bg-gray-800 rounded"></div>
-            ) : user ? (
-              <div className="flex items-center space-x-4">
-                <Link 
-                  href="/chat" 
-                  className="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-gray-800"
-                >
-                  Chat
-                </Link>
-                
-                {/* Dropdown de usuario */}
-                <div className="relative group">
-                  <button 
-                    className="flex items-center space-x-2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-sport-400"
-                    aria-expanded={isMobileMenuOpen}
-                    aria-label="Menú de usuario"
-                  >
-                    <div className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-gray-700">
-                      <Image 
-                        src={user.picture || "https://via.placeholder.com/64"}
-                        alt={user.name || "Usuario"} 
-                        width={32} 
-                        height={32}
-                        className="object-cover"
-                      />
-                    </div>
-                    <span className="text-sm font-medium max-w-[100px] truncate hidden sm:block">
-                      {user.name?.split(' ')[0] || user.email?.split('@')[0] || "Usuario"}
-                    </span>
-                  </button>
-                  
-                  {/* Menú desplegable de escritorio */}
-                  <div className="absolute right-0 mt-2 w-48 origin-top-right bg-gray-800 border border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <div className="py-1 px-1">
-                      <div className="px-3 py-2 border-b border-gray-700">
-                        <p className="text-xs font-medium text-gray-300 truncate">
-                          {user.email}
-                        </p>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            <Link href="/" className="text-white hover:text-primary-400 transition-colors">
+              Inicio
+            </Link>
+            <Link href="/chat" className="text-white hover:text-primary-400 transition-colors">
+              Chat con IA
+            </Link>
+            
+            {!isLoading && (
+              <>
+                {user ? (
+                  <div className="relative group">
+                    <button className="flex items-center space-x-2 text-white hover:text-primary-400 transition-colors">
+                      <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-primary-500">
+                        <Image 
+                          src={user.picture || 'https://via.placeholder.com/40'} 
+                          alt={user.name || 'Usuario'} 
+                          width={32} 
+                          height={32} 
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <Link 
-                        href="/admin/users" 
-                        className="block rounded-md px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
-                      >
-                        Mi Cuenta
-                      </Link>
-                      <button 
-                        onClick={handleLogout}
-                        className="block w-full text-left rounded-md px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
-                      >
-                        Cerrar Sesión
-                      </button>
+                      <span>{user.name?.split(' ')[0] || 'Usuario'}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    <div className="absolute right-0 mt-2 w-48 bg-[#1a1a1a] rounded-md shadow-lg overflow-hidden z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right">
+                      <div className="py-2">
+                        <Link href="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-primary-500 hover:text-white transition-colors">
+                          Mi Perfil
+                        </Link>
+                        <Link href="/chat" className="block px-4 py-2 text-sm text-gray-300 hover:bg-primary-500 hover:text-white transition-colors">
+                          Mis Conversaciones
+                        </Link>
+                        <button 
+                          onClick={handleLogout}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-primary-500 hover:text-white transition-colors"
+                        >
+                          Cerrar Sesión
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            ) : (
-              <Link 
-                href="/api/auth/login" 
-                className="btn btn-sport"
-              >
-                Iniciar Sesión
-              </Link>
+                ) : (
+                  <Link 
+                    href="/api/auth/login" 
+                    className="px-4 py-2 rounded-md bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+                  >
+                    Iniciar Sesión
+                  </Link>
+                )}
+              </>
             )}
           </div>
           
-          {/* Botón menú móvil */}
-          <button
-            className="md:hidden p-2 rounded-md transition-colors hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-sport-400"
+          {/* Mobile Menu Button */}
+          <button 
+            className="md:hidden text-white focus:outline-none"
             onClick={toggleMobileMenu}
-            aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-            aria-expanded={isMobileMenuOpen}
+            aria-label="Toggle menu"
           >
-            <div className="w-6 h-5 relative flex flex-col justify-between">
-              <span 
-                className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 ${
-                  isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''
-                }`}
-              />
-              <span 
-                className={`w-full h-0.5 bg-white rounded-full transition-all duration-200 ${
-                  isMobileMenuOpen ? 'opacity-0' : ''
-                }`}
-              />
-              <span 
-                className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 ${
-                  isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''
-                }`}
-              />
-            </div>
+            {isMobileMenuOpen ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
           </button>
-        </div>
+        </nav>
       </div>
       
-      {/* Menú móvil con animación */}
+      {/* Mobile Menu */}
       <div 
         ref={mobileMenuRef}
-        className={`fixed md:hidden inset-0 top-16 z-40 bg-black/95 backdrop-blur-md transform transition-transform duration-300 ease-in-out ${
-          isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`md:hidden fixed inset-y-0 right-0 z-50 w-64 bg-[#1a1a1a] shadow-xl transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
-        <div className="container mx-auto px-4 py-4 h-full flex flex-col">
-          {user ? (
-            <>
-              <div className="flex items-center space-x-3 p-3 mb-4 bg-gray-800/50 rounded-lg">
-                <div className="relative w-10 h-10 rounded-full overflow-hidden">
-                  <Image 
-                    src={user.picture || "https://via.placeholder.com/80"} 
-                    alt={user.name || "Usuario"} 
-                    width={40} 
-                    height={40}
-                    className="object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-white text-sm truncate">
-                    {user.name || "Usuario"}
-                  </p>
-                  <p className="text-xs text-gray-400 truncate">
-                    {user.email}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <Link 
-                  href="/chat" 
-                  className="block w-full text-left px-4 py-3 rounded-lg text-white bg-gray-800/50 hover:bg-gray-800 transition-colors"
-                  onClick={closeMenu}
-                >
-                  Chat
-                </Link>
-                <Link 
-                  href="/admin/users" 
-                  className="block w-full text-left px-4 py-3 rounded-lg text-white bg-gray-800/50 hover:bg-gray-800 transition-colors"
-                  onClick={closeMenu}
-                >
-                  Mi Cuenta
-                </Link>
-              </div>
-              
-              <div className="mt-auto pt-4 border-t border-gray-800">
-                <button 
-                  onClick={handleLogout}
-                  className="block w-full text-center px-4 py-3 rounded-lg text-white bg-gray-800 hover:bg-gray-700 transition-colors"
-                >
-                  Cerrar Sesión
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-full">
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between p-4 border-b border-gray-800">
+            <span className="text-lg font-bold">Menú</span>
+            <button 
+              className="text-white focus:outline-none"
+              onClick={closeMenu}
+              aria-label="Close menu"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto py-4">
+            <nav className="flex flex-col space-y-2 px-4">
               <Link 
-                href="/api/auth/login" 
-                className="btn btn-sport w-full max-w-xs text-center py-3"
+                href="/" 
+                className="py-2 text-white hover:text-primary-400 transition-colors"
                 onClick={closeMenu}
               >
-                Iniciar Sesión
+                Inicio
               </Link>
-            </div>
-          )}
+              <Link 
+                href="/chat" 
+                className="py-2 text-white hover:text-primary-400 transition-colors"
+                onClick={closeMenu}
+              >
+                Chat con IA
+              </Link>
+              
+              <div className="border-t border-gray-800 my-4"></div>
+              
+              {!isLoading && (
+                <>
+                  {user ? (
+                    <>
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-500">
+                          <Image 
+                            src={user.picture || 'https://via.placeholder.com/40'} 
+                            alt={user.name || 'Usuario'} 
+                            width={40} 
+                            height={40} 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <div className="font-medium">{user.name || 'Usuario'}</div>
+                          <div className="text-sm text-gray-400">{user.email}</div>
+                        </div>
+                      </div>
+                      
+                      <Link 
+                        href="/profile" 
+                        className="py-2 text-white hover:text-primary-400 transition-colors"
+                        onClick={closeMenu}
+                      >
+                        Mi Perfil
+                      </Link>
+                      <Link 
+                        href="/chat" 
+                        className="py-2 text-white hover:text-primary-400 transition-colors"
+                        onClick={closeMenu}
+                      >
+                        Mis Conversaciones
+                      </Link>
+                      <button 
+                        onClick={(e) => {
+                          closeMenu()
+                          handleLogout(e)
+                        }}
+                        className="py-2 text-left text-white hover:text-primary-400 transition-colors"
+                      >
+                        Cerrar Sesión
+                      </button>
+                    </>
+                  ) : (
+                    <Link 
+                      href="/api/auth/login" 
+                      className="w-full py-2 rounded-md bg-primary-500 text-center text-white hover:bg-primary-600 transition-colors"
+                      onClick={closeMenu}
+                    >
+                      Iniciar Sesión
+                    </Link>
+                  )}
+                </>
+              )}
+            </nav>
+          </div>
         </div>
       </div>
-    </nav>
+    </header>
   )
-} 
+}

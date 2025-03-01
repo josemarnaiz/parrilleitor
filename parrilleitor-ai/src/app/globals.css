@@ -6,10 +6,10 @@
 
 :root {
   /* Base colors */
-  --black: #000000;
+  --black: #121212;
   --white: #ffffff;
   
-  /* Color variables - usando variables CSS para facilitar cambios globales */
+  /* Color variables */
   --gray-50: 249, 250, 251;
   --gray-100: 243, 244, 246;
   --gray-200: 229, 231, 235;
@@ -22,76 +22,49 @@
   --gray-900: 17, 24, 39;
   --gray-950: 9, 13, 20;
 
-  /* Sport theme colors - fitness/gym */
-  --sport-50: 240, 253, 244;
-  --sport-100: 220, 252, 231;
-  --sport-200: 187, 247, 208;
-  --sport-300: 134, 239, 172;
-  --sport-400: 74, 222, 128;
-  --sport-500: 34, 197, 94;
-  --sport-600: 22, 163, 74;
-  --sport-700: 21, 128, 61;
-  --sport-800: 22, 101, 52;
-  --sport-900: 20, 83, 45;
-  --sport-950: 5, 46, 22;
+  /* Primary theme colors */
+  --primary-50: 240, 249, 255;
+  --primary-100: 224, 242, 254;
+  --primary-200: 186, 230, 253;
+  --primary-300: 125, 211, 252;
+  --primary-400: 56, 189, 248;
+  --primary-500: 14, 165, 233;
+  --primary-600: 2, 132, 199;
+  --primary-700: 3, 105, 161;
+  --primary-800: 7, 89, 133;
+  --primary-900: 12, 74, 110;
+  --primary-950: 8, 47, 73;
 
-  /* Nutrition theme colors - food/diet */
-  --nutrition-50: 255, 247, 237;
-  --nutrition-100: 255, 237, 213;
-  --nutrition-200: 254, 215, 170;
-  --nutrition-300: 253, 186, 116;
-  --nutrition-400: 251, 146, 60;
-  --nutrition-500: 249, 115, 22;
-  --nutrition-600: 234, 88, 12;
-  --nutrition-700: 194, 65, 12;
-  --nutrition-800: 154, 52, 18;
-  --nutrition-900: 124, 45, 18;
-  --nutrition-950: 67, 20, 7;
+  /* Secondary theme colors */
+  --secondary-50: 240, 253, 244;
+  --secondary-100: 220, 252, 231;
+  --secondary-200: 187, 247, 208;
+  --secondary-300: 134, 239, 172;
+  --secondary-400: 74, 222, 128;
+  --secondary-500: 34, 197, 94;
+  --secondary-600: 22, 163, 74;
+  --secondary-700: 21, 128, 61;
+  --secondary-800: 22, 101, 52;
+  --secondary-900: 20, 83, 45;
+  --secondary-950: 5, 46, 22;
 
-  /* Energy theme colors - vitality */
-  --energy-50: 254, 252, 232;
-  --energy-100: 254, 249, 195;
-  --energy-200: 254, 240, 138;
-  --energy-300: 253, 224, 71;
-  --energy-400: 250, 204, 21;
-  --energy-500: 234, 179, 8;
-  --energy-600: 202, 138, 4;
-  --energy-700: 161, 98, 7;
-  --energy-800: 133, 77, 14;
-  --energy-900: 113, 63, 18;
-  --energy-950: 66, 32, 6;
+  /* Accent theme colors */
+  --accent-50: 254, 252, 232;
+  --accent-100: 254, 249, 195;
+  --accent-200: 254, 240, 138;
+  --accent-300: 253, 224, 71;
+  --accent-400: 250, 204, 21;
+  --accent-500: 234, 179, 8;
+  --accent-600: 202, 138, 4;
+  --accent-700: 161, 98, 7;
+  --accent-800: 133, 77, 14;
+  --accent-900: 113, 63, 18;
+  --accent-950: 66, 32, 6;
 
-  /* Muscle/strength theme colors */
-  --muscle-50: 253, 242, 248;
-  --muscle-100: 252, 231, 243;
-  --muscle-200: 251, 207, 232;
-  --muscle-300: 249, 168, 212;
-  --muscle-400: 244, 114, 182;
-  --muscle-500: 236, 72, 153;
-  --muscle-600: 219, 39, 119;
-  --muscle-700: 190, 24, 93;
-  --muscle-800: 157, 23, 77;
-  --muscle-900: 131, 24, 67;
-  --muscle-950: 80, 7, 36;
-
-  /* Progress theme colors */
-  --progress-50: 236, 254, 255;
-  --progress-100: 207, 250, 254;
-  --progress-200: 165, 243, 252;
-  --progress-300: 103, 232, 249;
-  --progress-400: 34, 211, 238;
-  --progress-500: 6, 182, 212;
-  --progress-600: 8, 145, 178;
-  --progress-700: 14, 116, 144;
-  --progress-800: 21, 94, 117;
-  --progress-900: 22, 78, 99;
-  --progress-950: 8, 51, 68;
-
-  /* Theme colors para la aplicación */
-  --background: #000000;
-  --foreground: #ffffff;
-  --border: #333333;
-  --primary: #0ea5e9;
+  /* UI variables */
+  --background: var(--black);
+  --foreground: var(--white);
+  --border: rgba(255, 255, 255, 0.1);
   --radius: 0.5rem;
   
   /* Espaciado base - sistema de espaciado coherente */
@@ -152,7 +125,7 @@ img, svg, video, canvas, audio, iframe, embed, object {
 
 /* Focus visible mejorado para accesibilidad */
 :focus-visible {
-  outline: 2px solid rgb(var(--sport-400));
+  outline: 2px solid rgb(var(--secondary-400));
   outline-offset: 2px;
 }
 
@@ -278,22 +251,22 @@ img, svg, video, canvas, audio, iframe, embed, object {
 }
 
 /* Gradient texts - mejorados */
-.text-gradient-sport {
-  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+.text-gradient-primary {
+  background: linear-gradient(135deg, rgb(var(--primary-400)), rgb(var(--primary-600)));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.text-gradient-nutrition {
-  background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+.text-gradient-secondary {
+  background: linear-gradient(135deg, rgb(var(--secondary-400)), rgb(var(--secondary-600)));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.text-gradient-energy {
-  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+.text-gradient-accent {
+  background: linear-gradient(135deg, rgb(var(--accent-400)), rgb(var(--accent-600)));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -305,36 +278,36 @@ img, svg, video, canvas, audio, iframe, embed, object {
   display: inline-block;
 }
 
-.heading-sport::after {
+.heading-primary::after {
   content: '';
   position: absolute;
   bottom: -0.5rem;
   left: 0;
   width: 3rem;
   height: 3px;
-  background: linear-gradient(90deg, #38bdf8, transparent);
+  background: linear-gradient(90deg, rgb(var(--primary-400)), transparent);
   border-radius: 1.5px;
 }
 
-.heading-nutrition::after {
+.heading-secondary::after {
   content: '';
   position: absolute;
   bottom: -0.5rem;
   left: 0;
   width: 3rem;
   height: 3px;
-  background: linear-gradient(90deg, #4ade80, transparent);
+  background: linear-gradient(90deg, rgb(var(--secondary-400)), transparent);
   border-radius: 1.5px;
 }
 
-.heading-energy::after {
+.heading-accent::after {
   content: '';
   position: absolute;
   bottom: -0.5rem;
   left: 0;
   width: 3rem;
   height: 3px;
-  background: linear-gradient(90deg, #a78bfa, transparent);
+  background: linear-gradient(90deg, rgb(var(--accent-400)), transparent);
   border-radius: 1.5px;
 }
 
@@ -368,43 +341,43 @@ img, svg, video, canvas, audio, iframe, embed, object {
   box-shadow: 0 0 0 3px rgba(var(--gray-300), 0.4);
 }
 
-.btn-sport {
-  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+.btn-primary {
+  background: linear-gradient(135deg, rgb(var(--primary-400)), rgb(var(--primary-600)));
   color: white;
 }
 
-.btn-sport:hover {
+.btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px -2px rgba(56, 189, 248, 0.5);
+  box-shadow: 0 4px 12px -2px rgba(var(--primary-400), 0.5);
 }
 
-.btn-nutrition {
-  background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+.btn-secondary {
+  background: linear-gradient(135deg, rgb(var(--secondary-400)), rgb(var(--secondary-600)));
   color: white;
 }
 
-.btn-nutrition:hover {
+.btn-secondary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px -2px rgba(74, 222, 128, 0.5);
+  box-shadow: 0 4px 12px -2px rgba(var(--secondary-400), 0.5);
 }
 
-.btn-energy {
-  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+.btn-accent {
+  background: linear-gradient(135deg, rgb(var(--accent-400)), rgb(var(--accent-600)));
   color: white;
 }
 
-.btn-energy:hover {
+.btn-accent:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px -2px rgba(167, 139, 250, 0.5);
+  box-shadow: 0 4px 12px -2px rgba(var(--accent-400), 0.5);
 }
 
-.btn-ghost {
+.btn-outline {
   background: transparent;
-  border: 1px solid rgba(var(--gray-400), 0.5);
+  border: 1px solid rgba(var(--gray-300), 0.5);
   color: white;
 }
 
-.btn-ghost:hover {
+.btn-outline:hover {
   background: rgba(var(--gray-800), 0.5);
   border-color: rgba(var(--gray-300), 0.8);
 }
@@ -413,16 +386,16 @@ img, svg, video, canvas, audio, iframe, embed, object {
 .card {
   border-radius: 1rem;
   overflow: hidden;
-  background: rgba(var(--gray-800), 0.5);
+  background: rgba(var(--gray-900), 0.7);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(var(--gray-700), 0.5);
+  border: 1px solid var(--border);
   transition: all 0.3s ease;
   height: 100%;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.3);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
 .feature-card {
@@ -430,13 +403,13 @@ img, svg, video, canvas, audio, iframe, embed, object {
   transition: all 0.25s ease;
   height: 100%;
   padding: 1rem;
-  background: rgba(var(--gray-800), 0.4);
-  border: 1px solid rgba(var(--gray-700), 0.5);
+  background: rgba(var(--gray-900), 0.7);
+  border: 1px solid var(--border);
 }
 
 .feature-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.3);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
 .benefit-card {
@@ -444,17 +417,17 @@ img, svg, video, canvas, audio, iframe, embed, object {
   transition: all 0.25s ease;
   height: 100%;
   padding: 1rem;
-  background: rgba(var(--gray-800), 0.4);
-  border: 1px solid rgba(var(--gray-700), 0.5);
+  background: rgba(var(--gray-900), 0.7);
+  border: 1px solid var(--border);
 }
 
 .benefit-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.3);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
 /* Secciones */
-.section-sport-gradient {
+.section-primary-gradient {
   background: linear-gradient(180deg, 
     rgba(56, 189, 248, 0.1) 0%, 
     rgba(56, 189, 248, 0.05) 30%, 
