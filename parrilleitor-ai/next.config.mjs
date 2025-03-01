@@ -2,11 +2,14 @@
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
-    serverComponentsExternalPackages: ['mongoose']
+    serverComponentsExternalPackages: ['mongoose'],
+    optimizeCss: true,
   },
   images: {
     domains: ['lh3.googleusercontent.com', 's.gravatar.com'],
-    unoptimized: true
+    unoptimized: true,
+    deviceSizes: [320, 420, 640, 768, 1024, 1280, 1920],
+    formats: ['image/webp', 'image/avif']
   },
   async headers() {
     return [
@@ -28,11 +31,23 @@ const nextConfig = {
           },
           {
             key: 'Access-Control-Allow-Headers',
-            value: 'X-Requested-With, Content-Type, Authorization, x-next-router-state-tree, x-next-url',
+            value: 'X-Requested-With, Content-Type, Authorization, x-next-router-state-tree, x-next-url, x-auth-token, x-client-version',
           },
           {
             key: 'Access-Control-Allow-Credentials',
             value: 'true',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(self)',
           },
         ],
       },
@@ -43,6 +58,40 @@ const nextConfig = {
       ...config.experiments,
       topLevelAwait: true,
     };
+    
+    // Optimizaciones adicionales
+    if (process.env.NODE_ENV === 'production') {
+      // Optimiza los chunks para mejor carga en dispositivos móviles
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          default: false,
+          vendors: false,
+          framework: {
+            name: 'framework',
+            test: /[\\/]node_modules[\\/](@next|next|react|react-dom)[\\/]/,
+            priority: 40,
+            chunks: 'all',
+          },
+          commons: {
+            name: 'commons',
+            minChunks: 2,
+            priority: 20,
+          },
+          lib: {
+            test: /[\\/]node_modules[\\/]/,
+            name(module) {
+              const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)[1];
+              return `lib.${packageName.replace('@', '')}`;
+            },
+            priority: 10,
+            minChunks: 1,
+            chunks: 'async',
+          },
+        },
+      };
+    }
+    
     return {
       ...config,
       resolve: {

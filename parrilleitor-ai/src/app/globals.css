@@ -5,11 +5,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap');
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 0, 0, 0;
-  --background-end-rgb: 0, 0, 0;
-
-  /* Color variables */
+  /* Base colors */
+  --black: #000000;
+  --white: #ffffff;
+  
+  /* Color variables - usando variables CSS para facilitar cambios globales */
   --gray-50: 249, 250, 251;
   --gray-100: 243, 244, 246;
   --gray-200: 229, 231, 235;
@@ -87,104 +87,202 @@
   --progress-900: 22, 78, 99;
   --progress-950: 8, 51, 68;
 
+  /* Theme colors para la aplicación */
   --background: #000000;
   --foreground: #ffffff;
   --border: #333333;
   --primary: #0ea5e9;
   --radius: 0.5rem;
+  
+  /* Espaciado base - sistema de espaciado coherente */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  
+  /* Texto - sistema de tipografía escalable */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  
+  /* Transiciones */
+  --transition-fast: 150ms;
+  --transition-normal: 250ms;
+  --transition-slow: 350ms;
 }
 
-/* Configuración base para todo el documento */
-html, body {
-  @apply h-full bg-background text-foreground overflow-x-hidden;
-  max-width: 100vw;
-}
-
+/* ========= RESETS Y CONFIGURACIÓN BASE ========= */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* Estilos para imágenes y SVG para hacerlos responsivos */
-img, svg {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+html {
+  font-size: 16px;
+  height: 100%;
+  overflow-x: hidden;
+  max-width: 100vw;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  @apply flex min-h-screen flex-col;
-  font-family: var(--font-inter), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-  width: 100%;
+  @apply bg-black text-white flex flex-col min-h-screen overflow-x-hidden w-full;
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.5;
 }
 
-/* Contenedor personalizado con padding responsivo */
-.container-custom {
+img, svg, video, canvas, audio, iframe, embed, object {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Focus visible mejorado para accesibilidad */
+:focus-visible {
+  outline: 2px solid rgb(var(--sport-400));
+  outline-offset: 2px;
+}
+
+/* ========= CONTENEDORES ========= */
+/* Sistema de contenedores consistente para alineación */
+.container-fluid {
   width: 100%;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+  margin: 0 auto;
+}
+
+.container {
+  width: 100%;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+  margin: 0 auto;
   max-width: 1280px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
 }
 
-/* Clases para manejar overflow */
+@media (min-width: 640px) {
+  .container {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-left: var(--space-8);
+    padding-right: var(--space-8);
+  }
+}
+
+/* ========= UTILIDADES ========= */
 .overflow-x-hidden {
   overflow-x: hidden;
 }
 
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
+/* Scrollbar personalizada */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #1f2937;
+  background: rgba(var(--gray-800), 0.3);
+  border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #4b5563;
-  border-radius: 20px;
+  background-color: rgba(var(--gray-600), 0.5);
+  border-radius: 4px;
 }
 
-/* Utilities for animations */
+/* ========= ANIMACIONES ========= */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+.animate-pulse {
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Delays para animaciones en secuencia */
 .delay-100 {
-  animation-delay: 0.1s;
+  animation-delay: 100ms;
 }
 
 .delay-200 {
-  animation-delay: 0.2s;
+  animation-delay: 200ms;
 }
 
-/* Hero Section con imagen de fondo */
+.delay-300 {
+  animation-delay: 300ms;
+}
+
+/* ========= COMPONENTS ========= */
+/* Hero section con imagen mejorada */
 .hero-section {
-  background-color: #0f172a;
+  background-color: #0a0c10; /* Fondo más oscuro para mejor contraste */
   background-image: url('/images/hero-bg.svg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   position: relative;
-  color: white;
+  isolation: isolate;
 }
 
-/* Gradient text */
+.hero-section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, 
+    rgba(0,0,0,0.9) 0%, 
+    rgba(0,0,0,0.7) 20%, 
+    rgba(0,0,0,0.5) 40%, 
+    rgba(0,0,0,0.2) 80%, 
+    rgba(0,0,0,0) 100%);
+  z-index: -1;
+}
+
+/* Gradient texts - mejorados */
 .text-gradient-sport {
   background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
 }
 
 .text-gradient-nutrition {
@@ -192,7 +290,6 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
 }
 
 .text-gradient-energy {
@@ -200,11 +297,10 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
 }
 
-/* Headings con gradientes */
-.heading-sport {
+/* Headings - más elegantes y consistentes */
+.heading {
   position: relative;
   display: inline-block;
 }
@@ -212,31 +308,41 @@ body {
 .heading-sport::after {
   content: '';
   position: absolute;
-  bottom: -8px;
+  bottom: -0.5rem;
   left: 0;
-  width: 40%;
-  height: 4px;
+  width: 3rem;
+  height: 3px;
   background: linear-gradient(90deg, #38bdf8, transparent);
-  border-radius: 2px;
+  border-radius: 1.5px;
 }
 
-.section-sport-gradient {
-  background: linear-gradient(180deg, 
-    rgba(56, 189, 248, 0.1) 0%, 
-    rgba(56, 189, 248, 0.05) 30%, 
-    rgba(56, 189, 248, 0) 100%);
-  color: white;
+.heading-nutrition::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  width: 3rem;
+  height: 3px;
+  background: linear-gradient(90deg, #4ade80, transparent);
+  border-radius: 1.5px;
 }
 
-/* Polygon clip for section */
-.clip-polygon {
-  clip-path: polygon(0% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%);
+.heading-energy::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  width: 3rem;
+  height: 3px;
+  background: linear-gradient(90deg, #a78bfa, transparent);
+  border-radius: 1.5px;
 }
 
-/* Buttons */
-.btn-sport {
-  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
-  color: white;
+/* Botones - sistema de botones mejorado y consistente */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   font-weight: 500;
@@ -246,170 +352,199 @@ body {
   overflow: hidden;
   z-index: 1;
   text-align: center;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .btn {
+    padding: 0.625rem 1.25rem;
+    font-size: var(--text-base);
+  }
+}
+
+.btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--gray-300), 0.4);
+}
+
+.btn-sport {
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  color: white;
 }
 
 .btn-sport:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.5);
+  box-shadow: 0 4px 12px -2px rgba(56, 189, 248, 0.5);
 }
 
 .btn-nutrition {
   background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border: none;
-  position: relative;
-  overflow: hidden;
-  z-index: 1;
-  text-align: center;
 }
 
 .btn-nutrition:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(74, 222, 128, 0.5);
+  box-shadow: 0 4px 12px -2px rgba(74, 222, 128, 0.5);
 }
 
 .btn-energy {
   background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border: none;
-  position: relative;
-  overflow: hidden;
-  z-index: 1;
-  text-align: center;
 }
 
 .btn-energy:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(167, 139, 250, 0.5);
+  box-shadow: 0 4px 12px -2px rgba(167, 139, 250, 0.5);
 }
 
-/* Tarjetas temáticas */
-.sport-card {
-  border: 2px solid rgba(56, 189, 248, 0.2);
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(var(--gray-400), 0.5);
+  color: white;
+}
+
+.btn-ghost:hover {
+  background: rgba(var(--gray-800), 0.5);
+  border-color: rgba(var(--gray-300), 0.8);
+}
+
+/* Cards - sistema de tarjetas modernas y consistentes */
+.card {
   border-radius: 1rem;
-  transition: all 0.3s ease;
-  background: rgba(56, 189, 248, 0.05);
   overflow: hidden;
+  background: rgba(var(--gray-800), 0.5);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(var(--gray-700), 0.5);
+  transition: all 0.3s ease;
   height: 100%;
 }
 
-.sport-card:hover {
-  border-color: rgba(56, 189, 248, 0.5);
-  transform: translateY(-5px);
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.3);
 }
 
-.nutrition-card {
-  border: 2px solid rgba(74, 222, 128, 0.2);
+.feature-card {
   border-radius: 1rem;
-  transition: all 0.3s ease;
-  background: rgba(74, 222, 128, 0.05);
-  overflow: hidden;
+  transition: all 0.25s ease;
   height: 100%;
+  padding: 1rem;
+  background: rgba(var(--gray-800), 0.4);
+  border: 1px solid rgba(var(--gray-700), 0.5);
 }
 
-.nutrition-card:hover {
-  border-color: rgba(74, 222, 128, 0.5);
-  transform: translateY(-5px);
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.3);
 }
 
-.energy-card {
-  border: 2px solid rgba(167, 139, 250, 0.2);
+.benefit-card {
   border-radius: 1rem;
-  transition: all 0.3s ease;
-  background: rgba(167, 139, 250, 0.05);
-  overflow: hidden;
+  transition: all 0.25s ease;
   height: 100%;
+  padding: 1rem;
+  background: rgba(var(--gray-800), 0.4);
+  border: 1px solid rgba(var(--gray-700), 0.5);
 }
 
-.energy-card:hover {
-  border-color: rgba(167, 139, 250, 0.5);
-  transform: translateY(-5px);
+.benefit-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.3);
 }
 
-/* Glows para hover effects */
-.hover\:shadow-sport-glow:hover {
-  box-shadow: 0 0 30px -5px rgba(56, 189, 248, 0.5);
+/* Secciones */
+.section-sport-gradient {
+  background: linear-gradient(180deg, 
+    rgba(56, 189, 248, 0.1) 0%, 
+    rgba(56, 189, 248, 0.05) 30%, 
+    rgba(56, 189, 248, 0) 100%);
+  position: relative;
 }
 
-.hover\:shadow-nutrition-glow:hover {
-  box-shadow: 0 0 30px -5px rgba(74, 222, 128, 0.5);
+.clip-polygon {
+  clip-path: polygon(0% 0%, 100% 0%, 100% 95%, 90% 100%, 0% 100%);
 }
 
-.hover\:shadow-energy-glow:hover {
-  box-shadow: 0 0 30px -5px rgba(167, 139, 250, 0.5);
+/* Secciones con fondo decorativo */
+.bg-dots {
+  background-image: radial-gradient(rgba(var(--gray-600), 0.3) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
-/* Media queries específicas para mejorar la experiencia móvil */
+/* Media queries específicas para dispositivos móviles */
 @media (max-width: 640px) {
-  .container-custom {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-    width: 100%;
+  :root {
+    /* Ajustamos tamaños para móviles */
+    --space-1: 0.15rem;
+    --space-2: 0.35rem;
+    --space-3: 0.5rem;
+    --space-4: 0.75rem;
+    --space-6: 1.25rem;
+    --space-8: 1.5rem;
+    --space-12: 2rem;
+    --space-16: 3rem;
+  }
+  
+  html, body {
+    font-size: 14px; /* Base font size slightly smaller on mobile */
   }
   
   .hero-section {
     padding-top: 4rem;
   }
   
-  .btn-sport, .btn-nutrition, .btn-energy {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.875rem;
+  .feature-card, .benefit-card {
+    padding: 0.75rem;
   }
   
   .clip-polygon {
-    clip-path: polygon(0% 0%, 100% 0%, 100% 90%, 90% 100%, 0% 100%);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 97%, 95% 100%, 0% 100%);
   }
-
-  /* Corregir elementos descuadrados */
-  .feature-card, .benefit-card {
-    max-width: 100%;
-    width: 100%;
-    margin-left: 0;
-    margin-right: 0;
+  
+  h1 {
+    font-size: 1.75rem;
+    line-height: 1.3;
   }
-
-  /* Reducir tamaños de iconos */
-  .feature-card img, .benefit-card img {
-    width: 24px !important;
-    height: 24px !important;
-    max-width: 24px !important;
-    max-height: 24px !important;
+  
+  h2 {
+    font-size: 1.5rem;
+    line-height: 1.3;
   }
-
-  /* Ajustar tamaños de texto */
-  h1, h2, h3 {
-    line-height: 1.2;
-    word-break: break-word;
+  
+  p {
+    font-size: 0.9rem;
   }
-
-  /* Ajustar espaciado vertical */
-  .py-16, .py-12, .py-10 {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-  }
-
-  .mt-16, .mt-12, .mt-10 {
-    margin-top: 2rem;
-  }
-
-  /* Reducir padding horizontal */
-  .px-8, .px-6 {
-    padding-left: 1rem;
-    padding-right: 1rem;
+  
+  .feature-card img, .feature-card svg, 
+  .benefit-card img, .benefit-card svg {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
   }
 }
 
-/* Ajustes para pantallas extra pequeñas */
+/* Media queries para pantallas extra pequeñas */
 @media (max-width: 360px) {
-  /* Reducir aún más los tamaños de texto */
+  :root {
+    /* Ajustamos aún más para pantallas muy pequeñas */
+    --space-1: 0.1rem;
+    --space-2: 0.25rem;
+    --space-3: 0.4rem;
+    --space-4: 0.6rem;
+    --space-6: 1rem;
+    --space-8: 1.25rem;
+    --space-12: 1.75rem;
+    --space-16: 2.5rem;
+  }
+  
+  html, body {
+    font-size: 13px;
+  }
+  
+  .feature-card, .benefit-card {
+    padding: 0.6rem;
+  }
+  
   h1 {
     font-size: 1.5rem;
   }
@@ -419,20 +554,33 @@ body {
   }
   
   p {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
   }
-
-  /* Iconos aún más pequeños */
-  .feature-card img, .benefit-card img {
-    width: 20px !important;
-    height: 20px !important;
-    max-width: 20px !important;
-    max-height: 20px !important;
+  
+  .feature-card img, .feature-card svg, 
+  .benefit-card img, .benefit-card svg {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
   }
+}
 
-  /* Espaciado mínimo */
-  .px-4 {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+/* Utilities for proper spacing */
+.py-safe {
+  padding-top: max(var(--space-4), env(safe-area-inset-top));
+  padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+}
+
+.pt-safe {
+  padding-top: max(var(--space-4), env(safe-area-inset-top));
+}
+
+.pb-safe {
+  padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+}
+
+/* Fix for iOS Safari 100vh issue */
+@supports (-webkit-touch-callout: none) {
+  .min-h-screen {
+    min-height: -webkit-fill-available;
   }
 }
