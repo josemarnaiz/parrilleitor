@@ -2,20 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap');
+
 :root {
-  --background: #111827;
+  --background: #0F172A;
   --foreground: #ffffff;
   --border: #374151;
-  --primary: #0ea5e9;
+  --primary: #0095ff;
   --primary-foreground: #ffffff;
+  --secondary: #4cd119;
+  --secondary-foreground: #ffffff;
+  --accent: #ff9d00;
+  --accent-foreground: #ffffff;
   --radius: 0.5rem;
+  
+  /* Colores específicos para temas deportivos */
+  --sport-blue: #0095ff;
+  --nutrition-green: #4cd119;
+  --energy-orange: #ff9d00;
+  --muscle-pink: #ec4899;
+  --progress-purple: #8b5cf6;
+  
+  /* Gradientes predefinidos */
+  --gradient-sport: linear-gradient(135deg, #0077e6, #38aeff);
+  --gradient-nutrition: linear-gradient(135deg, #3cad13, #65dd3c);
+  --gradient-energy: linear-gradient(135deg, #e67a00, #ffb81f);
 }
 
 /* Estilos básicos para verificar que se están cargando */
 body {
-  background-color: #111827;
-  color: white;
-  font-family: 'Inter', sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Montserrat', 'Inter', sans-serif;
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -296,17 +314,25 @@ a:hover {
   }
 
   body {
-    @apply h-full bg-gray-900 text-white;
+    @apply h-full text-white;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sport font-bold;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-sport-500 border border-transparent rounded-md shadow-sm hover:bg-sport-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sport-500 transition-all duration-300 ease-in-out;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-nutrition-500 border border-transparent rounded-md shadow-sm hover:bg-nutrition-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-nutrition-500 transition-all duration-300 ease-in-out;
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-energy-500 border border-transparent rounded-md shadow-sm hover:bg-energy-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-energy-500 transition-all duration-300 ease-in-out;
   }
 
   .container-custom {
@@ -314,15 +340,15 @@ a:hover {
   }
 
   .card {
-    @apply overflow-hidden bg-gray-800 rounded-lg shadow-lg p-6;
+    @apply overflow-hidden bg-gray-800 rounded-lg shadow-lg p-6 transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1;
   }
 
   .input-field {
-    @apply block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6;
+    @apply block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-sport-600 transition-all duration-300 ease-in-out sm:text-sm sm:leading-6;
   }
 
   .nav-link {
-    @apply text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium;
+    @apply text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 ease-in-out;
   }
 }
 
@@ -335,4 +361,242 @@ a:hover {
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  
+  .clip-polygon {
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+  }
+  
+  .text-gradient-sport {
+    background: linear-gradient(90deg, var(--sport-blue), var(--nutrition-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+/* Componentes específicos para deporte y nutrición */
+.sport-card {
+  background-color: #1f2937;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border-left: 4px solid var(--sport-blue);
+  box-shadow: 0 10px 15px -3px rgba(0, 149, 255, 0.2), 0 4px 6px -2px rgba(0, 149, 255, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sport-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgba(0, 149, 255, 0.25), 0 10px 10px -5px rgba(0, 149, 255, 0.15);
+}
+
+.nutrition-card {
+  background-color: #1f2937;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border-left: 4px solid var(--nutrition-green);
+  box-shadow: 0 10px 15px -3px rgba(76, 209, 25, 0.2), 0 4px 6px -2px rgba(76, 209, 25, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.nutrition-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgba(76, 209, 25, 0.25), 0 10px 10px -5px rgba(76, 209, 25, 0.15);
+}
+
+.energy-card {
+  background-color: #1f2937;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border-left: 4px solid var(--energy-orange);
+  box-shadow: 0 10px 15px -3px rgba(255, 157, 0, 0.2), 0 4px 6px -2px rgba(255, 157, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.energy-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgba(255, 157, 0, 0.25), 0 10px 10px -5px rgba(255, 157, 0, 0.15);
+}
+
+/* Botones deportivos */
+.btn-sport {
+  background-color: var(--sport-blue);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 6px -1px rgba(0, 149, 255, 0.2), 0 2px 4px -1px rgba(0, 149, 255, 0.1);
+}
+
+.btn-sport:hover {
+  background-color: #0077e6;
+  box-shadow: 0 10px 15px -3px rgba(0, 149, 255, 0.3), 0 4px 6px -2px rgba(0, 149, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.btn-nutrition {
+  background-color: var(--nutrition-green);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 6px -1px rgba(76, 209, 25, 0.2), 0 2px 4px -1px rgba(76, 209, 25, 0.1);
+}
+
+.btn-nutrition:hover {
+  background-color: #3cad13;
+  box-shadow: 0 10px 15px -3px rgba(76, 209, 25, 0.3), 0 4px 6px -2px rgba(76, 209, 25, 0.15);
+  transform: translateY(-2px);
+}
+
+.btn-energy {
+  background-color: var(--energy-orange);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 6px -1px rgba(255, 157, 0, 0.2), 0 2px 4px -1px rgba(255, 157, 0, 0.1);
+}
+
+.btn-energy:hover {
+  background-color: #e67a00;
+  box-shadow: 0 10px 15px -3px rgba(255, 157, 0, 0.3), 0 4px 6px -2px rgba(255, 157, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Encabezados deportivos */
+.heading-sport {
+  color: white;
+  font-weight: 800;
+  font-family: 'Montserrat', sans-serif;
+  letter-spacing: -0.025em;
+  position: relative;
+  display: inline-block;
+  margin-bottom: 1.5rem;
+}
+
+.heading-sport::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  width: 3rem;
+  height: 0.25rem;
+  background-color: var(--sport-blue);
+  border-radius: 0.25rem;
+}
+
+.heading-nutrition {
+  color: white;
+  font-weight: 800;
+  font-family: 'Montserrat', sans-serif;
+  letter-spacing: -0.025em;
+  position: relative;
+  display: inline-block;
+  margin-bottom: 1.5rem;
+}
+
+.heading-nutrition::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  width: 3rem;
+  height: 0.25rem;
+  background-color: var(--nutrition-green);
+  border-radius: 0.25rem;
+}
+
+/* Secciones con fondos gradientes */
+.section-sport-gradient {
+  background: var(--gradient-sport);
+  padding: 4rem 0;
+  color: white;
+}
+
+.section-nutrition-gradient {
+  background: var(--gradient-nutrition);
+  padding: 4rem 0;
+  color: white;
+}
+
+.section-energy-gradient {
+  background: var(--gradient-energy);
+  padding: 4rem 0;
+  color: white;
+}
+
+/* Hero section con fondo de imagen */
+.hero-section {
+  background-image: url('/images/hero-bg.svg');
+  background-size: cover;
+  background-position: center;
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+/* Barra de navegación mejorada */
+nav.sport-navbar {
+  background-color: rgba(31, 41, 55, 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Estilos para las tarjetas de características animadas */
+.feature-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  background-color: #1f2937;
+  padding: 2rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0.25rem;
+  background: linear-gradient(90deg, var(--sport-blue), var(--nutrition-green), var(--energy-orange));
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

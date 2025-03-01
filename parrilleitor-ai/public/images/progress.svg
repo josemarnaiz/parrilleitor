@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo circular -->
+  <circle cx="256" cy="256" r="180" fill="#A78BFA" opacity="0.1" stroke="#A78BFA" stroke-width="12"/>
+  
+  <!-- Gráfica de barras -->
+  <rect x="140" y="300" width="40" height="60" rx="4" fill="#A78BFA"/>
+  <rect x="200" y="260" width="40" height="100" rx="4" fill="#A78BFA"/>
+  <rect x="260" y="220" width="40" height="140" rx="4" fill="#A78BFA"/>
+  <rect x="320" y="180" width="40" height="180" rx="4" fill="#A78BFA"/>
+  
+  <!-- Línea de base -->
+  <line x1="120" y1="360" x2="380" y2="360" stroke="#A78BFA" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Línea de tendencia -->
+  <path d="M140 300 Q 200 280 260 220 Q 320 160 360 150" stroke="#C026D3" stroke-width="6" stroke-linecap="round" stroke-dasharray="10 5"/>
+  
+  <!-- Puntos de datos -->
+  <circle cx="140" cy="300" r="8" fill="#C026D3"/>
+  <circle cx="200" cy="260" r="8" fill="#C026D3"/>
+  <circle cx="260" cy="220" r="8" fill="#C026D3"/>
+  <circle cx="320" cy="180" r="8" fill="#C026D3"/>
+  <circle cx="360" cy="150" r="8" fill="#C026D3"/>
+</svg> 

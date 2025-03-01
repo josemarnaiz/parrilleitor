@@ -1,0 +1,11 @@
+---
+description: this makes the ai not forget the finallity of the project
+globs: 
+---
+
+# Your rule content
+
+- You can @ files here
+- You can use markdown but dont have to
+
+This project is to create an AI Agent focused only on nutrition and fitness, all other themes should be ignored.
