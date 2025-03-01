@@ -23,6 +23,12 @@ export default function Chat() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [conversationSummaries, setConversationSummaries] = useState({})
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
+  // Nuevos estados para manejo de eliminación
+  const [isDeletingConversation, setIsDeletingConversation] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [conversationToDelete, setConversationToDelete] = useState(null)
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   // Función para hacer scroll al fondo cuando hay nuevos mensajes
   const scrollToBottom = () => {
@@ -280,6 +286,103 @@ export default function Chat() {
     } catch (error) {
       console.error('Error al guardar mensajes:', error);
     }
+  };
+
+  // Nueva función para eliminar una conversación individual
+  const deleteConversation = async (conversationId) => {
+    try {
+      setIsDeletingConversation(true);
+      setIsLoading(true);
+      
+      const response = await fetch(`/api/chat/history?conversationId=${conversationId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Actualizar el estado local eliminando la conversación borrada
+        setAllConversations(prev => prev.filter(conv => conv._id !== conversationId));
+        
+        // Si la conversación actual es la que se eliminó, cargar otra conversación
+        if (selectedConversationId === conversationId) {
+          const nextConversation = allConversations.find(conv => conv._id !== conversationId);
+          if (nextConversation) {
+            setMessages(nextConversation.messages || []);
+            setSelectedConversationId(nextConversation._id);
+          } else {
+            // Si no hay más conversaciones, iniciar una nueva
+            startNewConversation();
+          }
+        }
+        
+        // Eliminar el resumen de la conversación
+        setConversationSummaries(prev => {
+          const updated = { ...prev };
+          delete updated[conversationId];
+          return updated;
+        });
+        
+        setError(null);
+      } else {
+        console.error('Error al eliminar la conversación:', data.message || 'Error desconocido');
+        setError('No se pudo eliminar la conversación. Intenta de nuevo.');
+      }
+    } catch (error) {
+      console.error('Error al eliminar la conversación:', error);
+      setError('Error de conexión al intentar eliminar la conversación.');
+    } finally {
+      setIsDeletingConversation(false);
+      setIsLoading(false);
+      setShowDeleteConfirm(false);
+      setConversationToDelete(null);
+    }
+  };
+
+  // Nueva función para eliminar todas las conversaciones
+  const deleteAllConversations = async () => {
+    try {
+      setIsLoading(true);
+      
+      const response = await fetch('/api/chat/history?deleteAll=true', {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Limpiar todos los estados
+        setAllConversations([]);
+        startNewConversation();
+        setConversationSummaries({});
+        setError(null);
+      } else {
+        console.error('Error al eliminar todas las conversaciones:', data.message || 'Error desconocido');
+        setError('No se pudieron eliminar las conversaciones. Intenta de nuevo.');
+      }
+    } catch (error) {
+      console.error('Error al eliminar todas las conversaciones:', error);
+      setError('Error de conexión al intentar eliminar las conversaciones.');
+    } finally {
+      setIsLoading(false);
+      setShowDeleteAllConfirm(false);
+    }
+  };
+
+  // Función para confirmar la eliminación de una conversación
+  const confirmDeleteConversation = (conversationId, e) => {
+    e.stopPropagation(); // Evitar que se cargue la conversación al hacer clic en el botón de eliminar
+    setConversationToDelete(conversationId);
+    setShowDeleteConfirm(true);
+  };
+
+  // Función para cancelar la eliminación
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setShowDeleteAllConfirm(false);
+    setConversationToDelete(null);
   };
 
   if (isUserLoading || isCheckingAccess) {

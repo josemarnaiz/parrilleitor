@@ -10,7 +10,7 @@ const commonHeaders = {
   'Cache-Control': 'no-store, max-age=0',
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': 'https://parrilleitorai.vercel.app',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Credentials': 'true',
 };
@@ -144,7 +144,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'POST') {
       try {
-        const { messages } = req.body;
+        const { messages, summary } = req.body;
 
         if (!messages || !Array.isArray(messages)) {
           clearTimeout(functionTimeout);
@@ -184,6 +184,11 @@ export default async function handler(req, res) {
             createdAt: new Date(),
             updatedAt: new Date()
           };
+          
+          // Agregar el resumen si se proporciona
+          if (summary) {
+            newConversation.summary = summary;
+          }
 
           try {
             result = await mongoClient.insertOne(COLLECTION_NAME, newConversation);
@@ -235,6 +240,11 @@ export default async function handler(req, res) {
             lastUpdated: new Date(),
             updatedAt: new Date()
           };
+          
+          // Actualizar el resumen si se proporciona
+          if (summary) {
+            updatedConversation.summary = summary;
+          }
 
           try {
             result = await mongoClient.replaceOne(
@@ -275,6 +285,75 @@ export default async function handler(req, res) {
       } catch (saveError) {
         clearTimeout(functionTimeout);
         return handleError(res, saveError, 'Error al guardar la conversación');
+      }
+    }
+
+    // Nuevo método DELETE para borrar conversaciones
+    if (req.method === 'DELETE') {
+      try {
+        const { conversationId, deleteAll } = req.query;
+
+        // Opción 1: Borrar todas las conversaciones del usuario
+        if (deleteAll === 'true') {
+          const result = await mongoClient.deleteMany(
+            COLLECTION_NAME,
+            { userId: session.user.sub }
+          );
+
+          clearTimeout(functionTimeout);
+          return res.status(200).json({
+            success: true,
+            message: 'Todas las conversaciones han sido eliminadas',
+            count: result.deletedCount || 0
+          });
+        }
+        
+        // Opción 2: Borrar una conversación específica
+        else if (conversationId) {
+          try {
+            const objectId = mongoClient.ObjectId(conversationId);
+            const result = await mongoClient.deleteOne(
+              COLLECTION_NAME,
+              { 
+                _id: objectId,
+                userId: session.user.sub 
+              }
+            );
+
+            if (result.deletedCount === 0) {
+              clearTimeout(functionTimeout);
+              return res.status(404).json({
+                success: false,
+                message: 'No se encontró la conversación o no tienes permiso para eliminarla'
+              });
+            }
+
+            clearTimeout(functionTimeout);
+            return res.status(200).json({
+              success: true,
+              message: 'Conversación eliminada correctamente'
+            });
+          } catch (idError) {
+            clearTimeout(functionTimeout);
+            return res.status(400).json({
+              success: false,
+              message: 'ID de conversación inválido',
+              error: idError.message
+            });
+          }
+        }
+        
+        // Si no se proporcionó ninguna opción válida
+        else {
+          clearTimeout(functionTimeout);
+          return res.status(400).json({
+            success: false,
+            message: 'Se debe especificar conversationId o deleteAll=true'
+          });
+        }
+      } catch (deleteError) {
+        clearTimeout(functionTimeout);
+        return handleError(res, deleteError, 'Error al eliminar las conversaciones');
       }
     }
 
