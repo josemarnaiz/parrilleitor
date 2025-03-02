@@ -4,6 +4,7 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 import { cva } from 'class-variance-authority';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 // Definición de los estilos base y variantes del botón
 const buttonVariants = cva(
@@ -63,10 +64,36 @@ const Button = React.forwardRef(
     icon,
     iconRight,
     animate = true,
+    as,
+    href,
     ...props 
   }, ref) => {
-    // Si hay animación, usamos motion.button, de lo contrario un botón regular
-    const Component = animate ? motion.button : 'button';
+    // Identificar si tenemos iconos y su posición
+    let iconPosition = null;
+    if (icon && !iconRight) iconPosition = 'left';
+    else if (iconRight && !icon) iconPosition = 'right';
+    else if (icon && iconRight) iconPosition = 'both';
+    else if ((icon || iconRight) && !children) iconPosition = 'only';
+    
+    // Clases comunes para todos los tipos de botones
+    const buttonClasses = cn(
+      buttonVariants({ 
+        variant, 
+        size, 
+        fullWidth, 
+        withIcon: iconPosition
+      }), 
+      className
+    );
+    
+    // Contenido del botón
+    const buttonContent = (
+      <>
+        {icon && <span className={cn("inline-flex", children && "mr-2")}>{icon}</span>}
+        {children}
+        {iconRight && <span className={cn("inline-flex", children && "ml-2")}>{iconRight}</span>}
+      </>
+    );
     
     // Animaciones para el botón
     const buttonAnimation = {
@@ -75,28 +102,48 @@ const Button = React.forwardRef(
       transition: { duration: 0.1 },
     };
     
-    // Identificar si tenemos iconos y su posición
-    let iconPosition = null;
-    if (icon && !iconRight) iconPosition = 'left';
-    else if (iconRight && !icon) iconPosition = 'right';
-    else if (icon && iconRight) iconPosition = 'both';
-    else if ((icon || iconRight) && !children) iconPosition = 'only';
+    // Si se proporciona 'as' y es Link, o si hay un href, renderizar como Link
+    if ((as === Link || as === 'Link' || as === 'link') || href) {
+      const Component = animate ? motion.a : 'a';
+      
+      return (
+        <Link href={href || '#'} passHref legacyBehavior>
+          <Component
+            className={buttonClasses}
+            ref={ref}
+            {...buttonAnimation}
+            {...props}
+          >
+            {buttonContent}
+          </Component>
+        </Link>
+      );
+    }
     
+    // Si se proporciona un componente personalizado mediante 'as'
+    if (as && typeof as !== 'string') {
+      const Component = as;
+      return (
+        <Component
+          className={buttonClasses}
+          ref={ref}
+          {...props}
+        >
+          {buttonContent}
+        </Component>
+      );
+    }
+    
+    // Por defecto, renderizar como botón
+    const Component = animate ? motion.button : 'button';
     return (
       <Component
-        className={cn(buttonVariants({ 
-          variant, 
-          size, 
-          fullWidth, 
-          withIcon: iconPosition
-        }), className)}
+        className={buttonClasses}
         ref={ref}
         {...buttonAnimation}
         {...props}
       >
-        {icon && <span className={cn("inline-flex", children && "mr-2")}>{icon}</span>}
-        {children}
-        {iconRight && <span className={cn("inline-flex", children && "ml-2")}>{iconRight}</span>}
+        {buttonContent}
       </Component>
     );
   }

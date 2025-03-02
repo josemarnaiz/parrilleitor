@@ -430,7 +430,7 @@ export default function Chat() {
       const sendMessageAsync = async () => {
         try {
           const response = await fetch('/api/chat', {
-            method: 'PUT',
+            method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
@@ -450,7 +450,7 @@ export default function Chat() {
           // Añadir respuesta al chat
           const assistantMessage = {
             role: 'assistant',
-            content: data.reply,
+            content: data.response,
           };
           
           const newMessages = [...updatedMessages, assistantMessage];
