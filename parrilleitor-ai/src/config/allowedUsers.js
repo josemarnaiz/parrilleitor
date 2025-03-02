@@ -1,8 +1,8 @@
 // Lista adicional de usuarios con acceso premium
 export const ADDITIONAL_ALLOWED_USERS = [
-  'josem.arnaizmartin@gmail.com',
-  'cesar.carlos.parrilla@gmail.com',
-  'testparrilleitor2025@yopmail.com'
+  'user1@example.com',
+  'user2@example.com',
+  'user3@example.com'
   // Añade más emails aquí
 ]
 
