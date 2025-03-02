@@ -8,7 +8,7 @@ export default function ConversationList({
   loadConversation,
   isLoading,
   onDeleteConversation,
-  onDeleteAllConversations
+  onDeleteAllConversations 
 }) {
   const [showDeleteOptions, setShowDeleteOptions] = useState(false);
   
