@@ -88,10 +88,58 @@ export async function GET(req) {
     const email = session.user.email
     const name = session.user.name || email
 
+    // Log completo del objeto de usuario para depuración
+    console.log('Auth0 complete user object:', JSON.stringify(session.user, null, 2))
+
     // Check both Auth0 roles and allowed users list
     const isAllowedListUser = isInAllowedList(email)
-    const roles = session.user[AUTH0_NAMESPACE] || []
-    const hasPremiumRole = roles.includes(PREMIUM_ROLE_ID)
+    
+    // Múltiples intentos para obtener roles
+    let roles = [];
+    let hasPremiumRole = false;
+    
+    // Método 1: Namespace estándar
+    if (session.user[AUTH0_NAMESPACE]) {
+      roles = session.user[AUTH0_NAMESPACE];
+      console.log('Roles found using standard namespace:', roles);
+    } 
+    // Método 2: Propiedad roles directa
+    else if (session.user.roles) {
+      roles = session.user.roles;
+      console.log('Roles found using direct roles property:', roles);
+    } 
+    // Método 3: Buscar en las propiedades del usuario
+    else {
+      console.log('Searching for roles in user properties...');
+      // Buscar cualquier propiedad que pueda contener roles
+      for (const key in session.user) {
+        if (Array.isArray(session.user[key])) {
+          console.log(`Found array property "${key}":`, session.user[key]);
+          // Si contiene el ID del rol premium, usarla
+          if (session.user[key].includes(PREMIUM_ROLE_ID)) {
+            roles = session.user[key];
+            console.log(`Using "${key}" as roles property:`, roles);
+            break;
+          }
+        }
+      }
+    }
+    
+    // Verificar si el rol premium está presente
+    hasPremiumRole = roles.includes(PREMIUM_ROLE_ID);
+    
+    // Para usuarios de prueba, verificar también por nombre del rol
+    if (!hasPremiumRole && Array.isArray(roles)) {
+      hasPremiumRole = roles.some(role => 
+        typeof role === 'string' && 
+        (role.toLowerCase().includes('premium') || role === PREMIUM_ROLE_ID)
+      );
+      if (hasPremiumRole) {
+        console.log('Premium role detected by name in:', roles);
+      }
+    }
+    
+    // Decisión final: un usuario es premium si está en la lista de permitidos o tiene el rol premium
     const isPremium = isAllowedListUser || hasPremiumRole
 
     // Log authorization details

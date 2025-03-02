@@ -88,6 +88,11 @@ export default function Chat() {
           
           if (data.user.isPremium) {
             loadChatHistory() // Cargar historial después de confirmar estado premium
+          } else {
+            // Redirigir a usuarios no premium a la página de unauthorized
+            console.log('User does not have premium access, redirecting to unauthorized')
+            router.push('/unauthorized')
+            return
           }
           return
         }
@@ -126,6 +131,8 @@ export default function Chat() {
     } else if (!isUserLoading && !user) {
       setError('Necesitas iniciar sesión para acceder al chat.')
       setIsCheckingAccess(false)
+      // Redirigir a usuarios no autenticados a la página principal
+      router.push('/')
     }
 
     return () => {
@@ -134,7 +141,7 @@ export default function Chat() {
         clearTimeout(retryTimeout)
       }
     }
-  }, [user, isUserLoading, retryCount])
+  }, [user, isUserLoading, retryCount, router])
 
   const loadChatHistory = async () => {
     try {

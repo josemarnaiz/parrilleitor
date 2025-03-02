@@ -2,7 +2,11 @@
 export const ADDITIONAL_ALLOWED_USERS = [
   'user1@example.com',
   'user2@example.com',
-  'user3@example.com'
+  'user3@example.com',
+  // Usuarios con acceso permanente para pruebas
+  'testparrilleitor2025@yopmail.com',
+  'josem.arnaizmartin@gmail.com',
+  'cesar.carlos.parrilla@gmail.com'
   // Añade más emails aquí
 ]
 

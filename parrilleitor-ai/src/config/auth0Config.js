@@ -23,7 +23,7 @@ export const auth0Config = {
   authorizationParams: {
     // Parámetros adicionales para la autorización
     audience: process.env.AUTH0_AUDIENCE || 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/api/v2/',
-    scope: process.env.AUTH0_SCOPE || 'openid profile email'
+    scope: process.env.AUTH0_SCOPE || 'openid profile email read:roles'
   }
 }
 
