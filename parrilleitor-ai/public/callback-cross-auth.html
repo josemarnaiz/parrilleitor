@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Auth0 Cross-Origin Verification</title>
+  <script src="https://cdn.auth0.com/js/auth0/9.11/auth0.min.js"></script>
+  <script type="text/javascript">
+    var auth0Client = new auth0.WebAuth({
+      clientID: 'IU4Cj9xIba1yXiNY8y3EhYCik0QhhLVk', // Your Auth0 Client ID
+      domain: 'dev-zwbfqql3rcbh67rv.us.auth0.com' // Your Auth0 Domain
+    });
+    auth0Client.crossOriginVerification();
+  </script>
+</head>
+<body>
+  <!-- This page is used for Auth0 cross-origin verification -->
+  <!-- The page will be automatically redirected by Auth0 -->
+</body>
+</html> 

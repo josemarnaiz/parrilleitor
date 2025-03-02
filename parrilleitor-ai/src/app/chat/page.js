@@ -255,12 +255,24 @@ export default function Chat() {
   const saveMessages = async (updatedMessages) => {
     try {
       setIsLoading(true);
+      
+      // Ensure we have messages to save
+      if (!updatedMessages || updatedMessages.length === 0) {
+        console.error('No hay mensajes para guardar');
+        setError('No hay mensajes para guardar');
+        return false;
+      }
+      
+      // Extract the last user message if available
+      const lastUserMessage = updatedMessages.filter(msg => msg.role === 'user').pop();
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          message: lastUserMessage ? lastUserMessage.content : '',
           messages: updatedMessages,
           conversationId: selectedConversationId,
         }),
@@ -523,9 +535,9 @@ export default function Chat() {
         <div className="p-3">
           <button 
             onClick={startNewConversation}
-            className="w-full p-2 rounded-md bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors flex items-center justify-center shadow-sm"
+            className="flex items-center justify-center px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 text-xs font-medium hover:bg-gray-200 transition-colors shadow-sm border border-gray-200"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
             Nueva conversación
@@ -557,7 +569,7 @@ export default function Chat() {
             </button>
           )}
           <div className="text-xl font-medium text-primary">
-            {!isSidebarOpen && 'ParrilleitorAI'}
+            {!isSidebarOpen ? 'ParrilleitorAI' : ''}
           </div>
           <div className="w-6"></div> {/* Spacer for alignment */}
         </header>
