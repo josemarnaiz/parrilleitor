@@ -38,12 +38,12 @@ MEDICAL BOUNDARIES:
 export default async function handler(req, res) {
   // Generar un ID único para esta solicitud para seguimiento en logs
   const requestId = Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
-  console.log(`[${requestId}] Iniciando solicitud de chat`);
+  console.log(`[${requestId}] Iniciando solicitud de chat: ${req.method}`);
 
   // Set CORS headers
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.setHeader('Access-Control-Allow-Origin', 'https://parrilleitorai.vercel.app');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 
@@ -53,26 +53,13 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
-  }
-
-  // Establecer un timeout para la función completa
-  const functionTimeout = setTimeout(() => {
-    console.error(`[${requestId}] Timeout de función alcanzado, respondiendo con error`);
-    return res.status(504).json({ 
-      error: 'La solicitud ha excedido el tiempo máximo de espera',
-      message: 'Por favor, intenta con un mensaje más corto o inténtalo de nuevo más tarde.'
-    });
-  }, 45000); // 45 segundos de timeout total
-
+  // Verificar autenticación para todos los métodos
   try {
     console.log(`[${requestId}] Obteniendo sesión de usuario`);
     const session = await getSession(req, res);
 
     if (!session?.user) {
       console.log(`[${requestId}] Usuario no autenticado`);
-      clearTimeout(functionTimeout);
       return res.status(401).json({ error: 'No autenticado' });
     }
 
@@ -92,9 +79,62 @@ export default async function handler(req, res) {
 
     if (!hasPremiumRole && !isAllowedUser) {
       console.log(`[${requestId}] Usuario no premium intentando acceder:`, userEmail);
-      clearTimeout(functionTimeout);
       return res.status(403).json({ error: 'Se requiere una cuenta premium' });
     }
+
+    // Manejar método DELETE para eliminar una conversación
+    if (req.method === 'DELETE') {
+      const { conversationId } = req.query;
+      
+      if (!conversationId) {
+        return res.status(400).json({ error: 'Se requiere un ID de conversación' });
+      }
+      
+      try {
+        await connectDB();
+        
+        // Buscar la conversación y verificar que pertenezca al usuario
+        const conversation = await Conversation.findOne({
+          _id: conversationId,
+          userId: session.user.sub
+        });
+        
+        if (!conversation) {
+          return res.status(404).json({ error: 'Conversación no encontrada' });
+        }
+        
+        // Eliminar la conversación
+        await Conversation.deleteOne({ _id: conversationId });
+        
+        console.log(`[${requestId}] Conversación eliminada: ${conversationId}`);
+        return res.status(200).json({ success: true, message: 'Conversación eliminada correctamente' });
+      } catch (error) {
+        console.error(`[${requestId}] Error al eliminar conversación:`, {
+          error: error.message,
+          stack: error.stack,
+          timestamp: new Date().toISOString()
+        });
+        
+        return res.status(500).json({ 
+          error: 'Error al eliminar la conversación',
+          details: error.message
+        });
+      }
+    }
+
+    // Si no es DELETE, verificar que sea POST
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Método no permitido' });
+    }
+
+    // Establecer un timeout para la función completa
+    const functionTimeout = setTimeout(() => {
+      console.error(`[${requestId}] Timeout de función alcanzado, respondiendo con error`);
+      return res.status(504).json({ 
+        error: 'La solicitud ha excedido el tiempo máximo de espera',
+        message: 'Por favor, intenta con un mensaje más corto o inténtalo de nuevo más tarde.'
+      });
+    }, 45000); // 45 segundos de timeout total
 
     const { message, conversationId } = req.body;
     console.log(`[${requestId}] Mensaje recibido:`, {
@@ -264,8 +304,11 @@ export default async function handler(req, res) {
       timestamp: new Date().toISOString()
     });
     
-    clearTimeout(functionTimeout);
-    return res.status(200).json({ 
+    if (req.method === 'POST' && functionTimeout) {
+      clearTimeout(functionTimeout);
+    }
+    
+    return res.status(500).json({ 
       error: 'Error interno del servidor',
       message: 'Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo más tarde.',
       details: error.message

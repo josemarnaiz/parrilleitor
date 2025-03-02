@@ -1,12 +1,17 @@
 import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 
 export default function ConversationList({ 
   conversations, 
   selectedConversationId, 
   conversationSummaries, 
   loadConversation,
-  isLoading
+  isLoading,
+  onDeleteConversation,
+  onDeleteAllConversations
 }) {
+  const [showDeleteOptions, setShowDeleteOptions] = useState(false);
+  
   // Group conversations by date for better organization
   const groupedConversations = groupByDate(conversations);
   
@@ -76,6 +81,22 @@ export default function ConversationList({
     return 'Conversación vacía';
   }
   
+  // Handle delete conversation
+  const handleDelete = (e, conversationId) => {
+    e.stopPropagation(); // Prevent triggering the conversation selection
+    if (onDeleteConversation) {
+      onDeleteConversation(conversationId);
+    }
+  };
+  
+  // Handle delete all conversations
+  const handleDeleteAll = () => {
+    if (onDeleteAllConversations) {
+      onDeleteAllConversations();
+    }
+    setShowDeleteOptions(false);
+  };
+  
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-20">
@@ -93,35 +114,77 @@ export default function ConversationList({
   }
   
   return (
-    <div className="flex-1 overflow-y-auto">
-      {Object.entries(groupedConversations).map(([dateKey, convs]) => (
-        <div key={dateKey} className="mb-1">
-          <div className="px-3 py-2 text-xs font-medium text-gray-500">
-            {dateKey}
-          </div>
-          
-          {convs.map((conv) => (
-            <button
-              key={conv._id}
-              onClick={() => loadConversation(conv._id)}
-              className={`w-full py-3 px-3 text-left hover:bg-gray-200 transition-colors ${
-                selectedConversationId === conv._id ? 'bg-gray-200' : ''
-              }`}
+    <div className="flex-1 overflow-y-auto flex flex-col">
+      {/* Delete options */}
+      <div className="px-3 py-2 border-b border-gray-200">
+        <button 
+          onClick={() => setShowDeleteOptions(!showDeleteOptions)}
+          className="text-xs text-gray-600 hover:text-red-600 flex items-center"
+        >
+          <Trash2 size={14} className="mr-1" />
+          Gestionar conversaciones
+        </button>
+        
+        {showDeleteOptions && (
+          <div className="mt-2 p-2 bg-gray-100 rounded-md">
+            <button 
+              onClick={handleDeleteAll}
+              className="text-xs text-red-600 hover:text-red-800 w-full text-left py-1"
             >
-              <div className="flex justify-between items-start">
-                <div className="max-w-[85%]">
-                  <div className="text-sm font-medium text-gray-800 truncate">
-                    {getConversationPreview(conv)}
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500">
-                  {formatTime(conv.lastUpdated || conv.createdAt)}
-                </div>
-              </div>
+              Borrar todas las conversaciones
             </button>
-          ))}
-        </div>
-      ))}
+            <div className="text-xs text-gray-500 mt-1">
+              O haz clic en el icono de papelera junto a cada conversación para borrarla individualmente.
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Conversation list */}
+      <div className="flex-1 overflow-y-auto">
+        {Object.entries(groupedConversations).map(([dateKey, convs]) => (
+          <div key={dateKey} className="mb-1">
+            <div className="px-3 py-2 text-xs font-medium text-gray-500">
+              {dateKey}
+            </div>
+            
+            {convs.map((conv) => (
+              <div 
+                key={conv._id}
+                className={`w-full py-3 px-3 hover:bg-gray-200 transition-colors ${
+                  selectedConversationId === conv._id ? 'bg-gray-200' : ''
+                } flex justify-between items-start`}
+              >
+                <button
+                  onClick={() => loadConversation(conv._id)}
+                  className="text-left flex-1"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="max-w-[85%]">
+                      <div className="text-sm font-medium text-gray-800 truncate">
+                        {getConversationPreview(conv)}
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {formatTime(conv.lastUpdated || conv.createdAt)}
+                    </div>
+                  </div>
+                </button>
+                
+                {showDeleteOptions && (
+                  <button 
+                    onClick={(e) => handleDelete(e, conv._id)}
+                    className="ml-2 text-gray-400 hover:text-red-600"
+                    title="Borrar conversación"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 } 

@@ -411,6 +411,7 @@ export default function Chat() {
     const userMessage = {
       role: 'user',
       content: input.trim(),
+      timestamp: new Date(),
     };
     
     const updatedMessages = [...messages, userMessage];
@@ -429,6 +430,8 @@ export default function Chat() {
       // Simular envío al servicio de AI y respuesta
       const sendMessageAsync = async () => {
         try {
+          console.log('Enviando mensaje al API con conversationId:', selectedConversationId);
+          
           const response = await fetch('/api/chat', {
             method: 'POST',
             headers: {
@@ -442,6 +445,7 @@ export default function Chat() {
           });
           
           const data = await response.json();
+          console.log('Respuesta recibida del API:', data);
           
           if (!response.ok) {
             throw new Error(data.error || 'Error en la respuesta del asistente');
@@ -451,10 +455,19 @@ export default function Chat() {
           const assistantMessage = {
             role: 'assistant',
             content: data.response,
+            timestamp: new Date(),
           };
+          
+          console.log('Añadiendo mensaje del asistente:', assistantMessage);
           
           const newMessages = [...updatedMessages, assistantMessage];
           setMessages(newMessages);
+          
+          // Si se creó una nueva conversación, actualizar el ID
+          if (data.conversation && data.conversation._id && !selectedConversationId) {
+            console.log('Actualizando ID de conversación:', data.conversation._id);
+            setSelectedConversationId(data.conversation._id);
+          }
           
           // Guardar la respuesta
           await saveMessages(newMessages);
@@ -466,6 +479,7 @@ export default function Chat() {
           const errorMessage = {
             role: 'error',
             content: `Error: ${error.message}. Por favor, intenta de nuevo.`,
+            timestamp: new Date(),
           };
           
           setMessages([...updatedMessages, errorMessage]);
@@ -551,6 +565,8 @@ export default function Chat() {
           conversationSummaries={conversationSummaries}
           loadConversation={loadConversation}
           isLoading={isLoadingHistory}
+          onDeleteConversation={deleteConversation}
+          onDeleteAllConversations={deleteAllConversations}
         />
       </aside>
       

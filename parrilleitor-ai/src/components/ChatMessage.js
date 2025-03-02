@@ -3,6 +3,22 @@ export default function ChatMessage({ message, isLast }) {
   const isUser = message.role === 'user';
   const isError = message.role === 'error';
   
+  // Format timestamp
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+    
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return '';
+    
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  };
+  
   // Determine the appropriate styling based on message type
   const getBubbleStyle = () => {
     if (isUser) {
@@ -39,6 +55,11 @@ export default function ChatMessage({ message, isLast }) {
         <div className={`${!isUser && !isError ? 'pt-1' : ''}`}>
           {formatContent(message.content)}
         </div>
+        {message.timestamp && (
+          <div className="mt-2 text-xs text-right opacity-70">
+            {formatTimestamp(message.timestamp)}
+          </div>
+        )}
       </div>
     </div>
   );
