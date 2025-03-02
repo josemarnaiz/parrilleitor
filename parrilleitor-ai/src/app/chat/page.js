@@ -313,12 +313,19 @@ export default function Chat() {
   const deleteConversation = async (conversationId) => {
     try {
       setIsDeletingConversation(true);
+      setError(null); // Limpiar errores previos
+      
+      if (!conversationId) {
+        throw new Error('ID de conversación no válido');
+      }
+      
       const response = await fetch(`/api/chat?conversationId=${conversationId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
+        signal: AbortSignal.timeout(8000) // 8 segundos de timeout
       });
 
       const data = await response.json();
@@ -345,11 +352,18 @@ export default function Chat() {
         console.log('Conversación eliminada con éxito');
         return true;
       } else {
+        console.error('Error en la respuesta del servidor:', data);
         throw new Error(data.error || 'Error al eliminar la conversación');
       }
     } catch (error) {
       console.error('Error al eliminar la conversación:', error);
-      setError(`Error al eliminar: ${error.message}`);
+      
+      // Mensaje de error más amigable para el usuario
+      const errorMsg = error.name === 'AbortError' 
+        ? 'La operación tomó demasiado tiempo. Por favor, intenta nuevamente.' 
+        : `Error al eliminar la conversación: ${error.message}`;
+      
+      setError(errorMsg);
       return false;
     } finally {
       setIsDeletingConversation(false);
@@ -361,12 +375,16 @@ export default function Chat() {
   const deleteAllConversations = async () => {
     try {
       setIsDeletingConversation(true);
+      setError(null); // Limpiar errores previos
+      
       const response = await fetch('/api/chat/all', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
+        // Añadir timeout más largo
+        signal: AbortSignal.timeout(10000) // 10 segundos de timeout
       });
 
       const data = await response.json();
@@ -379,11 +397,18 @@ export default function Chat() {
         console.log('Todas las conversaciones eliminadas con éxito');
         return true;
       } else {
-        throw new Error(data.error || 'Error al eliminar todas las conversaciones');
+        console.error('Error en la respuesta del servidor:', data);
+        throw new Error(data.error || 'Error al eliminar las conversaciones');
       }
     } catch (error) {
       console.error('Error al eliminar todas las conversaciones:', error);
-      setError(`Error al eliminar: ${error.message}`);
+      
+      // Mensaje de error más amigable para el usuario
+      const errorMsg = error.name === 'AbortError' 
+        ? 'La operación tomó demasiado tiempo. Por favor, intenta nuevamente.' 
+        : `Error al eliminar conversaciones: ${error.message}`;
+      
+      setError(errorMsg);
       return false;
     } finally {
       setIsDeletingConversation(false);
@@ -396,11 +421,21 @@ export default function Chat() {
     setConversationToDelete(conversationId);
     setShowDeleteConfirm(true);
   };
-
+  
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
     setShowDeleteAllConfirm(false);
     setConversationToDelete(null);
+  };
+
+  const confirmDelete = () => {
+    if (conversationToDelete) {
+      deleteConversation(conversationToDelete);
+    }
+  };
+  
+  const confirmDeleteAll = () => {
+    deleteAllConversations();
   };
 
   const handleSubmit = async (e) => {
@@ -430,7 +465,7 @@ export default function Chat() {
       // Simular envío al servicio de AI y respuesta
       const sendMessageAsync = async () => {
         try {
-          console.log('Enviando mensaje al API con conversationId:', selectedConversationId);
+          console.log('Enviando mensaje al API with conversationId:', selectedConversationId);
           
           const response = await fetch('/api/chat', {
             method: 'POST',
@@ -564,9 +599,9 @@ export default function Chat() {
             <input
               type="text"
               placeholder="Buscar conversación"
-              className="w-full py-1.5 pl-9 pr-3 rounded-full bg-white text-sm focus:outline-none border border-gray-200"
+              className="w-full py-1.5 pl-8 pr-3 rounded-full bg-white text-sm focus:outline-none border border-gray-200"
             />
-            <svg className="absolute left-3 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <svg className="absolute left-2.5 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
           </div>
@@ -631,14 +666,14 @@ export default function Chat() {
           
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500">
-              <div className="w-16 h-16 rounded-full bg-[#25d366] flex items-center justify-center mb-4 text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              <div className="w-12 h-12 rounded-full bg-[#25d366] flex items-center justify-center mb-4 text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
               </div>
-              <p className="text-center font-medium">¡Bienvenido a ParrilleitorAI Chat!</p>
-              <p className="text-sm text-center mt-2 max-w-xs">
-                Pregunta cualquier cosa y te responderé lo antes posible.
+              <p className="text-center font-medium text-gray-700">¡Bienvenido al Chat!</p>
+              <p className="text-sm text-center mt-2 max-w-xs text-gray-600">
+                Escribe un mensaje para comenzar una nueva conversación.
               </p>
             </div>
           ) : (
