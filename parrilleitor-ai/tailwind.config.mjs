@@ -234,7 +234,12 @@ export default {
     },
   },
   plugins: [
-    require('@tailwindcss/forms'),
+    // Import tailwind forms plugin in an ES module compatible way
+    {
+      handler: function() {
+        return import('@tailwindcss/forms').then(plugin => plugin.default());
+      }
+    },
   ],
   safelist: [
     // Clases de colores deportivos

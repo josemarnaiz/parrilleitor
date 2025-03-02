@@ -2,19 +2,32 @@
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
-    serverComponentsExternalPackages: ['mongoose'],
     optimizeCss: true,
   },
+  serverExternalPackages: ['mongoose'],
   images: {
     domains: ['lh3.googleusercontent.com', 's.gravatar.com'],
-    unoptimized: true,
+    unoptimized: false,
     deviceSizes: [320, 420, 640, 768, 1024, 1280, 1920],
-    formats: ['image/webp', 'image/avif']
+    formats: ['image/webp', 'image/avif'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 's.gravatar.com',
+        pathname: '/**',
+      },
+    ],
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: false,
   },
   async headers() {
     return [
       {
-        // Aplica estos headers a todas las rutas
         source: '/(.*)',
         headers: [
           {
@@ -23,7 +36,9 @@ const nextConfig = {
           },
           {
             key: 'Access-Control-Allow-Origin',
-            value: '*',
+            value: process.env.NODE_ENV === 'production' 
+              ? 'https://parrilleitorai.vercel.app' 
+              : 'http://localhost:3000',
           },
           {
             key: 'Access-Control-Allow-Methods',
@@ -49,6 +64,18 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=(self)',
           },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;",
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
         ],
       },
     ];
@@ -59,21 +86,17 @@ const nextConfig = {
       topLevelAwait: true,
     };
     
-    // Solo aplicar optimizaciones de chunks al código del cliente, no al servidor
     if (!isServer && process.env.NODE_ENV === 'production') {
-      // Configuración más segura para splitChunks en el cliente
       config.optimization.splitChunks = {
         chunks: 'all',
         cacheGroups: {
           default: false,
           vendors: false,
-          // Componentes comunes que se reutilizan
           commons: {
             name: 'commons',
             minChunks: 2,
             priority: 20,
           },
-          // Librerías de node_modules
           libs: {
             test: /[\\/]node_modules[\\/]/,
             priority: 10,

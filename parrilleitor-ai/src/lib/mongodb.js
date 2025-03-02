@@ -1,8 +1,9 @@
 import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
+import mongoose from 'mongoose';
 
 // Configuración de conexión a MongoDB
 // Asegurarse de que la URI siempre tenga el formato correcto
-const DEFAULT_URI = "mongodb+srv://jmam:jmamadmin@cluster0.pogiz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const DEFAULT_URI = "[REDACTED-MONGODB-URI]";
 const MONGODB_URI = process.env.MONGODB_URI && process.env.MONGODB_URI.startsWith('mongodb') 
   ? process.env.MONGODB_URI 
   : DEFAULT_URI;
@@ -31,9 +32,26 @@ const options = {
   wtimeoutMS: 10000,        // Timeout para operaciones de escritura
 };
 
+// Mongoose options optimized for serverless
+const mongooseOptions = {
+  maxPoolSize: 5,
+  minPoolSize: 1,
+  socketTimeoutMS: 30000,
+  connectTimeoutMS: 30000,
+  serverSelectionTimeoutMS: 30000,
+  heartbeatFrequencyMS: 10000,
+  bufferCommands: false, // Disable command buffering to prevent timeout issues
+  autoIndex: false, // Don't build indexes
+  retryWrites: true,
+  retryReads: true,
+  family: 4,
+  maxIdleTimeMS: 120000, // Close idle connections after 2 minutes
+};
+
 // Variable para almacenar la conexión
 let client;
 let clientPromise;
+let mongooseConnection = null;
 
 // Función para conectar a MongoDB
 async function connectToDatabase() {
@@ -74,6 +92,80 @@ async function connectToDatabase() {
       console.error("Recomendación: Verifica la conectividad de red y considera aumentar los timeouts en la configuración.");
     }
     
+    throw error;
+  }
+}
+
+// Función para conectar Mongoose a MongoDB
+// Esta función es más confiable para operaciones de Mongoose como deleteMany
+async function connectMongoose() {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      // Si ya está conectado, devuelve la conexión existente
+      console.log("Reutilizando conexión Mongoose existente");
+      return mongoose.connection;
+    }
+
+    // Verificar que la URI tenga el formato correcto
+    if (!MONGODB_URI.startsWith('mongodb://') && !MONGODB_URI.startsWith('mongodb+srv://')) {
+      throw new Error('URI de MongoDB inválida. Debe comenzar con "mongodb://" o "mongodb+srv://"');
+    }
+    
+    // Para evitar advertencias de deprecación
+    mongoose.set('strictQuery', false);
+    
+    // Configurar event listeners para debugging
+    mongoose.connection.on('error', err => {
+      console.error('Mongoose connection error:', err);
+    });
+    
+    mongoose.connection.on('disconnected', () => {
+      console.log('Mongoose disconnected');
+    });
+    
+    // Conexión con timeout
+    console.log("Iniciando conexión Mongoose a MongoDB...");
+    
+    const connectPromise = mongoose.connect(MONGODB_URI, mongooseOptions);
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Tiempo de conexión Mongoose agotado')), 20000);
+    });
+    
+    // Esperar a que se conecte o timeout
+    await Promise.race([connectPromise, timeoutPromise]);
+    
+    console.log("Conexión Mongoose establecida correctamente");
+    mongooseConnection = mongoose.connection;
+    return mongooseConnection;
+  } catch (error) {
+    console.error("Error al conectar Mongoose a MongoDB:", {
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Proporcionar información útil sobre posibles problemas de conexión
+    if (error.message.includes('Invalid scheme') || error.message.includes('URI de MongoDB inválida')) {
+      console.error("La URI de MongoDB no tiene el formato correcto. Asegúrate de que comience con 'mongodb://' o 'mongodb+srv://'");
+    } else if (error.message.includes('connection timed out') || error.message.includes('no server found')) {
+      console.error("Posible problema de whitelist de IPs. Asegúrate de que la IP de tu servidor esté permitida en MongoDB Atlas Network Access.");
+    } else if (error.message.includes('buffering timed out')) {
+      console.error("Timeout en operación de MongoDB. Esto puede ocurrir si la conexión es lenta o si hay problemas de red.");
+    }
+    
+    throw error;
+  }
+}
+
+// Función principal para conectar a la base de datos
+// Esta es la que exportamos por defecto y la que usan los API endpoints
+async function connectDB() {
+  try {
+    console.log("Conectando a MongoDB con Mongoose...");
+    await connectMongoose();
+    return mongoose.connection;
+  } catch (error) {
+    console.error("Error en connectDB:", error);
     throw error;
   }
 }
@@ -437,4 +529,5 @@ function getMongoDBClient() {
   return mongoClient;
 }
 
-export default getMongoDBClient; 
+export { getMongoDBClient };
+export default connectDB; 
