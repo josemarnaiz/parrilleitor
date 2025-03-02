@@ -33,17 +33,17 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <div className="flex min-h-screen flex-col">
             <Navbar />
-            <main className="flex-grow w-full mt-14 pb-safe">
+            <main className="flex-grow w-full pt-header pb-safe">
               {children}
             </main>
-            <footer className="py-5 text-center text-sm text-gray-500 border-t border-gray-200 bg-white pb-safe">
+            <footer className="py-3 text-center text-xs text-gray-500 border-t border-gray-200 bg-white pb-safe">
               <div className="container mx-auto px-4">
-                <div className="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
+                <div className="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
                   <div className="flex items-center">
-                    <span className="font-medium text-primary mr-2">ParrilleitorAI</span>
+                    <span className="font-medium text-primary mr-1">ParrilleitorAI</span>
                     <span>&copy; {new Date().getFullYear()}</span>
                   </div>
-                  <div className="flex gap-6">
+                  <div className="flex gap-4">
                     <a href="#" className="text-gray-500 hover:text-gray-700 transition-colors">Términos</a>
                     <a href="#" className="text-gray-500 hover:text-gray-700 transition-colors">Privacidad</a>
                     <a href="#" className="text-gray-500 hover:text-gray-700 transition-colors">Ayuda</a>

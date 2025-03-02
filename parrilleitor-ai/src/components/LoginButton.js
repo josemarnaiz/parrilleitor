@@ -15,7 +15,7 @@ export default function LoginButton({ className }) {
   return (
     <button
       onClick={handleLogin}
-      className={`bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-lg transition-colors ${className || ''}`}
+      className={`bg-primary hover:bg-primary-dark text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors ${className || ''}`}
     >
       Iniciar sesión
     </button>

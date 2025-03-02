@@ -12,15 +12,31 @@ export default function Navbar() {
   const pathname = usePathname()
   const [pageTitle, setPageTitle] = useState('ParrilleitorAI')
   const [scrolled, setScrolled] = useState(false)
+  const [lastScrollY, setLastScrollY] = useState(0)
+  const [showHeader, setShowHeader] = useState(true)
   
-  // Handle scroll effect
+  // Handle scroll effect with hide/show on scroll
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10)
+      const currentScrollY = window.scrollY
+      
+      // Determinar si el header debe mostrarse o esconderse
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        // Scrolling down & past threshold - hide header
+        setShowHeader(false)
+      } else {
+        // Scrolling up or at top - show header
+        setShowHeader(true)
+      }
+      
+      // Aplicar efecto de fondo cuando hay scroll
+      setScrolled(currentScrollY > 10)
+      setLastScrollY(currentScrollY)
     }
-    window.addEventListener('scroll', handleScroll)
+    
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  }, [lastScrollY])
   
   // Set page title based on current path
   useEffect(() => {
@@ -40,34 +56,38 @@ export default function Navbar() {
   
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-primary/95 backdrop-blur-sm shadow-md' : 'bg-primary'}`}>
+      <header 
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 
+          ${scrolled ? 'bg-primary/95 backdrop-blur-sm shadow-sm' : 'bg-primary'} 
+          ${showHeader ? 'translate-y-0' : '-translate-y-full'}`}
+      >
         <div className="container">
-          <div className="flex items-center justify-between h-14">
+          <div className="flex items-center justify-between h-11">
             <div className="flex items-center">
               {showBackButton && (
-                <Link href="/" className="mr-3 flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/10 transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                <Link href="/" className="mr-2 flex items-center justify-center w-6 h-6 rounded-full hover:bg-white/10 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
                     <path d="M15 18l-6-6 6-6" />
                   </svg>
                 </Link>
               )}
-              <h1 className="text-lg font-semibold text-white animate-fade-in">{pageTitle}</h1>
+              <h1 className="text-base font-semibold text-white animate-fade-in">{pageTitle}</h1>
             </div>
             
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
               {!user ? (
-                <LoginButton className="text-sm" />
+                <LoginButton className="text-xs py-1 px-3" />
               ) : (
-                <div className="flex items-center space-x-3">
-                  <Link href="/chat" className={`hidden sm:block text-sm text-white/90 hover:text-white px-3 py-1.5 rounded-lg ${pathname === '/chat' ? 'bg-white/10' : 'hover:bg-white/5'}`}>
+                <div className="flex items-center space-x-2">
+                  <Link href="/chat" className={`hidden sm:block text-xs text-white/90 hover:text-white px-2 py-1 rounded-lg ${pathname === '/chat' ? 'bg-white/10' : 'hover:bg-white/5'}`}>
                     Chat
                   </Link>
-                  <Link href="/profile" className="flex items-center space-x-2">
-                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white border border-white/20 hover:bg-white/20 transition-colors">
+                  <Link href="/profile" className="flex items-center">
+                    <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white border border-white/20 hover:bg-white/20 transition-colors text-xs">
                       {user.name?.charAt(0) || 'U'}
                     </div>
                   </Link>
-                  <LogoutButton className="text-sm" />
+                  <LogoutButton className="text-xs py-1 px-3" />
                 </div>
               )}
             </div>
