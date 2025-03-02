@@ -640,7 +640,9 @@ a, button, .btn, .card, input, select, textarea {
 }
 
 .mobile-nav-icon {
-  @apply mb-0.5 w-5 h-5;
+  @apply mb-0.5;
+  width: 20px !important;
+  height: 20px !important;
 }
 
 /* Ajuste para el contenido principal para evitar que quede debajo del navbar */
