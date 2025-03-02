@@ -619,12 +619,17 @@ export default function Chat() {
               ))}
               
               {isTyping && (
-                <div className="max-w-3xl mx-auto ml-auto max-w-xs md:max-w-md">
-                  <div className="p-3 rounded-lg bg-primary/10 shadow-sm">
-                    <div className="flex space-x-2">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce delay-100"></div>
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce delay-200"></div>
+                <div className="max-w-3xl mx-auto flex justify-start">
+                  <div className="p-4 bg-white border border-gray-200 shadow-sm text-gray-800 rounded-lg max-w-xs md:max-w-md">
+                    <div className="flex items-center mb-2">
+                      <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center mr-2">
+                        <span className="text-xs font-semibold text-primary">AI</span>
+                      </div>
+                      <span className="text-xs font-medium text-gray-500">ParrilleitorAI</span>
+                    </div>
+                    <div className="text-sm text-gray-700 mb-2">Procesando tu pregunta...</div>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-primary h-1.5 rounded-full animate-progress"></div>
                     </div>
                   </div>
                 </div>
