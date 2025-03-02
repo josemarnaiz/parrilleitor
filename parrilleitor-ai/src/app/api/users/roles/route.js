@@ -155,4 +155,4 @@ export async function OPTIONS(request) {
   })
 }
 
-export const runtime = 'edge' 
+export const runtime = 'experimental-edge' 
