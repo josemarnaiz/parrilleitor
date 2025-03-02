@@ -55,10 +55,10 @@ export default function ConversationList({
     return grouped;
   }
   
-  // Format time from date
+  // Format time from date (WhatsApp style)
   function formatTime(dateString) {
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   }
   
   // Get summary or first message preview
@@ -81,6 +81,21 @@ export default function ConversationList({
     return 'Conversación vacía';
   }
   
+  // Generate initials or icon for avatar
+  function getConversationIcon(conversation) {
+    // Get first letter of first word and first letter of second word
+    const preview = getConversationPreview(conversation);
+    const words = preview.split(' ');
+    
+    if (words.length >= 2) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    } else if (words.length === 1 && words[0].length > 0) {
+      return words[0][0].toUpperCase();
+    } else {
+      return 'AI';
+    }
+  }
+  
   // Handle delete conversation
   const handleDelete = (e, conversationId) => {
     e.stopPropagation(); // Prevent triggering the conversation selection
@@ -100,7 +115,7 @@ export default function ConversationList({
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-20">
-        <div className="w-6 h-6 border-t-2 border-primary rounded-full animate-spin"></div>
+        <div className="w-6 h-6 border-t-2 border-[#25d366] rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -116,70 +131,85 @@ export default function ConversationList({
   return (
     <div className="flex-1 overflow-y-auto flex flex-col">
       {/* Delete options */}
-      <div className="px-3 py-2 border-b border-gray-200">
-        <button 
-          onClick={() => setShowDeleteOptions(!showDeleteOptions)}
-          className="text-xs text-gray-600 hover:text-red-600 flex items-center"
-        >
-          <Trash2 size={14} className="mr-1" />
-          Gestionar conversaciones
-        </button>
-        
-        {showDeleteOptions && (
-          <div className="mt-2 p-2 bg-gray-100 rounded-md">
+      {showDeleteOptions && (
+        <div className="px-3 py-2 border-b border-gray-200 bg-[#f6f6f6]">
+          <div className="p-2 bg-white rounded-md shadow-sm">
             <button 
               onClick={handleDeleteAll}
-              className="text-xs text-red-600 hover:text-red-800 w-full text-left py-1"
+              className="text-xs text-red-600 hover:text-red-800 w-full text-left py-1 px-2 rounded hover:bg-gray-100"
             >
               Borrar todas las conversaciones
             </button>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-500 mt-1 px-2">
               O haz clic en el icono de papelera junto a cada conversación para borrarla individualmente.
             </div>
           </div>
-        )}
+        </div>
+      )}
+      
+      {/* Toggle delete options button */}
+      <div className="px-3 py-2 border-b border-gray-200 bg-[#f6f6f6]">
+        <button 
+          onClick={() => setShowDeleteOptions(!showDeleteOptions)}
+          className={`text-xs ${showDeleteOptions ? 'text-red-600' : 'text-gray-600'} hover:text-red-600 flex items-center px-2 py-1 rounded ${showDeleteOptions ? 'bg-gray-100' : ''}`}
+        >
+          <Trash2 size={14} className="mr-1" />
+          {showDeleteOptions ? 'Ocultar opciones' : 'Gestionar conversaciones'}
+        </button>
       </div>
       
       {/* Conversation list */}
       <div className="flex-1 overflow-y-auto">
         {Object.entries(groupedConversations).map(([dateKey, convs]) => (
-          <div key={dateKey} className="mb-1">
-            <div className="px-3 py-2 text-xs font-medium text-gray-500">
+          <div key={dateKey} className="mb-0.5">
+            <div className="px-3 py-1 text-xs font-medium text-gray-600 bg-[#f6f6f6]">
               {dateKey}
             </div>
             
             {convs.map((conv) => (
               <div 
                 key={conv._id}
-                className={`w-full py-3 px-3 hover:bg-gray-200 transition-colors ${
-                  selectedConversationId === conv._id ? 'bg-gray-200' : ''
-                } flex justify-between items-start`}
+                className={`border-b border-gray-100 ${
+                  selectedConversationId === conv._id ? 'bg-[#ebebeb]' : 'hover:bg-gray-50'
+                }`}
               >
                 <button
                   onClick={() => loadConversation(conv._id)}
-                  className="text-left flex-1"
+                  className="text-left w-full py-2 px-3 flex items-center"
                 >
-                  <div className="flex justify-between items-start">
-                    <div className="max-w-[85%]">
-                      <div className="text-sm font-medium text-gray-800 truncate">
-                        {getConversationPreview(conv)}
-                      </div>
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {formatTime(conv.lastUpdated || conv.createdAt)}
+                  {/* Avatar */}
+                  <div className="w-12 h-12 bg-[#dfe5e7] rounded-full mr-3 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                    <div className="w-full h-full bg-[#00a884] flex items-center justify-center text-white font-medium">
+                      {getConversationIcon(conv)}
                     </div>
                   </div>
+                  
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-baseline">
+                      <div className="font-medium text-gray-900 truncate">
+                        Conversación {conversationSummaries[conv._id] ? '' : `#${conv._id.substr(-4)}`}
+                      </div>
+                      <div className="text-xs text-gray-500 ml-2">
+                        {formatTime(conv.lastUpdated || conv.createdAt)}
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-500 truncate pr-1">
+                      {getConversationPreview(conv)}
+                    </div>
+                  </div>
+                  
+                  {/* Delete button */}
+                  {showDeleteOptions && (
+                    <button 
+                      onClick={(e) => handleDelete(e, conv._id)}
+                      className="ml-2 text-gray-400 hover:text-red-600 p-1"
+                      title="Borrar conversación"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </button>
-                
-                {showDeleteOptions && (
-                  <button 
-                    onClick={(e) => handleDelete(e, conv._id)}
-                    className="ml-2 text-gray-400 hover:text-red-600"
-                    title="Borrar conversación"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
               </div>
             ))}
           </div>

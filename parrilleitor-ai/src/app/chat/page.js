@@ -529,33 +529,47 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-800">
-      {/* Sidebar */}
-      <aside className={`${isSidebarOpen ? 'flex' : 'hidden'} w-72 border-r border-gray-200 flex-col h-full overflow-hidden bg-white shadow-sm`}>
-        <div className="py-3 px-4 border-b border-gray-200 flex items-center justify-between bg-primary text-white">
+    <div className="flex h-screen bg-gray-100 text-gray-800">
+      {/* Sidebar (Conversaciones) */}
+      <aside className={`${isSidebarOpen ? 'flex' : 'hidden'} w-80 border-r border-gray-200 flex-col h-full overflow-hidden bg-white shadow-sm`}>
+        {/* Sidebar Header */}
+        <div className="py-3 px-4 bg-[#075e54] text-white flex items-center justify-between shadow-sm">
           <div className="flex items-center">
-            <span className="font-medium">ParrilleitorAI</span>
+            <h1 className="font-medium text-lg">ParrilleitorAI</h1>
           </div>
-          <button 
-            onClick={() => setIsSidebarOpen(false)}
-            className="text-white/80 hover:text-white transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
+          <div className="flex items-center space-x-3">
+            <button 
+              onClick={startNewConversation}
+              className="text-white/90 hover:text-white transition-colors"
+              title="Nueva conversación"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </button>
+            <button 
+              onClick={() => setIsSidebarOpen(false)}
+              className="text-white/90 hover:text-white transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
         </div>
         
-        <div className="p-3">
-          <button 
-            onClick={startNewConversation}
-            className="flex items-center justify-center px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 text-xs font-medium hover:bg-gray-200 transition-colors shadow-sm border border-gray-200"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        {/* Search conversations */}
+        <div className="p-2 bg-[#f6f6f6]">
+          <div className="relative flex items-center">
+            <input
+              type="text"
+              placeholder="Buscar conversación"
+              className="w-full py-1.5 pl-9 pr-3 rounded-full bg-white text-sm focus:outline-none border border-gray-200"
+            />
+            <svg className="absolute left-3 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
-            Nueva conversación
-          </button>
+          </div>
         </div>
         
         {/* History list using component */}
@@ -572,26 +586,37 @@ export default function Chat() {
       
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* Header */}
-        <header className="h-14 border-b border-gray-200 flex items-center justify-between px-4 bg-white shadow-sm">
+        {/* Chat Header */}
+        <header className="h-16 border-b border-gray-200 flex items-center px-4 bg-[#075e54] text-white shadow-sm">
           {!isSidebarOpen && (
             <button 
               onClick={() => setIsSidebarOpen(true)}
-              className="text-gray-600 hover:text-gray-800"
+              className="text-white/90 hover:text-white mr-3"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
           )}
-          <div className="text-xl font-medium text-primary">
-            {!isSidebarOpen ? 'ParrilleitorAI' : ''}
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+              <span className="text-[#075e54] font-bold">AI</span>
+            </div>
+            <div>
+              <h2 className="font-medium">ParrilleitorAI</h2>
+              {isTyping && <p className="text-xs text-gray-100">escribiendo...</p>}
+            </div>
           </div>
-          <div className="w-6"></div> {/* Spacer for alignment */}
         </header>
         
         {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+        <div 
+          className="flex-1 overflow-y-auto p-3 bg-[#e5ddd5]" 
+          style={{ 
+            backgroundImage: "url('https://web.whatsapp.com/img/bg-chat-tile-light_a4be8c74.png')", 
+            backgroundRepeat: 'repeat' 
+          }}
+        >
           {error && (
             <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm max-w-3xl mx-auto shadow-sm">
               {error}
@@ -605,11 +630,19 @@ export default function Chat() {
           )}
           
           {messages.length === 0 ? (
-            <div className="text-center py-20 text-gray-500">
-              <p className="text-xl">¿En qué puedo ayudarte?</p>
+            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+              <div className="w-16 h-16 rounded-full bg-[#25d366] flex items-center justify-center mb-4 text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+              <p className="text-center font-medium">¡Bienvenido a ParrilleitorAI Chat!</p>
+              <p className="text-sm text-center mt-2 max-w-xs">
+                Pregunta cualquier cosa y te responderé lo antes posible.
+              </p>
             </div>
           ) : (
-            <div className="space-y-4 max-w-3xl mx-auto">
+            <div className="space-y-1 pb-2">
               {messages.map((message, index) => (
                 <ChatMessage 
                   key={index} 
@@ -619,12 +652,17 @@ export default function Chat() {
               ))}
               
               {isTyping && (
-                <div className="max-w-3xl mx-auto ml-auto max-w-xs md:max-w-md">
-                  <div className="p-3 rounded-lg bg-primary/10 shadow-sm">
-                    <div className="flex space-x-2">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce delay-100"></div>
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce delay-200"></div>
+                <div className="w-full px-1 py-1 flex justify-start">
+                  <div className="w-8 h-8 rounded-full bg-gray-200 mr-2 flex-shrink-0 overflow-hidden">
+                    <div className="w-full h-full flex items-center justify-center bg-primary text-white text-xs font-bold">
+                      AI
+                    </div>
+                  </div>
+                  <div className="p-3 max-w-xs md:max-w-md bg-white text-gray-800 rounded-tl-2xl rounded-tr-2xl rounded-br-2xl shadow-sm">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
                     </div>
                   </div>
                 </div>
@@ -635,28 +673,79 @@ export default function Chat() {
           )}
         </div>
         
-        {/* Input Area */}
-        <div className="border-t border-gray-200 p-4 bg-white shadow-inner">
-          <form onSubmit={handleSubmit} className="flex items-center max-w-3xl mx-auto">
+        {/* Input Area (WhatsApp style) */}
+        <div className="py-2 px-4 bg-[#f0f0f0]">
+          <form onSubmit={handleSubmit} className="flex items-center relative">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Pregunta lo que quieras"
-              className="flex-1 py-3 px-4 bg-gray-100 rounded-l-full focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white text-gray-800 border-0"
+              placeholder="Escribe un mensaje"
+              className="flex-1 py-2 pl-4 pr-10 rounded-full bg-white text-gray-800 focus:outline-none border-0 shadow-sm"
+              disabled={isTyping}
             />
             <button
               type="submit"
-              className="py-3 px-4 bg-primary text-white rounded-r-full hover:bg-primary-dark disabled:opacity-50 flex items-center"
-              disabled={isTyping || !input.trim()}
+              disabled={!input.trim() || isTyping}
+              className={`absolute right-2 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                input.trim() && !isTyping ? 'bg-[#25d366] text-white' : 'bg-gray-200 text-gray-400'
+              }`}
             >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </button>
           </form>
         </div>
       </div>
+      
+      {/* Delete conversation confirmation dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="text-lg font-medium mb-4">¿Eliminar esta conversación?</h3>
+            <p className="text-gray-600 mb-6">Esta acción no se puede deshacer.</p>
+            <div className="flex justify-end space-x-3">
+              <button 
+                onClick={cancelDelete}
+                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={confirmDelete}
+                className="px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded transition-colors"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Delete all conversations confirmation dialog */}
+      {showDeleteAllConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="text-lg font-medium mb-4">¿Eliminar todas las conversaciones?</h3>
+            <p className="text-gray-600 mb-6">Esta acción no se puede deshacer y eliminará todo el historial de chat.</p>
+            <div className="flex justify-end space-x-3">
+              <button 
+                onClick={cancelDelete}
+                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={confirmDeleteAll}
+                className="px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded transition-colors"
+              >
+                Eliminar todo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 } 

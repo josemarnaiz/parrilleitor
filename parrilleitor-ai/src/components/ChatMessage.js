@@ -10,23 +10,20 @@ export default function ChatMessage({ message, isLast }) {
     const date = new Date(timestamp);
     if (isNaN(date.getTime())) return '';
     
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
+    return `${hours}:${minutes}`;
   };
   
-  // Determine the appropriate styling based on message type
+  // Determine the appropriate styling based on message type (WhatsApp style)
   const getBubbleStyle = () => {
     if (isUser) {
-      return 'bg-primary text-white rounded-tr-lg rounded-tl-lg rounded-bl-lg';
+      return 'bg-[#dcf8c6] text-gray-800 rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl';
     } else if (isError) {
-      return 'bg-red-100 text-red-700 rounded-tr-lg rounded-tl-lg rounded-br-lg';
+      return 'bg-red-100 text-red-700 rounded-tl-2xl rounded-tr-2xl rounded-br-2xl';
     } else {
-      return 'bg-white border border-gray-200 shadow-sm text-gray-800 rounded-tr-lg rounded-tl-lg rounded-br-lg';
+      return 'bg-white text-gray-800 rounded-tl-2xl rounded-tr-2xl rounded-br-2xl';
     }
   };
   
@@ -34,7 +31,7 @@ export default function ChatMessage({ message, isLast }) {
   const formatContent = (content) => {
     if (!content) return '';
     return content.split('\n').map((line, i) => (
-      <span key={i}>
+      <span key={i} className="text-sm">
         {line}
         {i < content.split('\n').length - 1 && <br />}
       </span>
@@ -42,22 +39,52 @@ export default function ChatMessage({ message, isLast }) {
   };
   
   return (
-    <div className={`max-w-3xl mx-auto ${isUser ? 'flex justify-end' : 'flex justify-start'}`}>
-      <div className={`p-4 max-w-xs md:max-w-md lg:max-w-lg ${getBubbleStyle()} ${isUser ? 'ml-auto' : 'mr-auto'}`}>
+    <div className={`w-full px-1 py-1 ${isUser ? 'flex justify-end' : 'flex justify-start'}`}>
+      {/* Avatar for assistant (only shown for assistant messages) */}
+      {!isUser && !isError && (
+        <div className="w-8 h-8 rounded-full bg-gray-200 mr-2 flex-shrink-0 overflow-hidden">
+          <div className="w-full h-full flex items-center justify-center bg-primary text-white text-xs font-bold">
+            AI
+          </div>
+        </div>
+      )}
+      
+      {/* Message bubble */}
+      <div className={`p-2.5 max-w-xs md:max-w-md ${getBubbleStyle()} shadow-sm relative`}>
+        {/* Username for assistant (only shown for assistant messages) */}
         {!isUser && !isError && (
-          <div className="flex items-center mb-1">
-            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center mr-2">
-              <span className="text-xs font-semibold text-primary">AI</span>
-            </div>
-            <span className="text-xs font-medium text-gray-500">ParrilleitorAI</span>
+          <div className="text-xs font-medium text-primary mb-1">
+            ParrilleitorAI
           </div>
         )}
-        <div className={`${!isUser && !isError ? 'pt-1' : ''}`}>
+        
+        <div>
           {formatContent(message.content)}
         </div>
+        
+        {/* Timestamp */}
         {message.timestamp && (
-          <div className="mt-2 text-xs text-right opacity-70">
+          <div className="text-[10px] text-gray-500 opacity-70 text-right mt-1 min-w-[40px]">
             {formatTimestamp(message.timestamp)}
+            
+            {/* Read status for user messages (WhatsApp style) */}
+            {isUser && (
+              <span className="ml-1 text-[9px] text-blue-500">
+                ✓✓
+              </span>
+            )}
+          </div>
+        )}
+        
+        {/* Tail for chat bubble (WhatsApp style) */}
+        {!isUser && !isError && (
+          <div className="absolute top-0 left-[-8px] w-4 h-4 overflow-hidden">
+            <div className="absolute rotate-45 bg-white w-3 h-3 transform origin-bottom-right translate-x-1/2 translate-y-1/2"></div>
+          </div>
+        )}
+        {isUser && (
+          <div className="absolute top-0 right-[-8px] w-4 h-4 overflow-hidden">
+            <div className="absolute rotate-45 bg-[#dcf8c6] w-3 h-3 transform origin-bottom-left translate-x-[-50%] translate-y-1/2"></div>
           </div>
         )}
       </div>
