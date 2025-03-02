@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { useI18n, languageGroups } from '../i18n';
 

@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Internationalization (i18n) utility for the application
  * Provides functions for translation and language management
