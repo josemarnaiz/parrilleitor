@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { usePathname } from 'next/navigation'
 import LoginButton from './LoginButton'
+import LogoutButton from './LogoutButton'
 
 export default function Navbar() {
   const { user } = useUser()
@@ -66,6 +67,7 @@ export default function Navbar() {
                       {user.name?.charAt(0) || 'U'}
                     </div>
                   </Link>
+                  <LogoutButton className="text-sm" />
                 </div>
               )}
             </div>

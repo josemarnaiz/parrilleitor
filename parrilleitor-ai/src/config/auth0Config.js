@@ -3,12 +3,6 @@ export const auth0Config = {
   // Duración de la sesión en segundos (90 días)
   sessionDuration: 90 * 24 * 60 * 60,
   
-  // Otras configuraciones de Auth0
-  authorizationParams: {
-    audience: process.env.AUTH0_AUDIENCE,
-    scope: process.env.AUTH0_SCOPE
-  },
-  
   // URL de retorno después del login
   returnTo: '/',
   
@@ -18,6 +12,14 @@ export const auth0Config = {
   // Opciones para evitar problemas de CORS
   useFormData: true, // Usar form data en lugar de fetch API
   useRefreshTokens: true, // Usar refresh tokens para mantener la sesión
+  
+  // Configuración específica para el logout
+  logoutOptions: {
+    // No usar el logout global de Auth0 para evitar CORS
+    // Esto hace que el logout sea solo local (en la aplicación)
+    localOnly: true
+  },
+  
   authorizationParams: {
     // Parámetros adicionales para la autorización
     audience: process.env.AUTH0_AUDIENCE || 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/api/v2/',
