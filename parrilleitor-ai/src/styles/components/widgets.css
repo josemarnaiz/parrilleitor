@@ -1,0 +1,1187 @@
+/* Estilos para widgets de dashboard */
+
+/* Widget base */
+.widget {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: var(--transition-all);
+  border: 1px solid var(--gray-100);
+}
+
+.widget:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--gray-200);
+}
+
+.widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.widget-title-container {
+  display: flex;
+  align-items: center;
+}
+
+.widget-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius);
+  background-color: var(--primary-50);
+  color: var(--primary-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.widget-sport .widget-icon {
+  background-color: var(--sport-50);
+  color: var(--sport-500);
+}
+
+.widget-nutrition .widget-icon {
+  background-color: var(--nutrition-50);
+  color: var(--nutrition-500);
+}
+
+.widget-energy .widget-icon {
+  background-color: var(--energy-50);
+  color: var(--energy-500);
+}
+
+.widget-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.widget-subtitle {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin-top: 0.125rem;
+}
+
+.widget-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.widget-action-button {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-500);
+  background-color: transparent;
+  cursor: pointer;
+  transition: var(--transition-all);
+}
+
+.widget-action-button:hover {
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.widget-body {
+  padding: 1.5rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.widget-body-padless {
+  padding: 0;
+}
+
+.widget-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.widget-footer-link {
+  display: flex;
+  align-items: center;
+  font-size: 0.813rem;
+  font-weight: 500;
+  color: var(--primary-500);
+  transition: var(--transition-all);
+}
+
+.widget-footer-link:hover {
+  color: var(--primary-600);
+}
+
+.widget-footer-link svg {
+  margin-left: 0.375rem;
+  transition: var(--transition-all);
+}
+
+.widget-footer-link:hover svg {
+  transform: translateX(3px);
+}
+
+.widget-footer-info {
+  font-size: 0.813rem;
+  color: var(--gray-500);
+  display: flex;
+  align-items: center;
+}
+
+.widget-footer-info svg {
+  margin-right: 0.375rem;
+}
+
+/* Tamaños de widgets */
+.widget-sm {
+  min-height: 220px;
+}
+
+.widget-md {
+  min-height: 300px;
+}
+
+.widget-lg {
+  min-height: 400px;
+}
+
+.widget-xl {
+  min-height: 500px;
+}
+
+/* Widget de estadística simple */
+.stat-widget {
+  text-align: center;
+  justify-content: center;
+}
+
+.stat-widget-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.stat-widget-secondary {
+  font-size: 1.125rem;
+  color: var(--gray-500);
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+.stat-widget-description {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  max-width: 80%;
+  margin: 0 auto;
+}
+
+.stat-widget-change {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 1rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.stat-widget-increase {
+  background-color: var(--success-50);
+  color: var(--success-700);
+}
+
+.stat-widget-decrease {
+  background-color: var(--error-50);
+  color: var(--error-700);
+}
+
+.stat-widget-neutral {
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.stat-widget-change svg {
+  margin-right: 0.25rem;
+}
+
+/* Widget de progreso */
+.progress-widget-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  height: 100%;
+}
+
+.progress-widget-chart {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  margin-bottom: 1.5rem;
+}
+
+.progress-widget-circle {
+  fill: none;
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+
+.progress-widget-circle-bg {
+  stroke: var(--gray-100);
+}
+
+.progress-widget-circle-value {
+  stroke: var(--primary-500);
+  stroke-dasharray: 100 100;
+  transition: stroke-dashoffset 1s ease-in-out;
+}
+
+.progress-widget-sport .progress-widget-circle-value {
+  stroke: var(--sport-500);
+}
+
+.progress-widget-nutrition .progress-widget-circle-value {
+  stroke: var(--nutrition-500);
+}
+
+.progress-widget-energy .progress-widget-circle-value {
+  stroke: var(--energy-500);
+}
+
+.progress-widget-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.progress-widget-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1;
+}
+
+.progress-widget-label {
+  font-size: 0.875rem;
+  color: var(--gray-500);
+  margin-top: 0.25rem;
+}
+
+.progress-widget-detail {
+  text-align: center;
+}
+
+.progress-widget-target {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  margin-top: 0.5rem;
+}
+
+.progress-widget-target-value {
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+/* Widget de tarjeta de actividad */
+.activity-card {
+  display: flex;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--gray-100);
+  transition: var(--transition-all);
+}
+
+.activity-card:last-child {
+  border-bottom: none;
+}
+
+.activity-card:hover {
+  background-color: var(--gray-50);
+}
+
+.activity-card-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius);
+  background-color: var(--primary-50);
+  color: var(--primary-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.activity-card-content {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.activity-card-title {
+  font-size: 0.938rem;
+  font-weight: 500;
+  color: var(--gray-900);
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-card-meta {
+  display: flex;
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  gap: 1rem;
+}
+
+.activity-card-meta-item {
+  display: flex;
+  align-items: center;
+}
+
+.activity-card-meta-item svg {
+  margin-right: 0.25rem;
+  flex-shrink: 0;
+}
+
+.activity-card-metric {
+  font-size: 0.938rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.activity-card-sport {
+  border-left: 3px solid var(--sport-500);
+}
+
+.activity-card-sport .activity-card-icon {
+  background-color: var(--sport-50);
+  color: var(--sport-500);
+}
+
+.activity-card-nutrition {
+  border-left: 3px solid var(--nutrition-500);
+}
+
+.activity-card-nutrition .activity-card-icon {
+  background-color: var(--nutrition-50);
+  color: var(--nutrition-500);
+}
+
+.activity-card-energy {
+  border-left: 3px solid var(--energy-500);
+}
+
+.activity-card-energy .activity-card-icon {
+  background-color: var(--energy-50);
+  color: var(--energy-500);
+}
+
+/* Widget de calendario */
+.calendar-widget {
+  padding: 0;
+}
+
+.calendar-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.calendar-widget-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.calendar-widget-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.calendar-widget-nav-button {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: var(--transition-all);
+}
+
+.calendar-widget-nav-button:hover {
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.calendar-widget-date {
+  font-size: 0.875rem;
+  color: var(--gray-700);
+  font-weight: 500;
+  padding: 0 0.5rem;
+}
+
+.calendar-widget-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.calendar-widget-weekday {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--gray-500);
+}
+
+.calendar-widget-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  height: 220px;
+}
+
+.calendar-widget-day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--gray-100);
+  border-bottom: 1px solid var(--gray-100);
+  cursor: pointer;
+  transition: var(--transition-all);
+}
+
+.calendar-widget-day:nth-child(7n) {
+  border-right: none;
+}
+
+.calendar-widget-day:nth-last-child(-n+7) {
+  border-bottom: none;
+}
+
+.calendar-widget-day:hover {
+  background-color: var(--gray-50);
+}
+
+.calendar-widget-day-number {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--gray-700);
+}
+
+.calendar-widget-day-current .calendar-widget-day-number {
+  background-color: var(--primary-500);
+  color: white;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.calendar-widget-day-inactive .calendar-widget-day-number {
+  color: var(--gray-400);
+}
+
+.calendar-widget-day-marker {
+  position: absolute;
+  bottom: 0.375rem;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+}
+
+.calendar-widget-day-marker-sport {
+  background-color: var(--sport-500);
+}
+
+.calendar-widget-day-marker-nutrition {
+  background-color: var(--nutrition-500);
+}
+
+.calendar-widget-day-marker-energy {
+  background-color: var(--energy-500);
+}
+
+/* Widget de gráfico de línea */
+.line-chart-widget {
+  padding: 0;
+}
+
+.line-chart-container {
+  position: relative;
+  padding: 1.5rem;
+  width: 100%;
+  height: 250px;
+}
+
+.line-chart-axis {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background-color: var(--gray-200);
+}
+
+.line-chart-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 1.5rem 1.5rem;
+}
+
+.line-chart-label {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  text-align: center;
+  width: 2.5rem;
+}
+
+.line-chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 0 1.5rem 1.5rem;
+}
+
+.line-chart-legend-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.813rem;
+  color: var(--gray-700);
+}
+
+.line-chart-legend-color {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  background-color: var(--primary-500);
+}
+
+.line-chart-legend-color-sport {
+  background-color: var(--sport-500);
+}
+
+.line-chart-legend-color-nutrition {
+  background-color: var(--nutrition-500);
+}
+
+.line-chart-legend-color-energy {
+  background-color: var(--energy-500);
+}
+
+/* Widget de gráfico de barras */
+.bar-chart-widget {
+  padding: 0;
+}
+
+.bar-chart-container {
+  position: relative;
+  padding: 1.5rem 1.5rem 0.5rem;
+  width: 100%;
+  height: 250px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.bar-chart-bar {
+  position: relative;
+  width: 2rem;
+  background-color: var(--primary-500);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.5s ease;
+}
+
+.bar-chart-widget-sport .bar-chart-bar {
+  background-color: var(--sport-500);
+}
+
+.bar-chart-widget-nutrition .bar-chart-bar {
+  background-color: var(--nutrition-500);
+}
+
+.bar-chart-widget-energy .bar-chart-bar {
+  background-color: var(--energy-500);
+}
+
+.bar-chart-bar:hover {
+  opacity: 0.85;
+}
+
+.bar-chart-bar-value {
+  position: absolute;
+  top: -1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  white-space: nowrap;
+}
+
+.bar-chart-axis {
+  position: absolute;
+  left: 1.5rem;
+  right: 1.5rem;
+  bottom: 2.5rem;
+  height: 1px;
+  background-color: var(--gray-200);
+}
+
+.bar-chart-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 1.5rem 1rem;
+}
+
+.bar-chart-label {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  text-align: center;
+  width: 2rem;
+}
+
+/* Widget de tabla de datos */
+.data-table-widget {
+  padding: 0;
+}
+
+.data-table-widget table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table-widget th,
+.data-table-widget td {
+  padding: 0.75rem 1.25rem;
+  text-align: left;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.data-table-widget th {
+  font-weight: 600;
+  color: var(--gray-700);
+  background-color: var(--gray-50);
+}
+
+.data-table-widget td {
+  color: var(--gray-600);
+}
+
+.data-table-widget tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table-widget tr:hover td {
+  background-color: var(--gray-50);
+}
+
+.data-table-widget-value {
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+/* Widget de metas */
+.goal-widget {
+  padding: 0;
+}
+
+.goal-item {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--gray-100);
+  transition: var(--transition-all);
+}
+
+.goal-item:last-child {
+  border-bottom: none;
+}
+
+.goal-item:hover {
+  background-color: var(--gray-50);
+}
+
+.goal-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.goal-item-title {
+  font-size: 0.938rem;
+  font-weight: 500;
+  color: var(--gray-900);
+}
+
+.goal-item-status {
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.goal-item-status-pending {
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.goal-item-status-in-progress {
+  background-color: var(--primary-100);
+  color: var(--primary-700);
+}
+
+.goal-item-status-completed {
+  background-color: var(--success-100);
+  color: var(--success-700);
+}
+
+.goal-item-progress {
+  height: 0.375rem;
+  background-color: var(--gray-100);
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.goal-item-progress-bar {
+  height: 100%;
+  border-radius: 9999px;
+  background-color: var(--primary-500);
+  transition: width 0.3s ease;
+}
+
+.goal-item-sport .goal-item-progress-bar {
+  background-color: var(--sport-500);
+}
+
+.goal-item-nutrition .goal-item-progress-bar {
+  background-color: var(--nutrition-500);
+}
+
+.goal-item-energy .goal-item-progress-bar {
+  background-color: var(--energy-500);
+}
+
+.goal-item-details {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.goal-item-value {
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+/* Widget de recordatorio */
+.reminder-widget {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.reminder-icon {
+  width: 4rem;
+  height: 4rem;
+  background-color: var(--primary-100);
+  color: var(--primary-500);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.reminder-icon svg {
+  width: 2rem;
+  height: 2rem;
+}
+
+.reminder-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 0.75rem;
+}
+
+.reminder-description {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  max-width: 80%;
+  margin: 0 auto 1.5rem;
+  line-height: 1.6;
+}
+
+.reminder-button {
+  padding: 0.625rem 1.25rem;
+  background-color: var(--primary-500);
+  color: white;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-all);
+}
+
+.reminder-button:hover {
+  background-color: var(--primary-600);
+}
+
+/* Malla de widgets */
+.widget-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(12, 1fr);
+  grid-auto-rows: minmax(220px, auto);
+}
+
+.widget-col-1 {
+  grid-column: span 1;
+}
+
+.widget-col-2 {
+  grid-column: span 2;
+}
+
+.widget-col-3 {
+  grid-column: span 3;
+}
+
+.widget-col-4 {
+  grid-column: span 4;
+}
+
+.widget-col-5 {
+  grid-column: span 5;
+}
+
+.widget-col-6 {
+  grid-column: span 6;
+}
+
+.widget-col-7 {
+  grid-column: span 7;
+}
+
+.widget-col-8 {
+  grid-column: span 8;
+}
+
+.widget-col-9 {
+  grid-column: span 9;
+}
+
+.widget-col-10 {
+  grid-column: span 10;
+}
+
+.widget-col-11 {
+  grid-column: span 11;
+}
+
+.widget-col-12 {
+  grid-column: span 12;
+}
+
+.widget-row-1 {
+  grid-row: span 1;
+}
+
+.widget-row-2 {
+  grid-row: span 2;
+}
+
+.widget-row-3 {
+  grid-row: span 3;
+}
+
+/* Modo oscuro */
+.dark .widget {
+  background-color: var(--gray-800);
+  border-color: var(--gray-700);
+}
+
+.dark .widget:hover {
+  border-color: var(--gray-600);
+}
+
+.dark .widget-header,
+.dark .widget-footer,
+.dark .activity-card,
+.dark .calendar-widget-header,
+.dark .calendar-widget-weekdays,
+.dark .calendar-widget-day,
+.dark .goal-item,
+.dark .data-table-widget th,
+.dark .data-table-widget td {
+  border-color: var(--gray-700);
+}
+
+.dark .widget-title,
+.dark .stat-widget-value,
+.dark .progress-widget-value,
+.dark .activity-card-title,
+.dark .activity-card-metric,
+.dark .calendar-widget-title,
+.dark .calendar-widget-day-number,
+.dark .data-table-widget-value,
+.dark .goal-item-title,
+.dark .reminder-title {
+  color: var(--gray-100);
+}
+
+.dark .widget-subtitle,
+.dark .stat-widget-secondary,
+.dark .progress-widget-label,
+.dark .activity-card-meta,
+.dark .calendar-widget-weekday,
+.dark .line-chart-label,
+.dark .bar-chart-label,
+.dark .goal-item-details,
+.dark .data-table-widget td {
+  color: var(--gray-400);
+}
+
+.dark .widget-icon,
+.dark .activity-card-icon {
+  background-color: rgba(var(--primary-500-rgb), 0.2);
+}
+
+.dark .widget-sport .widget-icon,
+.dark .activity-card-sport .activity-card-icon {
+  background-color: rgba(var(--sport-500-rgb), 0.2);
+}
+
+.dark .widget-nutrition .widget-icon,
+.dark .activity-card-nutrition .activity-card-icon {
+  background-color: rgba(var(--nutrition-500-rgb), 0.2);
+}
+
+.dark .widget-energy .widget-icon,
+.dark .activity-card-energy .activity-card-icon {
+  background-color: rgba(var(--energy-500-rgb), 0.2);
+}
+
+.dark .widget-action-button:hover {
+  background-color: var(--gray-700);
+  color: var(--gray-300);
+}
+
+.dark .stat-widget-description {
+  color: var(--gray-400);
+}
+
+.dark .stat-widget-increase {
+  background-color: rgba(var(--success-500-rgb), 0.2);
+  color: var(--success-300);
+}
+
+.dark .stat-widget-decrease {
+  background-color: rgba(var(--error-500-rgb), 0.2);
+  color: var(--error-300);
+}
+
+.dark .stat-widget-neutral {
+  background-color: var(--gray-700);
+  color: var(--gray-300);
+}
+
+.dark .progress-widget-circle-bg {
+  stroke: var(--gray-700);
+}
+
+.dark .progress-widget-target {
+  color: var(--gray-400);
+}
+
+.dark .progress-widget-target-value {
+  color: var(--gray-300);
+}
+
+.dark .activity-card:hover,
+.dark .calendar-widget-day:hover,
+.dark .goal-item:hover,
+.dark .data-table-widget tr:hover td {
+  background-color: var(--gray-700);
+}
+
+.dark .calendar-widget-day-inactive .calendar-widget-day-number {
+  color: var(--gray-600);
+}
+
+.dark .calendar-widget-nav-button:hover {
+  background-color: var(--gray-700);
+  color: var(--gray-300);
+}
+
+.dark .calendar-widget-date {
+  color: var(--gray-300);
+}
+
+.dark .line-chart-axis,
+.dark .bar-chart-axis {
+  background-color: var(--gray-700);
+}
+
+.dark .line-chart-legend-item {
+  color: var(--gray-300);
+}
+
+.dark .bar-chart-bar-value {
+  color: var(--gray-300);
+}
+
+.dark .data-table-widget th {
+  background-color: var(--gray-900);
+  color: var(--gray-300);
+}
+
+.dark .goal-item-status-pending {
+  background-color: var(--gray-700);
+  color: var(--gray-300);
+}
+
+.dark .goal-item-status-in-progress {
+  background-color: rgba(var(--primary-500-rgb), 0.2);
+  color: var(--primary-300);
+}
+
+.dark .goal-item-status-completed {
+  background-color: rgba(var(--success-500-rgb), 0.2);
+  color: var(--success-300);
+}
+
+.dark .goal-item-progress {
+  background-color: var(--gray-700);
+}
+
+.dark .goal-item-value {
+  color: var(--gray-300);
+}
+
+.dark .reminder-icon {
+  background-color: rgba(var(--primary-500-rgb), 0.2);
+}
+
+.dark .reminder-description {
+  color: var(--gray-400);
+}
+
+/* Responsivo */
+@media (max-width: 1280px) {
+  .widget-col-lg-12 {
+    grid-column: span 12;
+  }
+  
+  .widget-col-lg-6 {
+    grid-column: span 6;
+  }
+  
+  .widget-col-lg-4 {
+    grid-column: span 4;
+  }
+  
+  .widget-col-lg-3 {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 1024px) {
+  .widget-col-md-12 {
+    grid-column: span 12;
+  }
+  
+  .widget-col-md-6 {
+    grid-column: span 6;
+  }
+  
+  .widget-col-md-4 {
+    grid-column: span 4;
+  }
+}
+
+@media (max-width: 768px) {
+  .widget-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  .widget-col-sm-6 {
+    grid-column: span 6;
+  }
+  
+  .widget-col-sm-3 {
+    grid-column: span 3;
+  }
+  
+  .progress-widget-chart {
+    width: 140px;
+    height: 140px;
+  }
+  
+  .progress-widget-value {
+    font-size: 1.75rem;
+  }
+  
+  .stat-widget-value {
+    font-size: 2rem;
+  }
+  
+  .calendar-widget-days {
+    height: 180px;
+  }
+}
+
+@media (max-width: 640px) {
+  .widget-grid {
+    grid-template-columns: repeat(1, 1fr);
+  }
+  
+  .widget-col-xs-1 {
+    grid-column: span 1;
+  }
+  
+  .line-chart-legend {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .bar-chart-container {
+    height: 200px;
+  }
+} 

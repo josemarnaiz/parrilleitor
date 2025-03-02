@@ -1,0 +1,585 @@
+/* Estilos para componentes específicos de deportes y entrenamiento */
+
+/* Progress indicators */
+.progress-circle {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.progress-circle-bg {
+  fill: none;
+  stroke: var(--gray-200);
+  stroke-width: 8;
+}
+
+.progress-circle-value {
+  fill: none;
+  stroke: var(--sport-500);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.progress-circle-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.progress-circle-text small {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--gray-600);
+}
+
+/* Progress bar */
+.progress-bar {
+  position: relative;
+  height: 8px;
+  background-color: var(--gray-200);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-bar-value {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: var(--sport-500);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.progress-bar-text {
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--gray-600);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Workout card */
+.workout-card {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background-color: white;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-all);
+}
+
+.workout-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.workout-card-header {
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.workout-card-title {
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: var(--gray-900);
+}
+
+.workout-card-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.workout-card-badge-beginner {
+  background-color: var(--sport-100);
+  color: var(--sport-800);
+}
+
+.workout-card-badge-intermediate {
+  background-color: var(--warning-100);
+  color: var(--warning-800);
+}
+
+.workout-card-badge-advanced {
+  background-color: var(--error-100);
+  color: var(--error-800);
+}
+
+.workout-card-content {
+  padding: 1.5rem;
+}
+
+.workout-card-exercises {
+  margin-top: 1rem;
+}
+
+.workout-card-exercise {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.workout-card-exercise:last-child {
+  border-bottom: none;
+}
+
+.workout-card-exercise-icon {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: var(--sport-50);
+  color: var(--sport-600);
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.workout-card-exercise-info {
+  flex-grow: 1;
+}
+
+.workout-card-exercise-name {
+  font-weight: 500;
+  color: var(--gray-900);
+}
+
+.workout-card-exercise-details {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  margin-top: 0.125rem;
+}
+
+.workout-card-exercise-reps {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--sport-600);
+  padding-left: 1rem;
+  flex-shrink: 0;
+}
+
+.workout-card-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.workout-card-meta {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+.workout-card-meta-item {
+  display: flex;
+  align-items: center;
+  margin-right: 1rem;
+}
+
+.workout-card-meta-item svg {
+  margin-right: 0.375rem;
+}
+
+/* Timer component */
+.workout-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.workout-timer-display {
+  font-size: 3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--gray-900);
+  margin-bottom: 1.5rem;
+}
+
+.workout-timer-controls {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.workout-timer-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-color: var(--gray-100);
+  color: var(--gray-900);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-all);
+}
+
+.workout-timer-button-start {
+  background-color: var(--sport-500);
+  color: white;
+}
+
+.workout-timer-button-start:hover {
+  background-color: var(--sport-600);
+}
+
+.workout-timer-button-reset {
+  background-color: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.workout-timer-button-reset:hover {
+  background-color: var(--gray-300);
+}
+
+.workout-timer-button-pause {
+  background-color: var(--warning-500);
+  color: white;
+}
+
+.workout-timer-button-pause:hover {
+  background-color: var(--warning-600);
+}
+
+/* Calendar and scheduling */
+.workout-calendar {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background-color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.workout-calendar-header {
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--sport-500);
+  color: white;
+}
+
+.workout-calendar-title {
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.workout-calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.workout-calendar-nav-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-all);
+}
+
+.workout-calendar-nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.workout-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background-color: var(--gray-100);
+}
+
+.workout-calendar-weekday {
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  background-color: var(--gray-50);
+}
+
+.workout-calendar-day {
+  aspect-ratio: 1/1;
+  padding: 0.5rem;
+  background-color: white;
+  position: relative;
+  cursor: pointer;
+}
+
+.workout-calendar-day-number {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.workout-calendar-day.today {
+  background-color: var(--sport-50);
+}
+
+.workout-calendar-day.today .workout-calendar-day-number {
+  color: var(--sport-700);
+  font-weight: 700;
+}
+
+.workout-calendar-day.has-workout::after {
+  content: '';
+  position: absolute;
+  bottom: 0.375rem;
+  right: 0.375rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--sport-500);
+}
+
+.workout-calendar-day.different-month {
+  opacity: 0.4;
+}
+
+/* Stats cards */
+.stats-card {
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-all);
+}
+
+.stats-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.stats-card-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  margin-bottom: 0.5rem;
+}
+
+.stats-card-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1;
+}
+
+.stats-card-trend {
+  display: flex;
+  align-items: center;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.stats-card-trend-up {
+  color: var(--success-500);
+}
+
+.stats-card-trend-down {
+  color: var(--error-500);
+}
+
+.stats-card-trend svg {
+  margin-right: 0.25rem;
+}
+
+.stats-card-trend-value {
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+.stats-card-trend-period {
+  color: var(--gray-500);
+}
+
+/* Achievement badges */
+.achievement-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-all);
+}
+
+.achievement-badge:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.achievement-badge-icon {
+  width: 4rem;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--sport-50);
+  color: var(--sport-600);
+  margin-bottom: 1rem;
+}
+
+.achievement-badge-title {
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 0.25rem;
+  text-align: center;
+}
+
+.achievement-badge-description {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  text-align: center;
+}
+
+.achievement-badge-locked {
+  filter: grayscale(1);
+  opacity: 0.7;
+}
+
+/* Modo oscuro */
+.dark .workout-card,
+.dark .workout-timer,
+.dark .workout-calendar,
+.dark .stats-card,
+.dark .achievement-badge {
+  background-color: var(--gray-800);
+}
+
+.dark .workout-card-title,
+.dark .workout-card-exercise-name,
+.dark .workout-timer-display,
+.dark .stats-card-value,
+.dark .achievement-badge-title {
+  color: var(--gray-100);
+}
+
+.dark .workout-card-exercise-details,
+.dark .workout-card-meta,
+.dark .stats-card-title,
+.dark .achievement-badge-description {
+  color: var(--gray-400);
+}
+
+.dark .workout-card-header,
+.dark .workout-card-footer,
+.dark .workout-card-exercise {
+  border-color: var(--gray-700);
+}
+
+.dark .workout-calendar-grid {
+  background-color: var(--gray-700);
+}
+
+.dark .workout-calendar-weekday {
+  background-color: var(--gray-800);
+  color: var(--gray-400);
+}
+
+.dark .workout-calendar-day {
+  background-color: var(--gray-800);
+}
+
+.dark .workout-calendar-day-number {
+  color: var(--gray-300);
+}
+
+.dark .workout-calendar-day.today {
+  background-color: var(--sport-900);
+}
+
+.dark .workout-calendar-day.today .workout-calendar-day-number {
+  color: var(--sport-300);
+}
+
+.dark .progress-circle-bg {
+  stroke: var(--gray-700);
+}
+
+.dark .progress-bar {
+  background-color: var(--gray-700);
+}
+
+.dark .progress-circle-text {
+  color: var(--gray-100);
+}
+
+.dark .progress-circle-text small {
+  color: var(--gray-400);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .workout-card-header,
+  .workout-card-content,
+  .workout-card-footer {
+    padding: 1rem;
+  }
+  
+  .workout-timer-display {
+    font-size: 2.5rem;
+  }
+  
+  .workout-calendar-grid {
+    grid-template-columns: repeat(7, 1fr);
+  }
+  
+  .workout-calendar-day {
+    padding: 0.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .progress-circle {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .progress-circle-text {
+    font-size: 1.25rem;
+  }
+  
+  .workout-timer-display {
+    font-size: 2rem;
+  }
+  
+  .workout-timer-button {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  
+  .stats-card-value {
+    font-size: 1.75rem;
+  }
+  
+  .achievement-badge-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+} 

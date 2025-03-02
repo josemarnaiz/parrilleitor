@@ -1,0 +1,249 @@
+{
+  "app": {
+    "name": "ParrilleitorAI",
+    "tagline": "Your personal fitness and nutrition assistant",
+    "description": "Personalized nutrition and exercise assistant"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error has occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "selectLanguage": "Select language",
+    "notFound": "Page not found",
+    "back": "Back",
+    "backToHome": "Back to home",
+    "seeAll": "See all",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "continue": "Continue",
+    "skip": "Skip",
+    "next": "Next",
+    "previous": "Previous",
+    "requiredField": "Required field"
+  },
+  "languages": {
+    "groups": {
+      "western": "Western Europe",
+      "northern": "Northern Europe",
+      "eastern": "Eastern Europe",
+      "southern": "Southern Europe"
+    }
+  },
+  "auth": {
+    "login": "Log in",
+    "logout": "Log out",
+    "register": "Register",
+    "forgotPassword": "Forgot password?",
+    "emailAddress": "Email address",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "resetPassword": "Reset password",
+    "signupWith": "Sign up with {provider}",
+    "loginWith": "Log in with {provider}",
+    "unauthorized": "You don't have permission to access this page"
+  },
+  "nav": {
+    "home": "Home",
+    "profile": "Profile",
+    "settings": "Settings",
+    "chat": "Chat",
+    "dashboard": "Dashboard",
+    "nutrition": "Nutrition",
+    "exercise": "Exercise"
+  },
+  "footer": {
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "help": "Help",
+    "copyright": "© {year} ParrilleitorAI"
+  },
+  "profile": {
+    "title": "Profile",
+    "personalInformation": "Personal Information",
+    "preferences": "Preferences",
+    "fitnessGoals": "Fitness Goals",
+    "nutritionPreferences": "Nutrition Preferences",
+    "exercisePreferences": "Exercise Preferences",
+    "name": "Name",
+    "email": "Email",
+    "changePhoto": "Change photo",
+    "removePhoto": "Remove photo",
+    "bio": "Bio",
+    "height": "Height",
+    "weight": "Weight",
+    "age": "Age",
+    "gender": "Gender",
+    "activityLevel": "Activity level",
+    "sedentary": "Sedentary",
+    "lightlyActive": "Lightly active",
+    "moderatelyActive": "Moderately active",
+    "veryActive": "Very active",
+    "extremelyActive": "Extremely active",
+    "goal": "Goal",
+    "loseWeight": "Lose weight",
+    "maintainWeight": "Maintain weight",
+    "gainWeight": "Gain weight",
+    "buildMuscle": "Build muscle",
+    "improveEndurance": "Improve endurance",
+    "improveStrength": "Improve strength",
+    "dietType": "Diet type",
+    "omnivore": "Omnivore",
+    "vegetarian": "Vegetarian",
+    "vegan": "Vegan",
+    "paleo": "Paleo",
+    "keto": "Keto",
+    "glutenFree": "Gluten-free",
+    "dairyFree": "Dairy-free",
+    "preferences": "Preferences",
+    "allergies": "Allergies",
+    "exerciseFrequency": "Exercise frequency",
+    "daysPerWeek": "{count} days per week",
+    "minutesPerSession": "{count} minutes per session",
+    "preferredExercises": "Preferred exercises",
+    "updateProfile": "Update profile"
+  },
+  "chat": {
+    "title": "Chat with ParrilleitorAI",
+    "placeholder": "Ask me anything about nutrition and fitness...",
+    "send": "Send",
+    "newChat": "New Chat",
+    "noMessages": "No messages yet. Start a conversation!",
+    "thinking": "Thinking...",
+    "typing": "Typing...",
+    "welcomeMessage": "Hello! I'm your nutrition and fitness assistant. How can I help you today?",
+    "suggestions": {
+      "title": "Suggestions",
+      "suggestion1": "What's a good breakfast before a workout?",
+      "suggestion2": "Can you recommend a diet for muscle building?",
+      "suggestion3": "What exercises are best for core strength?",
+      "suggestion4": "How many calories should I eat daily to lose weight?"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "summary": "Summary",
+    "todayStats": "Today's Stats",
+    "weeklyProgress": "Weekly Progress",
+    "goals": "Goals",
+    "recentActivity": "Recent Activity",
+    "nutrition": "Nutrition",
+    "exercise": "Exercise",
+    "upcomingWorkouts": "Upcoming Workouts",
+    "mealPlan": "Meal Plan",
+    "waterIntake": "Water Intake",
+    "sleep": "Sleep",
+    "addWorkout": "Add Workout",
+    "addMeal": "Add Meal",
+    "steps": "Steps",
+    "calories": "Calories",
+    "caloriesBurned": "Calories Burned",
+    "caloriesConsumed": "Calories Consumed",
+    "caloriesRemaining": "Calories Remaining",
+    "goalCompleted": "Goal Completed",
+    "viewMore": "View More"
+  },
+  "nutrition": {
+    "title": "Nutrition",
+    "calories": "Calories",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fat": "Fat",
+    "fiber": "Fiber",
+    "sugar": "Sugar",
+    "sodium": "Sodium",
+    "water": "Water",
+    "breakfast": "Breakfast",
+    "lunch": "Lunch",
+    "dinner": "Dinner",
+    "snacks": "Snacks",
+    "addMeal": "Add Meal",
+    "searchFood": "Search food",
+    "recentFoods": "Recent Foods",
+    "myRecipes": "My Recipes",
+    "mealPlans": "Meal Plans",
+    "trackWater": "Track Water",
+    "nutritionGoals": "Nutrition Goals",
+    "dailyIntake": "Daily Intake",
+    "weeklyOverview": "Weekly Overview",
+    "foodLog": "Food Log",
+    "addFood": "Add Food",
+    "createRecipe": "Create Recipe",
+    "generateMealPlan": "Generate Meal Plan"
+  },
+  "exercise": {
+    "title": "Exercise",
+    "workouts": "Workouts",
+    "exercises": "Exercises",
+    "cardio": "Cardio",
+    "strength": "Strength",
+    "flexibility": "Flexibility",
+    "addWorkout": "Add Workout",
+    "logExercise": "Log Exercise",
+    "recentWorkouts": "Recent Workouts",
+    "savedWorkouts": "Saved Workouts",
+    "createWorkout": "Create Workout",
+    "generateWorkoutPlan": "Generate Workout Plan",
+    "exerciseLog": "Exercise Log",
+    "duration": "Duration",
+    "distance": "Distance",
+    "sets": "Sets",
+    "reps": "Reps",
+    "weight": "Weight",
+    "rest": "Rest",
+    "pace": "Pace",
+    "intensity": "Intensity",
+    "light": "Light",
+    "moderate": "Moderate",
+    "vigorous": "Vigorous",
+    "maximal": "Maximal"
+  },
+  "home": {
+    "hero": {
+      "title": "Your Smart Fitness & Nutrition Coach",
+      "subtitle": "Get personalized recommendations, workout plans, and nutrition advice powered by AI",
+      "cta": "Get Started"
+    },
+    "features": {
+      "title": "Why Choose ParrilleitorAI",
+      "feature1": {
+        "title": "Personalized Plans",
+        "description": "Custom nutrition and workout plans tailored to your goals and preferences"
+      },
+      "feature2": {
+        "title": "Smart Coach",
+        "description": "AI-powered suggestions and adjustments based on your progress"
+      },
+      "feature3": {
+        "title": "Track Progress",
+        "description": "Monitor your results with detailed analytics and visualizations"
+      }
+    },
+    "testimonials": {
+      "title": "Success Stories",
+      "testimonial1": {
+        "quote": "ParrilleitorAI completely changed my approach to fitness. The personalized meal plans and workout routines made all the difference.",
+        "author": "Maria G."
+      },
+      "testimonial2": {
+        "quote": "As a busy professional, I needed something efficient. This app delivers exactly what I need without wasting my time.",
+        "author": "James L."
+      },
+      "testimonial3": {
+        "quote": "The AI suggestions are spot on! It's like having a personal trainer and nutritionist in my pocket.",
+        "author": "Sophie T."
+      }
+    },
+    "cta": {
+      "title": "Ready to transform your fitness journey?",
+      "subtitle": "Join thousands of users achieving their health and fitness goals",
+      "button": "Start Your Journey"
+    }
+  }
+} 

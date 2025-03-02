@@ -33,7 +33,12 @@ export default function LogoutButton({ className, children }) {
   return (
     <button
       onClick={handleLogout}
-      className={`bg-white/10 hover:bg-white/20 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors ${className || ''}`}
+      className={`bg-white/10 hover:bg-white/20 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors shadow-sm hover:shadow-md ${className || ''}`}
+      style={{
+        backdropFilter: 'blur(4px)',
+        transform: 'translateY(0)',
+        transition: 'all 0.2s ease'
+      }}
     >
       {children || 'Cerrar sesión'}
     </button>

@@ -5,12 +5,31 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import LoginButton from '../components/LoginButton'
+import { motion } from 'framer-motion'
+import { ArrowRight, CheckCircle, TrendingUp, Award, Users, Smartphone } from 'lucide-react'
+import { cn } from '../lib/utils'
+import { Button } from '../components/ui/Button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card'
+
+// Efecto de aparición escalonada para los elementos
+const fadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.1,
+      duration: 0.5,
+      ease: [0.48, 0.15, 0.25, 0.96]
+    }
+  })
+};
 
 export default function Home() {
   const { user, isLoading } = useUser()
   const [mounted, setMounted] = useState(false)
 
-  // Prevent hydration issues
+  // Prevenir problemas de hidratación
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -24,202 +43,386 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen page-transition">
-      {/* Hero Section - Improved with gradient and spacing */}
-      <section className="bg-gradient-to-r from-primary to-primary-dark text-white py-8 px-4">
-        <div className="container">
-          <div className="max-w-lg mx-auto text-center">
-            <h1 className="text-3xl font-bold mb-3 animate-fade-in">
-              ParrilleitorAI
-            </h1>
-            <p className="text-base opacity-90 mb-6 max-w-md mx-auto animate-fade-in delay-100">
-              Tu asistente personal de nutrición y ejercicio para alcanzar tus objetivos de forma saludable
+    <main className="flex flex-col min-h-screen">
+      {/* Hero Section con gradiente y diseño mejorado */}
+      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+        {/* Fondo con gradiente y patrón */}
+        <div className="absolute inset-0 bg-gradient-to-br from-sport-600 via-primary to-energy-500 opacity-90 z-0"></div>
+        <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 z-0"></div>
+        
+        {/* Contenido principal */}
+        <div className="container relative z-10 px-4 py-16 md:py-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Texto principal con animaciones */}
+            <motion.div 
+              className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+              }}
+            >
+              <motion.h1 
+                className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight"
+                variants={fadeInUp}
+                custom={0}
+              >
+                Tu asistente personal <span className="text-white/90">de nutrición y fitness</span>
+              </motion.h1>
+              
+              <motion.p 
+                className="text-lg md:text-xl text-white/80 mb-8"
+                variants={fadeInUp}
+                custom={1}
+              >
+                Alcanza tus objetivos de forma saludable con un plan personalizado 
+                de alimentación y ejercicio adaptado a tus necesidades.
+              </motion.p>
+              
+              <motion.div 
+                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+                variants={fadeInUp}
+                custom={2}
+              >
+                {!user ? (
+                  <LoginButton className="btn-primary text-base px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all">
+                    Comenzar ahora
+                  </LoginButton>
+                ) : (
+                  <Button 
+                    as={Link}
+                    href="/chat"
+                    variant="primary"
+                    size="lg"
+                    iconRight={<ArrowRight size={18} />}
+                    className="shadow-lg"
+                  >
+                    Ir al Chat
+                  </Button>
+                )}
+                <Button
+                  as={Link}
+                  href="#features"
+                  variant="outline"
+                  size="lg"
+                  className="border-white/30 bg-white/10 text-white hover:bg-white/20"
+                >
+                  Conocer más
+                </Button>
+              </motion.div>
+            </motion.div>
+            
+            {/* Imagen o ilustración */}
+            <motion.div
+              className="hidden lg:block"
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.8 }}
+            >
+              <div className="relative w-full h-[500px] bg-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                {/* Aquí se podría agregar una imagen real de la app o una ilustración */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-white/30 text-2xl font-light">
+                    Imagen de la aplicación
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+        
+        {/* Forma decorativa en la parte inferior */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-white rounded-t-[50px] z-10"></div>
+      </section>
+      
+      {/* Sección de características principales */}
+      <section id="features" className="py-20 bg-white relative z-20">
+        <div className="container px-4">
+          <div className="max-w-3xl mx-auto text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
+              Potencia tus resultados con inteligencia artificial
+            </h2>
+            <p className="text-lg text-gray-600">
+              Descubre cómo ParrilleitorAI transforma tu experiencia de nutrición y entrenamiento con tecnología avanzada.
             </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Tarjeta de características 1 */}
+            <Card
+              hover
+              animate
+              className="border-t-4 border-t-sport-500"
+            >
+              <CardHeader>
+                <div className="w-12 h-12 rounded-full bg-sport-100 flex items-center justify-center mb-4">
+                  <CheckCircle size={24} className="text-sport-500" />
+                </div>
+                <CardTitle>Planes personalizados</CardTitle>
+                <CardDescription>
+                  Recibe recomendaciones adaptadas a tus necesidades, preferencias y objetivos específicos.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {['Dietas adaptativas', 'Rutinas a medida', 'Ajustes en tiempo real'].map((item, i) => (
+                    <li key={i} className="flex items-center text-sm">
+                      <CheckCircle size={16} className="text-sport-500 mr-2 flex-shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
             
-            {!user && (
-              <LoginButton className="btn btn-primary bg-white/90 text-primary hover:bg-white shadow-lg animate-fade-in delay-200">
-                Iniciar Sesión
-              </LoginButton>
-            )}
+            {/* Tarjeta de características 2 */}
+            <Card
+              hover
+              animate
+              className="border-t-4 border-t-primary"
+            >
+              <CardHeader>
+                <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center mb-4">
+                  <TrendingUp size={24} className="text-primary" />
+                </div>
+                <CardTitle>Seguimiento inteligente</CardTitle>
+                <CardDescription>
+                  Monitoriza tu progreso con análisis avanzados y ajusta tu plan automáticamente.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {['Análisis de tendencias', 'Detección de patrones', 'Sugerencias de mejora'].map((item, i) => (
+                    <li key={i} className="flex items-center text-sm">
+                      <CheckCircle size={16} className="text-primary mr-2 flex-shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+            
+            {/* Tarjeta de características 3 */}
+            <Card
+              hover
+              animate
+              className="border-t-4 border-t-nutrition-500"
+            >
+              <CardHeader>
+                <div className="w-12 h-12 rounded-full bg-nutrition-100 flex items-center justify-center mb-4">
+                  <Award size={24} className="text-nutrition-500" />
+                </div>
+                <CardTitle>Asesoramiento experto</CardTitle>
+                <CardDescription>
+                  Accede a conocimiento basado en ciencia y experiencia profesional.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {['Recomendaciones científicas', 'Consejos prácticos', 'Respuestas a consultas'].map((item, i) => (
+                    <li key={i} className="flex items-center text-sm">
+                      <CheckCircle size={16} className="text-nutrition-500 mr-2 flex-shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
-
-      {/* Main Content - Updated card designs and spacing */}
-      <section className="py-6 px-4">
-        <div className="container">
-          {user ? (
-            <div className="card p-5 mb-6 bg-gradient-to-r from-primary-50 to-white border-l-4 border-primary">
-              <h2 className="text-xl font-semibold mb-3">Bienvenido, {user.name?.split(' ')[0] || 'Usuario'}</h2>
-              <p className="text-gray-600 mb-4">Continúa con tu plan personalizado o inicia una nueva conversación con tu asistente.</p>
-              <Link
-                href="/chat"
-                className="btn btn-primary inline-flex items-center"
-              >
-                <span>Iniciar Conversación</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </Link>
-            </div>
-          ) : (
-            <div className="card p-5 mb-6 border-l-4 border-primary">
-              <h2 className="text-xl font-semibold mb-3">Comienza tu viaje</h2>
-              <p className="text-gray-600 mb-4">Inicia sesión para obtener recomendaciones personalizadas de nutrición y ejercicio adaptadas a tus necesidades.</p>
-            </div>
-          )}
-          
-          {/* Features Cards - Improved design with icons */}
-          <h2 className="text-xl font-semibold mb-4">¿Qué ofrecemos?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <div className="feature-card">
-              <div className="feature-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">Nutrición Personalizada</h3>
-                <p className="text-gray-600">Planes de alimentación adaptados a tus objetivos, gustos y necesidades específicas.</p>
-              </div>
-            </div>
-            
-            <div className="feature-card">
-              <div className="feature-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">Rutinas de Ejercicio</h3>
-                <p className="text-gray-600">Entrenamiento adaptado a tu nivel actual, con progresión gradual para mejores resultados.</p>
-              </div>
-            </div>
-            
-            <div className="feature-card">
-              <div className="feature-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">Seguimiento Detallado</h3>
-                <p className="text-gray-600">Monitoreo de tu progreso con métricas clave y ajustes recomendados en tiempo real.</p>
-              </div>
-            </div>
-            
-            <div className="feature-card">
-              <div className="feature-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">Asistencia Continua</h3>
-                <p className="text-gray-600">Chat 24/7 con nuestro asistente IA para resolver dudas y recibir motivación constante.</p>
-              </div>
-            </div>
+      
+      {/* Sección de testimonios */}
+      <section className="py-20 bg-gray-50">
+        <div className="container px-4">
+          <div className="max-w-3xl mx-auto text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
+              Lo que dicen nuestros usuarios
+            </h2>
+            <p className="text-lg text-gray-600">
+              Historias reales de personas que han transformado sus hábitos y logrado sus objetivos.
+            </p>
           </div>
           
-          {/* Testimonials - New section */}
-          <h2 className="text-xl font-semibold mb-4">Lo que dicen nuestros usuarios</h2>
-          <div className="overflow-x-auto pb-4 -mx-4 px-4">
-            <div className="flex space-x-4 w-max">
-              <div className="card p-4 w-64 flex-shrink-0 border-t-4 border-primary">
-                <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 mr-3"></div>
-                  <div>
-                    <p className="font-medium">María G.</p>
-                    <div className="flex text-yellow-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                name: "Carlos M.",
+                role: "Atleta amateur",
+                content: "ParrilleitorAI me ha ayudado a optimizar mi nutrición y mejorar mis tiempos de recuperación. Los planes son súper personalizados.",
+                image: "https://randomuser.me/api/portraits/men/54.jpg"
+              },
+              {
+                name: "Laura G.",
+                role: "Profesional ocupada",
+                content: "Con mi agenda apretada, necesitaba algo eficiente. La app me da planes rápidos pero efectivos que puedo seguir sin complicaciones.",
+                image: "https://randomuser.me/api/portraits/women/67.jpg"
+              },
+              {
+                name: "Miguel S.",
+                role: "Principiante en fitness",
+                content: "Empecé sin saber nada de nutrición. La IA me ha guiado paso a paso y ahora entiendo mucho mejor cómo alimentarme correctamente.",
+                image: "https://randomuser.me/api/portraits/men/32.jpg"
+              }
+            ].map((testimonial, i) => (
+              <Card key={i} hover animate className="overflow-visible">
+                <CardContent className="pt-8 relative">
+                  <div className="absolute -top-6 left-4 w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
+                    <img 
+                      src={testimonial.image} 
+                      alt={testimonial.name}
+                      className="w-full h-full object-cover" 
+                    />
                   </div>
-                </div>
-                <p className="text-gray-600 text-sm">&ldquo;La app ha transformado mi enfoque hacia la nutrición. Los planes son fáciles de seguir y realmente efectivos.&rdquo;</p>
-              </div>
-              <div className="card p-4 w-64 flex-shrink-0 border-t-4 border-secondary">
-                <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 mr-3"></div>
+                  <p className="text-gray-600 mb-4">"{testimonial.content}"</p>
                   <div>
-                    <p className="font-medium">Carlos P.</p>
-                    <div className="flex text-yellow-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    </div>
+                    <p className="font-semibold">{testimonial.name}</p>
+                    <p className="text-sm text-gray-500">{testimonial.role}</p>
                   </div>
-                </div>
-                <p className="text-gray-600 text-sm">&ldquo;El asistente entiende mis necesidades y me proporciona rutinas que puedo hacer incluso con mi apretada agenda.&rdquo;</p>
-              </div>
-              <div className="card p-4 w-64 flex-shrink-0 border-t-4 border-primary">
-                <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 mr-3"></div>
-                  <div>
-                    <p className="font-medium">Ana R.</p>
-                    <div className="flex text-yellow-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-gray-600 text-sm">&ldquo;La IA realmente entiende mis restricciones alimentarias y me ofrece alternativas deliciosas que nunca hubiera descubierto.&rdquo;</p>
-              </div>
-            </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-          
-          {/* CTA Section - Updated design */}
-          {!user && (
-            <div className="bg-gradient-to-r from-primary to-primary-dark text-white rounded-2xl p-6 text-center shadow-lg">
-              <h2 className="text-xl font-bold mb-3">¿Listo para comenzar?</h2>
-              <p className="text-white/90 mb-5 max-w-md mx-auto">Únete ahora y recibe asesoramiento personalizado que te ayudará a alcanzar tus objetivos</p>
-              <LoginButton 
-                className="bg-white text-primary font-medium rounded-lg px-6 py-3 inline-block shadow-md hover:shadow-lg hover:bg-gray-100"
-              >
-                Comenzar Ahora
-              </LoginButton>
-            </div>
-          )}
         </div>
       </section>
-    </div>
-  )
+      
+      {/* Sección CTA */}
+      <section className="py-20 bg-gradient-to-r from-primary to-sport-600 text-white">
+        <div className="container px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                Comienza tu transformación hoy mismo
+              </h2>
+              <p className="text-lg text-white/80 mb-8">
+                Únete a miles de personas que ya están alcanzando sus metas con ParrilleitorAI.
+                Tu plan personalizado te espera.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                {!user ? (
+                  <LoginButton className="bg-white text-primary hover:bg-white/90 font-medium px-8 py-3 rounded-lg shadow-lg transition-all">
+                    Crear cuenta gratis
+                  </LoginButton>
+                ) : (
+                  <Button 
+                    as={Link}
+                    href="/chat"
+                    variant="outline"
+                    size="lg"
+                    className="bg-white text-primary hover:bg-white/90 border-transparent"
+                    iconRight={<ArrowRight size={18} />}
+                  >
+                    Ir a mi asistente
+                  </Button>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex justify-center">
+              <div className="bg-white/10 rounded-2xl p-8 backdrop-blur-sm max-w-md">
+                <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <Users size={20} className="mr-2" /> Únete a nuestra comunidad
+                </h3>
+                <ul className="space-y-4">
+                  <li className="flex items-start">
+                    <CheckCircle size={20} className="mr-3 text-white flex-shrink-0 mt-1" />
+                    <span>Acceso a planes personalizados de nutrición y entrenamiento</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle size={20} className="mr-3 text-white flex-shrink-0 mt-1" />
+                    <span>Asistente IA disponible 24/7 para resolver tus dudas</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle size={20} className="mr-3 text-white flex-shrink-0 mt-1" />
+                    <span>Seguimiento de progreso y ajustes automáticos</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle size={20} className="mr-3 text-white flex-shrink-0 mt-1" />
+                    <span>Comunidad de apoyo y recursos exclusivos</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="container px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div>
+              <h3 className="text-xl font-bold mb-4">ParrilleitorAI</h3>
+              <p className="text-gray-400 mb-4">
+                Tu asistente personal para alcanzar tus objetivos de nutrición y fitness.
+              </p>
+              <div className="flex space-x-4">
+                {/* Iconos de redes sociales */}
+                {['facebook', 'twitter', 'instagram'].map((social) => (
+                  <a 
+                    key={social}
+                    href="#" 
+                    className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary transition-colors"
+                    aria-label={`Síguenos en ${social}`}
+                  >
+                    <span className="sr-only">Síguenos en {social}</span>
+                    <div className="w-4 h-4"></div>
+                  </a>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Enlaces rápidos</h4>
+              <ul className="space-y-2">
+                {['Inicio', 'Características', 'Testimonios', 'Contacto'].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                      {item}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Recursos</h4>
+              <ul className="space-y-2">
+                {['Blog', 'Guías', 'Soporte', 'Preguntas frecuentes'].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                      {item}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Descarga la app</h4>
+              <p className="text-gray-400 mb-4">
+                Próximamente disponible para iOS y Android
+              </p>
+              <div className="flex flex-col space-y-2">
+                <a href="#" className="flex items-center px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors">
+                  <Smartphone size={20} className="mr-2" />
+                  <span>App Store</span>
+                </a>
+                <a href="#" className="flex items-center px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors">
+                  <Smartphone size={20} className="mr-2" />
+                  <span>Google Play</span>
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
+            <p>© {new Date().getFullYear()} ParrilleitorAI. Todos los derechos reservados.</p>
+          </div>
+        </div>
+      </footer>
+    </main>
+  );
 }

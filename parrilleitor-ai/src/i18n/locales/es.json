@@ -1,0 +1,249 @@
+{
+  "app": {
+    "name": "ParrilleitorAI",
+    "tagline": "Tu asistente personal de fitness y nutrición",
+    "description": "Asistente personalizado de nutrición y ejercicio"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ha ocurrido un error",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "search": "Buscar",
+    "selectLanguage": "Seleccionar idioma",
+    "notFound": "Página no encontrada",
+    "back": "Volver",
+    "backToHome": "Volver al inicio",
+    "seeAll": "Ver todo",
+    "showMore": "Mostrar más",
+    "showLess": "Mostrar menos",
+    "continue": "Continuar",
+    "skip": "Omitir",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "requiredField": "Campo obligatorio"
+  },
+  "languages": {
+    "groups": {
+      "western": "Europa Occidental",
+      "northern": "Europa del Norte",
+      "eastern": "Europa del Este",
+      "southern": "Europa del Sur"
+    }
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "register": "Registrarse",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "emailAddress": "Correo electrónico",
+    "password": "Contraseña",
+    "rememberMe": "Recordarme",
+    "dontHaveAccount": "¿No tienes una cuenta?",
+    "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+    "resetPassword": "Restablecer contraseña",
+    "signupWith": "Registrarse con {provider}",
+    "loginWith": "Iniciar sesión con {provider}",
+    "unauthorized": "No tienes permiso para acceder a esta página"
+  },
+  "nav": {
+    "home": "Inicio",
+    "profile": "Perfil",
+    "settings": "Ajustes",
+    "chat": "Chat",
+    "dashboard": "Panel",
+    "nutrition": "Nutrición",
+    "exercise": "Ejercicio"
+  },
+  "footer": {
+    "terms": "Términos",
+    "privacy": "Privacidad",
+    "help": "Ayuda",
+    "copyright": "© {year} ParrilleitorAI"
+  },
+  "profile": {
+    "title": "Perfil",
+    "personalInformation": "Información Personal",
+    "preferences": "Preferencias",
+    "fitnessGoals": "Objetivos de Fitness",
+    "nutritionPreferences": "Preferencias de Nutrición",
+    "exercisePreferences": "Preferencias de Ejercicio",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "changePhoto": "Cambiar foto",
+    "removePhoto": "Eliminar foto",
+    "bio": "Biografía",
+    "height": "Altura",
+    "weight": "Peso",
+    "age": "Edad",
+    "gender": "Género",
+    "activityLevel": "Nivel de actividad",
+    "sedentary": "Sedentario",
+    "lightlyActive": "Poco activo",
+    "moderatelyActive": "Moderadamente activo",
+    "veryActive": "Muy activo",
+    "extremelyActive": "Extremadamente activo",
+    "goal": "Objetivo",
+    "loseWeight": "Perder peso",
+    "maintainWeight": "Mantener peso",
+    "gainWeight": "Ganar peso",
+    "buildMuscle": "Desarrollar músculo",
+    "improveEndurance": "Mejorar resistencia",
+    "improveStrength": "Mejorar fuerza",
+    "dietType": "Tipo de dieta",
+    "omnivore": "Omnívoro",
+    "vegetarian": "Vegetariano",
+    "vegan": "Vegano",
+    "paleo": "Paleo",
+    "keto": "Keto",
+    "glutenFree": "Sin gluten",
+    "dairyFree": "Sin lácteos",
+    "preferences": "Preferencias",
+    "allergies": "Alergias",
+    "exerciseFrequency": "Frecuencia de ejercicio",
+    "daysPerWeek": "{count} días por semana",
+    "minutesPerSession": "{count} minutos por sesión",
+    "preferredExercises": "Ejercicios preferidos",
+    "updateProfile": "Actualizar perfil"
+  },
+  "chat": {
+    "title": "Chat con ParrilleitorAI",
+    "placeholder": "Pregúntame cualquier cosa sobre nutrición y fitness...",
+    "send": "Enviar",
+    "newChat": "Nuevo Chat",
+    "noMessages": "Aún no hay mensajes. ¡Inicia una conversación!",
+    "thinking": "Pensando...",
+    "typing": "Escribiendo...",
+    "welcomeMessage": "¡Hola! Soy tu asistente de nutrición y fitness. ¿En qué puedo ayudarte hoy?",
+    "suggestions": {
+      "title": "Sugerencias",
+      "suggestion1": "¿Qué es un buen desayuno antes de entrenar?",
+      "suggestion2": "¿Puedes recomendarme una dieta para ganar músculo?",
+      "suggestion3": "¿Qué ejercicios son mejores para fortalecer el core?",
+      "suggestion4": "¿Cuántas calorías debo comer diariamente para perder peso?"
+    }
+  },
+  "dashboard": {
+    "title": "Panel",
+    "summary": "Resumen",
+    "todayStats": "Estadísticas de Hoy",
+    "weeklyProgress": "Progreso Semanal",
+    "goals": "Objetivos",
+    "recentActivity": "Actividad Reciente",
+    "nutrition": "Nutrición",
+    "exercise": "Ejercicio",
+    "upcomingWorkouts": "Próximos Entrenamientos",
+    "mealPlan": "Plan de Comidas",
+    "waterIntake": "Consumo de Agua",
+    "sleep": "Sueño",
+    "addWorkout": "Añadir Entrenamiento",
+    "addMeal": "Añadir Comida",
+    "steps": "Pasos",
+    "calories": "Calorías",
+    "caloriesBurned": "Calorías Quemadas",
+    "caloriesConsumed": "Calorías Consumidas",
+    "caloriesRemaining": "Calorías Restantes",
+    "goalCompleted": "Objetivo Completado",
+    "viewMore": "Ver Más"
+  },
+  "nutrition": {
+    "title": "Nutrición",
+    "calories": "Calorías",
+    "protein": "Proteína",
+    "carbs": "Carbohidratos",
+    "fat": "Grasa",
+    "fiber": "Fibra",
+    "sugar": "Azúcar",
+    "sodium": "Sodio",
+    "water": "Agua",
+    "breakfast": "Desayuno",
+    "lunch": "Comida",
+    "dinner": "Cena",
+    "snacks": "Snacks",
+    "addMeal": "Añadir Comida",
+    "searchFood": "Buscar alimento",
+    "recentFoods": "Alimentos Recientes",
+    "myRecipes": "Mis Recetas",
+    "mealPlans": "Planes de Comida",
+    "trackWater": "Registrar Agua",
+    "nutritionGoals": "Objetivos Nutricionales",
+    "dailyIntake": "Consumo Diario",
+    "weeklyOverview": "Resumen Semanal",
+    "foodLog": "Registro de Alimentos",
+    "addFood": "Añadir Alimento",
+    "createRecipe": "Crear Receta",
+    "generateMealPlan": "Generar Plan de Comidas"
+  },
+  "exercise": {
+    "title": "Ejercicio",
+    "workouts": "Entrenamientos",
+    "exercises": "Ejercicios",
+    "cardio": "Cardio",
+    "strength": "Fuerza",
+    "flexibility": "Flexibilidad",
+    "addWorkout": "Añadir Entrenamiento",
+    "logExercise": "Registrar Ejercicio",
+    "recentWorkouts": "Entrenamientos Recientes",
+    "savedWorkouts": "Entrenamientos Guardados",
+    "createWorkout": "Crear Entrenamiento",
+    "generateWorkoutPlan": "Generar Plan de Entrenamiento",
+    "exerciseLog": "Registro de Ejercicios",
+    "duration": "Duración",
+    "distance": "Distancia",
+    "sets": "Series",
+    "reps": "Repeticiones",
+    "weight": "Peso",
+    "rest": "Descanso",
+    "pace": "Ritmo",
+    "intensity": "Intensidad",
+    "light": "Ligera",
+    "moderate": "Moderada",
+    "vigorous": "Vigorosa",
+    "maximal": "Máxima"
+  },
+  "home": {
+    "hero": {
+      "title": "Tu Entrenador Inteligente de Fitness y Nutrición",
+      "subtitle": "Obtén recomendaciones personalizadas, planes de entrenamiento y consejos nutricionales impulsados por IA",
+      "cta": "Comenzar"
+    },
+    "features": {
+      "title": "¿Por qué elegir ParrilleitorAI?",
+      "feature1": {
+        "title": "Planes Personalizados",
+        "description": "Planes de nutrición y entrenamiento a medida según tus objetivos y preferencias"
+      },
+      "feature2": {
+        "title": "Entrenador Inteligente",
+        "description": "Sugerencias y ajustes impulsados por IA basados en tu progreso"
+      },
+      "feature3": {
+        "title": "Seguimiento de Progreso",
+        "description": "Monitoriza tus resultados con análisis detallados y visualizaciones"
+      }
+    },
+    "testimonials": {
+      "title": "Historias de Éxito",
+      "testimonial1": {
+        "quote": "ParrilleitorAI cambió completamente mi enfoque del fitness. Los planes de comidas personalizados y las rutinas de entrenamiento marcaron la diferencia.",
+        "author": "María G."
+      },
+      "testimonial2": {
+        "quote": "Como profesional ocupado, necesitaba algo eficiente. Esta app me proporciona exactamente lo que necesito sin perder mi tiempo.",
+        "author": "Jaime L."
+      },
+      "testimonial3": {
+        "quote": "¡Las sugerencias de la IA son perfectas! Es como tener un entrenador personal y un nutricionista en mi bolsillo.",
+        "author": "Sofía T."
+      }
+    },
+    "cta": {
+      "title": "¿Listo para transformar tu recorrido fitness?",
+      "subtitle": "Únete a miles de usuarios que están logrando sus objetivos de salud y fitness",
+      "button": "Comienza Tu Viaje"
+    }
+  }
+} 

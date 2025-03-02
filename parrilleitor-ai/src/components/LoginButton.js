@@ -15,7 +15,12 @@ export default function LoginButton({ className }) {
   return (
     <button
       onClick={handleLogin}
-      className={`bg-primary hover:bg-primary-dark text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors ${className || ''}`}
+      className={`bg-primary hover:bg-primary-dark text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors shadow-sm hover:shadow-md ${className || ''}`}
+      style={{
+        backgroundImage: 'linear-gradient(to bottom, var(--primary-light), var(--primary))',
+        transform: 'translateY(0)',
+        transition: 'all 0.2s ease'
+      }}
     >
       Iniciar sesión
     </button>

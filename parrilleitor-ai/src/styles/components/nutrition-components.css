@@ -1,0 +1,670 @@
+/* Estilos para componentes específicos de nutrición */
+
+/* Tarjeta de receta */
+.recipe-card {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background-color: white;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-all);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.recipe-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.recipe-card-image {
+  position: relative;
+  height: 0;
+  padding-bottom: 56.25%; /* Aspect ratio 16:9 */
+  overflow: hidden;
+}
+
+.recipe-card-image img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: var(--transition-all);
+}
+
+.recipe-card:hover .recipe-card-image img {
+  transform: scale(1.05);
+}
+
+.recipe-card-type {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  padding: 0.25rem 0.625rem;
+  background-color: var(--nutrition-500);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  z-index: 10;
+}
+
+.recipe-card-time {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.25rem 0.625rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+}
+
+.recipe-card-time svg {
+  margin-right: 0.25rem;
+}
+
+.recipe-card-content {
+  padding: 1.5rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.recipe-card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 0.5rem;
+}
+
+.recipe-card-description {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.recipe-card-meta {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recipe-card-nutrition {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.recipe-card-nutrition-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.recipe-card-nutrition-value {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.recipe-card-nutrition-label {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.recipe-card-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--warning-500);
+}
+
+.recipe-card-rating-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-left: 0.25rem;
+}
+
+/* Indicador de macronutrientes */
+.macro-indicator {
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.macro-indicator-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  margin-bottom: 1rem;
+}
+
+.macro-indicator-chart {
+  position: relative;
+  height: 0.5rem;
+  background-color: var(--gray-100);
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.macro-indicator-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 9999px;
+}
+
+.macro-indicator-bar-protein {
+  background-color: var(--nutrition-500);
+  z-index: 3;
+}
+
+.macro-indicator-bar-carbs {
+  background-color: var(--warning-500);
+  z-index: 2;
+}
+
+.macro-indicator-bar-fat {
+  background-color: var(--primary-500);
+  z-index: 1;
+}
+
+.macro-indicator-details {
+  display: flex;
+  justify-content: space-between;
+}
+
+.macro-indicator-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.macro-indicator-item-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.macro-indicator-item-label {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin-top: 0.25rem;
+}
+
+.macro-indicator-item-protein .macro-indicator-item-value {
+  color: var(--nutrition-600);
+}
+
+.macro-indicator-item-carbs .macro-indicator-item-value {
+  color: var(--warning-600);
+}
+
+.macro-indicator-item-fat .macro-indicator-item-value {
+  color: var(--primary-600);
+}
+
+/* Calendario de comidas */
+.meal-planner {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.meal-planner-header {
+  padding: 1rem 1.5rem;
+  background-color: var(--nutrition-500);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.meal-planner-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.meal-planner-date {
+  font-size: 0.875rem;
+}
+
+.meal-planner-day {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.meal-planner-day:last-child {
+  border-bottom: none;
+}
+
+.meal-planner-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.meal-planner-day-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.meal-planner-day-calories {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+.meal-planner-day-calories strong {
+  color: var(--gray-900);
+}
+
+.meal-planner-meals {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.meal-planner-meal {
+  display: flex;
+  align-items: flex-start;
+  padding: 1rem;
+  background-color: var(--gray-50);
+  border-radius: var(--radius);
+  border-left: 4px solid var(--nutrition-500);
+}
+
+.meal-planner-meal-breakfast {
+  border-left-color: var(--warning-500);
+}
+
+.meal-planner-meal-lunch {
+  border-left-color: var(--nutrition-500);
+}
+
+.meal-planner-meal-dinner {
+  border-left-color: var(--primary-500);
+}
+
+.meal-planner-meal-snack {
+  border-left-color: var(--gray-400);
+}
+
+.meal-planner-meal-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border-radius: 50%;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.meal-planner-meal-icon svg {
+  color: var(--nutrition-500);
+}
+
+.meal-planner-meal-breakfast .meal-planner-meal-icon svg {
+  color: var(--warning-500);
+}
+
+.meal-planner-meal-lunch .meal-planner-meal-icon svg {
+  color: var(--nutrition-500);
+}
+
+.meal-planner-meal-dinner .meal-planner-meal-icon svg {
+  color: var(--primary-500);
+}
+
+.meal-planner-meal-snack .meal-planner-meal-icon svg {
+  color: var(--gray-400);
+}
+
+.meal-planner-meal-content {
+  flex-grow: 1;
+}
+
+.meal-planner-meal-title {
+  font-weight: 500;
+  color: var(--gray-900);
+  margin-bottom: 0.25rem;
+}
+
+.meal-planner-meal-details {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+.meal-planner-meal-calories {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-left: 1rem;
+  flex-shrink: 0;
+}
+
+/* Seguimiento de agua */
+.water-tracker {
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.water-tracker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.water-tracker-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.water-tracker-value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--primary-500);
+}
+
+.water-tracker-glasses {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.water-tracker-glass {
+  width: 2.5rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--gray-100);
+  border-radius: var(--radius);
+  color: var(--gray-400);
+  transition: var(--transition-all);
+  cursor: pointer;
+}
+
+.water-tracker-glass.filled {
+  background-color: var(--primary-100);
+  color: var(--primary-500);
+}
+
+.water-tracker-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.water-tracker-button {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  background-color: var(--primary-500);
+  color: white;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-all);
+}
+
+.water-tracker-button:hover {
+  background-color: var(--primary-600);
+}
+
+.water-tracker-button-remove {
+  background-color: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.water-tracker-button-remove:hover {
+  background-color: var(--gray-300);
+}
+
+/* Gráfico de calorías semanal */
+.calorie-chart {
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.calorie-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.calorie-chart-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.calorie-chart-legend {
+  display: flex;
+  gap: 1rem;
+}
+
+.calorie-chart-legend-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--gray-600);
+}
+
+.calorie-chart-legend-color {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 0.25rem;
+  margin-right: 0.375rem;
+}
+
+.calorie-chart-legend-consumed .calorie-chart-legend-color {
+  background-color: var(--nutrition-500);
+}
+
+.calorie-chart-legend-target .calorie-chart-legend-color {
+  background-color: var(--gray-300);
+}
+
+.calorie-chart-bars {
+  display: flex;
+  height: 12rem;
+  gap: 1rem;
+  align-items: flex-end;
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.calorie-chart-bar-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.calorie-chart-target-line {
+  position: absolute;
+  top: 20%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--gray-300);
+  z-index: 1;
+}
+
+.calorie-chart-bar {
+  width: 100%;
+  background-color: var(--nutrition-500);
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  z-index: 2;
+}
+
+.calorie-chart-bar-value {
+  position: absolute;
+  top: -1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  white-space: nowrap;
+}
+
+.calorie-chart-bar-under {
+  background-color: var(--success-500);
+}
+
+.calorie-chart-bar-over {
+  background-color: var(--error-500);
+}
+
+.calorie-chart-labels {
+  display: flex;
+  gap: 1rem;
+}
+
+.calorie-chart-label {
+  flex: 1;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--gray-600);
+}
+
+/* Modo oscuro */
+.dark .recipe-card,
+.dark .macro-indicator,
+.dark .meal-planner,
+.dark .water-tracker,
+.dark .calorie-chart {
+  background-color: var(--gray-800);
+}
+
+.dark .recipe-card-title,
+.dark .macro-indicator-item-value,
+.dark .meal-planner-day-name,
+.dark .meal-planner-meal-title,
+.dark .water-tracker-title,
+.dark .calorie-chart-title,
+.dark .calorie-chart-bar-value {
+  color: var(--gray-100);
+}
+
+.dark .recipe-card-description,
+.dark .recipe-card-nutrition-label,
+.dark .macro-indicator-title,
+.dark .macro-indicator-item-label,
+.dark .meal-planner-day-calories,
+.dark .meal-planner-meal-details,
+.dark .calorie-chart-legend-item,
+.dark .calorie-chart-label {
+  color: var(--gray-400);
+}
+
+.dark .macro-indicator-chart {
+  background-color: var(--gray-700);
+}
+
+.dark .recipe-card-nutrition-value,
+.dark .meal-planner-day-calories strong,
+.dark .meal-planner-meal-calories {
+  color: var(--gray-200);
+}
+
+.dark .meal-planner-day {
+  border-color: var(--gray-700);
+}
+
+.dark .meal-planner-meal {
+  background-color: var(--gray-900);
+}
+
+.dark .meal-planner-meal-icon,
+.dark .water-tracker-glass.filled {
+  background-color: var(--gray-700);
+}
+
+.dark .water-tracker-glass {
+  background-color: var(--gray-900);
+  color: var(--gray-500);
+}
+
+.dark .water-tracker-button-remove {
+  background-color: var(--gray-700);
+  color: var(--gray-300);
+}
+
+.dark .water-tracker-button-remove:hover {
+  background-color: var(--gray-600);
+}
+
+.dark .calorie-chart-target-line {
+  background-color: var(--gray-600);
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .recipe-card-content {
+    padding: 1rem;
+  }
+  
+  .macro-indicator,
+  .water-tracker,
+  .calorie-chart {
+    padding: 1rem;
+  }
+  
+  .meal-planner-header,
+  .meal-planner-day {
+    padding: 1rem;
+  }
+  
+  .calorie-chart-bars {
+    height: 8rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .recipe-card-nutrition {
+    gap: 0.5rem;
+  }
+  
+  .water-tracker-glass {
+    width: 2rem;
+    height: 2.5rem;
+  }
+  
+  .meal-planner-meal {
+    padding: 0.75rem;
+  }
+  
+  .meal-planner-meal-icon {
+    width: 2rem;
+    height: 2rem;
+  }
+} 

@@ -1,0 +1,550 @@
+/* Botones - sistema de botones mejorados con diseño actual */
+.btn {
+  @apply inline-flex items-center justify-center rounded-lg font-medium text-center transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  position: relative;
+  overflow: hidden;
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(0);
+}
+
+/* Efecto hover mejorado */
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Efecto de clic mejorado */
+.btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Tamaños de botones mejor definidos */
+.btn-xs {
+  @apply px-2.5 py-1.5 text-xs;
+}
+
+.btn-sm {
+  @apply px-3 py-2 text-sm;
+}
+
+.btn-md {
+  @apply px-4 py-2 text-sm;
+}
+
+.btn-lg {
+  @apply px-6 py-3 text-base;
+}
+
+.btn-xl {
+  @apply px-8 py-4 text-lg;
+}
+
+/* Variantes de botones */
+.btn-primary {
+  @apply bg-primary text-white focus:ring-primary/50;
+  background-image: var(--gradient-primary);
+}
+
+.btn-secondary {
+  @apply bg-secondary text-white focus:ring-secondary/50;
+  background-image: var(--gradient-secondary);
+}
+
+.btn-outline {
+  @apply border-2 border-primary bg-transparent text-primary hover:bg-primary/10 focus:ring-primary/30;
+}
+
+.btn-ghost {
+  @apply text-primary bg-transparent hover:bg-primary/10 focus:ring-primary/30;
+  box-shadow: none;
+}
+
+.btn-white {
+  @apply bg-white text-primary border border-gray-200 hover:bg-gray-50 focus:ring-primary/30;
+}
+
+/* Efecto de ripple para botones */
+.btn.btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn.btn-ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%, -50%);
+  transform-origin: 50% 50%;
+}
+
+.btn.btn-ripple:focus:not(:active)::after {
+  animation: ripple 0.8s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(100, 100);
+    opacity: 0;
+  }
+}
+
+/* Botones con iconos */
+.btn-icon {
+  @apply flex items-center justify-center;
+}
+
+.btn-icon svg,
+.btn-icon img {
+  @apply mr-2;
+}
+
+.btn-icon-only {
+  @apply p-2 h-10 w-10 flex items-center justify-center;
+  min-width: 2.5rem;
+}
+
+/* Estado de carga */
+.btn-loading {
+  @apply relative text-transparent cursor-wait;
+}
+
+.btn-loading::before {
+  content: '';
+  @apply absolute inset-0 w-5 h-5 m-auto border-2 border-t-transparent rounded-full animate-spin;
+  border-color: currentColor;
+  border-top-color: transparent;
+}
+
+/* Media queries para responsive */
+@media (max-width: 640px) {
+  .btn-lg {
+    @apply px-5 py-2.5 text-sm;
+  }
+  
+  .btn-xl {
+    @apply px-6 py-3 text-base;
+  }
+}
+
+/* Soporte para transiciones fluidas en navegadores móviles */
+@media (hover: hover) {
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* Add smooth transition to all interactive elements */
+a, button, .btn, .card, input, select, textarea {
+  @apply transition-all duration-300;
+}
+
+/* Estilos para botones y controles interactivos */
+
+/* Estilos básicos de botones */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  font-weight: 500;
+  line-height: 1.5;
+  transition: var(--transition-all);
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid transparent;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  height: 2.5rem;
+}
+
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.btn:focus {
+  outline: 2px solid rgba(0, 0, 0, 0.1);
+  outline-offset: 2px;
+}
+
+/* Variantes de botones */
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-600);
+}
+
+.btn-primary:active {
+  background-color: var(--primary-700);
+}
+
+.btn-secondary {
+  background-color: var(--gray-100);
+  color: var(--gray-900);
+}
+
+.btn-secondary:hover {
+  background-color: var(--gray-200);
+}
+
+.btn-secondary:active {
+  background-color: var(--gray-300);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border-color: var(--gray-300);
+  color: var(--gray-900);
+}
+
+.btn-outline:hover {
+  background-color: var(--gray-50);
+}
+
+.btn-outline:active {
+  background-color: var(--gray-100);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--gray-700);
+}
+
+.btn-ghost:hover {
+  background-color: var(--gray-50);
+}
+
+.btn-ghost:active {
+  background-color: var(--gray-100);
+}
+
+.btn-link {
+  background-color: transparent;
+  color: var(--primary);
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  height: auto;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+.btn-danger {
+  background-color: var(--error-500);
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
+}
+
+.btn-danger:active {
+  background-color: #b91c1c;
+}
+
+.btn-success {
+  background-color: var(--success-500);
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #0d9488;
+}
+
+.btn-success:active {
+  background-color: #0f766e;
+}
+
+.btn-warning {
+  background-color: var(--warning-500);
+  color: var(--gray-900);
+}
+
+.btn-warning:hover {
+  background-color: #d97706;
+}
+
+.btn-warning:active {
+  background-color: #b45309;
+}
+
+/* Variantes de tema */
+.btn-sport {
+  background-color: var(--sport-500);
+  color: white;
+}
+
+.btn-sport:hover {
+  background-color: var(--sport-600);
+}
+
+.btn-sport:active {
+  background-color: var(--sport-700);
+}
+
+.btn-nutrition {
+  background-color: var(--nutrition-500);
+  color: white;
+}
+
+.btn-nutrition:hover {
+  background-color: var(--nutrition-600);
+}
+
+.btn-nutrition:active {
+  background-color: var(--nutrition-700);
+}
+
+.btn-energy {
+  background-color: var(--energy-500);
+  color: white;
+}
+
+.btn-energy:hover {
+  background-color: var(--energy-600);
+}
+
+.btn-energy:active {
+  background-color: var(--energy-700);
+}
+
+/* Tamaños de botones */
+.btn-xs {
+  height: 1.75rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: calc(var(--radius) - 0.125rem);
+}
+
+.btn-sm {
+  height: 2.25rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.btn-md {
+  height: 2.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-lg {
+  height: 2.75rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+}
+
+.btn-xl {
+  height: 3rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.125rem;
+  border-radius: calc(var(--radius) + 0.125rem);
+}
+
+/* Modificadores de botones */
+.btn-block {
+  display: flex;
+  width: 100%;
+}
+
+.btn-icon {
+  padding: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon.btn-xs {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.btn-icon.btn-sm {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.btn-icon.btn-lg {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.btn-icon.btn-xl {
+  width: 3rem;
+  height: 3rem;
+}
+
+.btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Animaciones para botones */
+.btn-pulse {
+  animation: pulse 3s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Grupo de botones */
+.btn-group {
+  display: inline-flex;
+}
+
+.btn-group .btn {
+  border-radius: 0;
+}
+
+.btn-group .btn:not(:last-child) {
+  margin-right: -1px;
+}
+
+.btn-group .btn:first-child {
+  border-top-left-radius: var(--radius);
+  border-bottom-left-radius: var(--radius);
+}
+
+.btn-group .btn:last-child {
+  border-top-right-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+}
+
+/* Botones con estados de carga */
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Botones con efectos hover */
+.btn-hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-hover-expand {
+  transition: padding 0.2s ease;
+}
+
+.btn-hover-expand:hover {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+/* Botones flotantes (FAB) */
+.btn-fab {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 9999px;
+  background-color: var(--primary);
+  color: white;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+  transition: transform 0.2s ease;
+}
+
+.btn-fab:hover {
+  transform: scale(1.05);
+  background-color: var(--primary-600);
+}
+
+.btn-fab:active {
+  transform: scale(0.95);
+}
+
+/* Estilos para modo oscuro */
+.dark .btn-secondary {
+  background-color: var(--gray-700);
+  color: var(--gray-100);
+}
+
+.dark .btn-secondary:hover {
+  background-color: var(--gray-600);
+}
+
+.dark .btn-secondary:active {
+  background-color: var(--gray-500);
+}
+
+.dark .btn-outline {
+  border-color: var(--gray-600);
+  color: var(--gray-200);
+}
+
+.dark .btn-outline:hover {
+  background-color: var(--gray-800);
+}
+
+.dark .btn-outline:active {
+  background-color: var(--gray-700);
+}
+
+.dark .btn-ghost {
+  color: var(--gray-300);
+}
+
+.dark .btn-ghost:hover {
+  background-color: var(--gray-800);
+}
+
+.dark .btn-ghost:active {
+  background-color: var(--gray-700);
+} 
