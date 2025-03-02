@@ -141,9 +141,14 @@ export default async function handler(req, res) {
     try {
       // Intentar actualizar la conversación con el resumen
       try {
+        // Validar el conversationId antes de usarlo
+        if (!conversationId || typeof conversationId !== 'string') {
+          return res.status(400).json({ error: 'ID de conversación inválido' });
+        }
+
         const result = await mongoClient.updateOne(
           COLLECTION_NAME,
-          { _id: mongoClient.ObjectId(conversationId), userId: session.user.sub },
+          { _id: mongoClient.createObjectId(conversationId), userId: session.user.sub },
           { $set: { summary, updatedAt: new Date() } }
         );
 

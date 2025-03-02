@@ -87,6 +87,16 @@ class MongoDBClient {
     this.ObjectId = ObjectId;
   }
 
+  // Helper method for creating an ObjectId safely
+  createObjectId(id) {
+    try {
+      return new this.ObjectId(id);
+    } catch (error) {
+      console.error('Error creating ObjectId:', error);
+      throw new Error(`Invalid ObjectId format: ${error.message}`);
+    }
+  }
+
   // Método para obtener la conexión
   async getConnection() {
     try {

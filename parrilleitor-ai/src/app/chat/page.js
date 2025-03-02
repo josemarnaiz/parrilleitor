@@ -508,7 +508,7 @@ export default function Chat() {
       <aside className={`${isSidebarOpen ? 'flex' : 'hidden'} w-72 border-r border-gray-300 flex-col h-full overflow-hidden bg-gray-100`}>
         <div className="py-3 px-3 border-b border-gray-300 flex items-center justify-between">
           <div className="flex items-center">
-            <span className="font-medium text-gray-700">ChatGPT</span>
+            <span className="font-medium text-gray-700">ParrilleitorAI</span>
           </div>
           <button 
             onClick={() => setIsSidebarOpen(false)}
@@ -557,7 +557,7 @@ export default function Chat() {
             </button>
           )}
           <div className="text-xl font-medium text-gray-800">
-            {isSidebarOpen ? '' : 'ChatGPT'}
+            {!isSidebarOpen && 'ParrilleitorAI'}
           </div>
           <div className="w-6"></div> {/* Spacer for alignment */}
         </header>
