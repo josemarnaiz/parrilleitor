@@ -1,8 +1,12 @@
 import { getSession } from '@auth0/nextjs-auth0/edge'
 import { isInAllowedList } from '@/config/allowedUsers'
+import { hasPremiumAccess } from '@/config/auth0Config'
 
+// Actualizo configuración de Auth0 - puede variar el formato según la configuración
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles'
+const ALTERNATIVE_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/user_authorization'
 const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS'
+const PREMIUM_ROLE_NAME = 'Premium'
 
 // Obtener la URL base actual
 const AUTH0_BASE_URL = process.env.AUTH0_BASE_URL || 'https://parrilleitorai.vercel.app'
@@ -38,6 +42,19 @@ export async function GET(req) {
       timestamp: new Date().toISOString(),
       headers: Object.fromEntries(req.headers.entries())
     })
+
+    // Log detallado del objeto de usuario completo para diagnosticar problemas de roles
+    if (session?.user) {
+      console.log('Roles endpoint - Auth0 user object:', JSON.stringify(session.user, null, 2));
+      console.log('Roles endpoint - Auth0 user keys:', Object.keys(session.user));
+      
+      // Examinar todas las propiedades en busca de posibles roles
+      for (const key in session.user) {
+        if (Array.isArray(session.user[key])) {
+          console.log(`Roles endpoint - Found array property "${key}":`, session.user[key]);
+        }
+      }
+    }
 
     // Si no hay sesión pero hay token de autorización, intentar usar eso
     const authHeader = req.headers.get('authorization')
@@ -94,55 +111,107 @@ export async function GET(req) {
     // Check both Auth0 roles and allowed users list
     const isAllowedListUser = isInAllowedList(email)
     
-    // Múltiples intentos para obtener roles
+    // VERIFICACIÓN DE ROL PREMIUM: Múltiples estrategias
     let roles = [];
     let hasPremiumRole = false;
     
-    // Método 1: Namespace estándar
-    if (session.user[AUTH0_NAMESPACE]) {
-      roles = session.user[AUTH0_NAMESPACE];
-      console.log('Roles found using standard namespace:', roles);
-    } 
-    // Método 2: Propiedad roles directa
-    else if (session.user.roles) {
-      roles = session.user.roles;
-      console.log('Roles found using direct roles property:', roles);
-    } 
-    // Método 3: Buscar en las propiedades del usuario
+    // Estrategia 1: Usar la función auxiliar de la configuración
+    if (hasPremiumAccess(session.user)) {
+      hasPremiumRole = true;
+      console.log('DEBUG - Premium access detected by hasPremiumAccess helper');
+    }
+    // Si la función auxiliar no detectó nada, seguir con otras estrategias
     else {
-      console.log('Searching for roles in user properties...');
-      // Buscar cualquier propiedad que pueda contener roles
-      for (const key in session.user) {
-        if (Array.isArray(session.user[key])) {
-          console.log(`Found array property "${key}":`, session.user[key]);
-          // Si contiene el ID del rol premium, usarla
-          if (session.user[key].includes(PREMIUM_ROLE_ID)) {
-            roles = session.user[key];
-            console.log(`Using "${key}" as roles property:`, roles);
+      // Estrategia 2: Namespace estándar para roles
+      if (session.user[AUTH0_NAMESPACE]) {
+        roles = session.user[AUTH0_NAMESPACE];
+        console.log('DEBUG - Roles found using standard namespace:', roles);
+      } 
+      // Estrategia 3: Propiedad roles directa
+      else if (session.user.roles) {
+        roles = session.user.roles;
+        console.log('DEBUG - Roles found using direct roles property:', roles);
+      } 
+      // Estrategia 4: Buscar en sub-claims del objeto de usuario
+      else if (session.user['https://dev-zwbfqql3rcbh67rv.us.auth0.com']) {
+        const authClaims = session.user['https://dev-zwbfqql3rcbh67rv.us.auth0.com'];
+        console.log('DEBUG - Found Auth0 claims object:', authClaims);
+        
+        if (authClaims.roles) {
+          roles = authClaims.roles;
+          console.log('DEBUG - Roles found in Auth0 claims:', roles);
+        }
+      }
+      // Estrategia 5: Buscar en todas las propiedades del usuario
+      else {
+        console.log('DEBUG - Searching for roles in all user properties...');
+        // Buscar cualquier propiedad que pueda contener roles
+        for (const key in session.user) {
+          if (Array.isArray(session.user[key])) {
+            console.log(`DEBUG - Found array property "${key}":`, session.user[key]);
+            // Si contiene el ID del rol premium, usarla
+            if (session.user[key].includes(PREMIUM_ROLE_ID)) {
+              roles = session.user[key];
+              console.log(`DEBUG - Using "${key}" as roles property:`, roles);
+              break;
+            }
+          }
+        }
+      }
+      
+      // Verificación del rol premium en los roles encontrados
+      
+      // Método 1: Verificar por ID exacto del rol
+      if (roles.includes(PREMIUM_ROLE_ID)) {
+        hasPremiumRole = true;
+        console.log(`DEBUG - Premium role detected by ID match: ${PREMIUM_ROLE_ID}`);
+      } 
+      // Método 2: Verificar por nombre del rol
+      else if (Array.isArray(roles)) {
+        hasPremiumRole = roles.some(role => 
+          typeof role === 'string' && 
+          (role.toLowerCase().includes('premium') || role.startsWith('rol_'))
+        );
+        if (hasPremiumRole) {
+          console.log('DEBUG - Premium role detected by name pattern in:', roles);
+        }
+      }
+      
+      // Método 3: Verificar por otras propiedades en el token
+      if (!hasPremiumRole) {
+        // Buscar cualquier indicador de premium en el token
+        for (const key in session.user) {
+          const value = session.user[key];
+          
+          // Verificar propiedades que podrían indicar estado premium
+          if (typeof value === 'string' && value.toLowerCase().includes('premium')) {
+            console.log(`DEBUG - Premium indicator found in property "${key}":`, value);
+            hasPremiumRole = true;
             break;
+          }
+          
+          // Verificar objetos anidados
+          if (value && typeof value === 'object' && !Array.isArray(value)) {
+            for (const subKey in value) {
+              const subValue = value[subKey];
+              if (
+                (typeof subValue === 'string' && subValue.toLowerCase().includes('premium')) ||
+                (subValue === true && subKey.toLowerCase().includes('premium'))
+              ) {
+                console.log(`DEBUG - Premium indicator found in nested property "${key}.${subKey}":`, subValue);
+                hasPremiumRole = true;
+                break;
+              }
+            }
           }
         }
       }
     }
     
-    // Verificar si el rol premium está presente
-    hasPremiumRole = roles.includes(PREMIUM_ROLE_ID);
-    
-    // Para usuarios de prueba, verificar también por nombre del rol
-    if (!hasPremiumRole && Array.isArray(roles)) {
-      hasPremiumRole = roles.some(role => 
-        typeof role === 'string' && 
-        (role.toLowerCase().includes('premium') || role === PREMIUM_ROLE_ID)
-      );
-      if (hasPremiumRole) {
-        console.log('Premium role detected by name in:', roles);
-      }
-    }
-    
-    // Decisión final: un usuario es premium si está en la lista de permitidos o tiene el rol premium
-    const isPremium = isAllowedListUser || hasPremiumRole
+    // DECISIÓN FINAL: Un usuario es premium si está en la lista de permitidos o tiene rol premium
+    const isPremium = isAllowedListUser || hasPremiumRole;
 
-    // Log authorization details
+    // Log completo para debugging
     console.log('Roles endpoint - Authorization check:', {
       email,
       roles,
