@@ -2,7 +2,9 @@
 
 import { useUser } from '@auth0/nextjs-auth0/client'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
+import LoginButton from '../components/LoginButton'
 
 export default function Home() {
   const { user, isLoading } = useUser()
@@ -35,12 +37,9 @@ export default function Home() {
             </p>
             
             {!user && (
-              <Link
-                href="/api/auth/login" 
-                className="btn btn-primary bg-white/90 text-primary hover:bg-white shadow-lg animate-fade-in delay-200"
-              >
+              <LoginButton className="btn btn-primary bg-white/90 text-primary hover:bg-white shadow-lg animate-fade-in delay-200">
                 Iniciar Sesión
-              </Link>
+              </LoginButton>
             )}
           </div>
         </div>
@@ -212,12 +211,11 @@ export default function Home() {
             <div className="bg-gradient-to-r from-primary to-primary-dark text-white rounded-2xl p-6 text-center shadow-lg">
               <h2 className="text-xl font-bold mb-3">¿Listo para comenzar?</h2>
               <p className="text-white/90 mb-5 max-w-md mx-auto">Únete ahora y recibe asesoramiento personalizado que te ayudará a alcanzar tus objetivos</p>
-              <Link 
-                href="/api/auth/login"
+              <LoginButton 
                 className="bg-white text-primary font-medium rounded-lg px-6 py-3 inline-block shadow-md hover:shadow-lg hover:bg-gray-100"
               >
                 Comenzar Ahora
-              </Link>
+              </LoginButton>
             </div>
           )}
         </div>

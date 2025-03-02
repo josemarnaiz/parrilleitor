@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ConversationList from '@/components/ConversationList'
 import ChatMessage from '@/components/ChatMessage'
+import LoginButton from '../../components/LoginButton'
 
 export default function Chat() {
   const { user, isLoading: isUserLoading } = useUser()
@@ -498,12 +499,11 @@ export default function Chat() {
       <div className="flex min-h-screen flex-col items-center justify-center bg-white p-4 text-center">
         <h1 className="text-2xl font-semibold mb-4 text-gray-800">Necesitas iniciar sesión</h1>
         <p className="mb-6 text-gray-600">Para utilizar el chat, debes iniciar sesión primero</p>
-        <Link 
-          href="/api/auth/login" 
+        <LoginButton 
           className="btn btn-primary"
         >
           Iniciar Sesión
-        </Link>
+        </LoginButton>
         <Link 
           href="/" 
           className="mt-4 text-primary hover:underline"

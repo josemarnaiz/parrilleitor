@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { usePathname } from 'next/navigation'
+import LoginButton from './LoginButton'
 
 export default function Navbar() {
   const { user } = useUser()
@@ -54,12 +55,7 @@ export default function Navbar() {
             
             <div className="flex items-center space-x-3">
               {!user ? (
-                <Link 
-                  href="/api/auth/login" 
-                  className="text-sm bg-white text-primary rounded-lg px-3 py-1.5 shadow-sm hover:shadow-md transition-all"
-                >
-                  Iniciar Sesión
-                </Link>
+                <LoginButton className="text-sm" />
               ) : (
                 <div className="flex items-center space-x-3">
                   <Link href="/chat" className={`hidden sm:block text-sm text-white/90 hover:text-white px-3 py-1.5 rounded-lg ${pathname === '/chat' ? 'bg-white/10' : 'hover:bg-white/5'}`}>

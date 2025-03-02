@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { useRouter } from 'next/navigation'
+import LoginButton from '../../../components/LoginButton'
 
 export default function AdminUsers() {
   const { user, isLoading } = useUser()
@@ -57,12 +58,11 @@ export default function AdminUsers() {
         <div className="container mx-auto text-center">
           <h1 className="text-2xl font-bold mb-4">Información de Usuario</h1>
           <p className="mb-4">Para ver tu información de usuario, debes iniciar sesión primero.</p>
-          <a 
-            href="/api/auth/login" 
+          <LoginButton 
             className="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition-colors"
           >
             Iniciar Sesión
-          </a>
+          </LoginButton>
         </div>
       </div>
     )
