@@ -1,10 +1,8 @@
-"use client";
-
 import { Inter } from 'next/font/google'
 import './globals.css'
 import AuthProvider from '@/components/AuthProvider'
 import Navbar from '@/components/Navbar'
-import { I18nProvider } from '@/i18n'
+import ClientI18nProvider from '@/components/ClientI18nProvider'
 import '@/styles/components/language-selector.css'
 
 // Font configuration
@@ -35,7 +33,7 @@ export default function RootLayout({ children }) {
     <html lang="es" className={inter.className}>
       <body className="bg-gray-50 text-gray-800">
         <AuthProvider>
-          <I18nProvider>
+          <ClientI18nProvider>
             <div className="flex min-h-screen flex-col">
               <Navbar />
               <main className="flex-grow w-full pt-header pb-safe">
@@ -57,7 +55,7 @@ export default function RootLayout({ children }) {
                 </div>
               </footer>
             </div>
-          </I18nProvider>
+          </ClientI18nProvider>
         </AuthProvider>
       </body>
     </html>
