@@ -43,6 +43,16 @@ export default {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      animation: {
+        'progress': 'progress 1.5s ease-in-out infinite',
+      },
+      keyframes: {
+        progress: {
+          '0%': { width: '0%' },
+          '50%': { width: '100%' },
+          '100%': { width: '0%' },
+        },
+      },
     },
   },
   plugins: [],
