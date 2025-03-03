@@ -1,11 +1,11 @@
 import { withMiddlewareAuthRequired, getSession } from '@auth0/nextjs-auth0/edge'
 import { isInAllowedList } from './src/config/allowedUsers'
-import { hasPremiumAccess } from './src/config/auth0Config'
+import { hasPremiumAccess, auth0Config } from './src/config/auth0Config'
 import { NextResponse } from 'next/server'
 
-// Actualizar el namespace para roles
-const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles'
-const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS'
+// Obtener el namespace base de Auth0 para verificaciones
+const AUTH0_BASE_NAMESPACE = auth0Config.baseNamespace
+const AUTH0_ROLES_NAMESPACE = `${AUTH0_BASE_NAMESPACE}/roles`
 
 // Rutas que no requieren autenticación
 const publicPaths = [
@@ -111,16 +111,26 @@ export default async function middleware(req) {
     let roles = [];
     let hasPremiumRole = false;
     
+    // Estrategia 0: Verificar el nuevo atributo isPremium (prioridad máxima)
+    if (session.user[`${AUTH0_BASE_NAMESPACE}/isPremium`] === true) {
+      hasPremiumRole = true;
+      console.log('Middleware - Premium access detected via direct isPremium claim');
+    }
+    // También verificar en objeto namespace
+    else if (session.user[AUTH0_BASE_NAMESPACE] && session.user[AUTH0_BASE_NAMESPACE].isPremium === true) {
+      hasPremiumRole = true;
+      console.log('Middleware - Premium access detected via nested isPremium claim');
+    }
     // Estrategia 1: Usar la función auxiliar de la configuración
-    if (hasPremiumAccess(session.user)) {
+    else if (hasPremiumAccess(session.user)) {
       hasPremiumRole = true;
       console.log('Middleware - Premium access detected by hasPremiumAccess helper');
     } 
     // Si la función auxiliar no detectó nada, seguir con otras estrategias
     else {
       // Estrategia 2: Namespace estándar para roles
-      if (session.user[AUTH0_NAMESPACE]) {
-        roles = session.user[AUTH0_NAMESPACE];
+      if (session.user[AUTH0_ROLES_NAMESPACE]) {
+        roles = session.user[AUTH0_ROLES_NAMESPACE];
         console.log('Middleware - Roles found using standard namespace:', roles);
       } 
       // Estrategia 3: Propiedad roles directa

@@ -38,8 +38,18 @@ export const auth0Config = {
     'user_metadata.roles'                               // User metadata
   ],
   
-  // ID del rol premium
-  premiumRoleId: 'rol_vWDGREdcQo4ulVhS'
+  // Base namespace para Auth0 (sin /roles)
+  baseNamespace: 'https://dev-zwbfqql3rcbh67rv.us.auth0.com',
+  
+  // IDs conocidos de roles premium
+  premiumRolePatterns: [
+    // Patrones exactos (IDs específicos)
+    'rol_vWDGREdcQo4ulVhS',
+    
+    // Patrones parciales (para hacer la detección más robusta)
+    'premium',
+    'rol_'
+  ]
 }
 
 // Función para obtener la configuración de Auth0
@@ -53,6 +63,22 @@ export function hasPremiumAccess(user) {
   
   // Debug log
   console.log('Verificando acceso premium para:', user.email || 'usuario desconocido')
+  
+  // Obtener namespace base de la configuración
+  const authNamespace = auth0Config.baseNamespace;
+  
+  // 0. Verificar primero el nuevo claim explícito (prioridad máxima)
+  // Verificar si existe el nuevo claim isPremium directo
+  if (user[`${authNamespace}/isPremium`] === true) {
+    console.log(`Estado premium encontrado en claim directo isPremium`)
+    return true;
+  }
+  
+  // Verificar si existe el claim en el objeto namespace
+  if (user[authNamespace] && user[authNamespace].isPremium === true) {
+    console.log(`Estado premium encontrado en claim anidado isPremium`)
+    return true;
+  }
   
   // 1. Verificar en todas las rutas de roles configuradas
   for (const rolePath of auth0Config.rolePaths) {
@@ -73,17 +99,16 @@ export function hasPremiumAccess(user) {
       
       // Si encontramos la ruta y contiene roles
       if (pathExists && Array.isArray(current)) {
-        // Verificar por ID exacto
-        if (current.includes(auth0Config.premiumRoleId)) {
-          console.log(`Rol premium encontrado en ruta anidada: ${rolePath}`)
-          return true;
-        }
-        // Verificar por coincidencia parcial
-        if (current.some(r => typeof r === 'string' && (
-          r.toLowerCase().includes('premium') || 
-          r.startsWith('rol_')
-        ))) {
-          console.log(`Rol premium encontrado por nombre en ruta anidada: ${rolePath}`)
+        // Verificar cada rol contra los patrones conocidos
+        const matchedRole = current.find(r => 
+          typeof r === 'string' && 
+          auth0Config.premiumRolePatterns.some(pattern => 
+            r === pattern || r.toLowerCase().includes(pattern.toLowerCase())
+          )
+        );
+        
+        if (matchedRole) {
+          console.log(`Rol premium encontrado en ruta anidada: ${rolePath}, rol: ${matchedRole}`)
           return true;
         }
       }
@@ -92,17 +117,16 @@ export function hasPremiumAccess(user) {
     else {
       const roles = user[rolePath];
       if (Array.isArray(roles)) {
-        // Verificar por ID exacto
-        if (roles.includes(auth0Config.premiumRoleId)) {
-          console.log(`Rol premium encontrado en ruta: ${rolePath}`)
-          return true;
-        }
-        // Verificar por coincidencia parcial
-        if (roles.some(r => typeof r === 'string' && (
-          r.toLowerCase().includes('premium') || 
-          r.startsWith('rol_')
-        ))) {
-          console.log(`Rol premium encontrado por nombre en ruta: ${rolePath}`)
+        // Verificar cada rol contra los patrones conocidos
+        const matchedRole = roles.find(r => 
+          typeof r === 'string' && 
+          auth0Config.premiumRolePatterns.some(pattern => 
+            r === pattern || r.toLowerCase().includes(pattern.toLowerCase())
+          )
+        );
+        
+        if (matchedRole) {
+          console.log(`Rol premium encontrado en ruta: ${rolePath}, rol: ${matchedRole}`)
           return true;
         }
       }
@@ -112,17 +136,16 @@ export function hasPremiumAccess(user) {
         // Buscar cualquier propiedad que pueda contener roles
         for (const key in roles) {
           if (Array.isArray(roles[key])) {
-            // Verificar por ID exacto
-            if (roles[key].includes(auth0Config.premiumRoleId)) {
-              console.log(`Rol premium encontrado en ruta anidada: ${rolePath}.${key}`)
-              return true;
-            }
-            // Verificar por coincidencia parcial
-            if (roles[key].some(r => typeof r === 'string' && (
-              r.toLowerCase().includes('premium') || 
-              r.startsWith('rol_')
-            ))) {
-              console.log(`Rol premium encontrado por nombre en ruta anidada: ${rolePath}.${key}`)
+            // Verificar por coincidencia con patrones
+            const matchedRole = roles[key].find(r => 
+              typeof r === 'string' && 
+              auth0Config.premiumRolePatterns.some(pattern => 
+                r === pattern || r.toLowerCase().includes(pattern.toLowerCase())
+              )
+            );
+            
+            if (matchedRole) {
+              console.log(`Rol premium encontrado en ruta anidada: ${rolePath}.${key}, rol: ${matchedRole}`)
               return true;
             }
           }
@@ -132,7 +155,6 @@ export function hasPremiumAccess(user) {
   }
   
   // 2. Buscar en objetos anidados (espacios de nombres)
-  const authNamespace = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com';
   if (user[authNamespace]) {
     const namespaceObj = user[authNamespace];
     // Verificar si es un objeto
@@ -140,17 +162,16 @@ export function hasPremiumAccess(user) {
       // Buscar en propiedades que podrían contener roles
       for (const key in namespaceObj) {
         if (Array.isArray(namespaceObj[key])) {
-          // Verificar por ID exacto
-          if (namespaceObj[key].includes(auth0Config.premiumRoleId)) {
-            console.log(`Rol premium encontrado en namespace: ${authNamespace}.${key}`)
-            return true;
-          }
-          // Verificar por coincidencia parcial
-          if (namespaceObj[key].some(r => typeof r === 'string' && (
-            r.toLowerCase().includes('premium') || 
-            r.startsWith('rol_')
-          ))) {
-            console.log(`Rol premium encontrado por nombre en namespace: ${authNamespace}.${key}`)
+          // Verificar por coincidencia con patrones
+          const matchedRole = namespaceObj[key].find(r => 
+            typeof r === 'string' && 
+            auth0Config.premiumRolePatterns.some(pattern => 
+              r === pattern || r.toLowerCase().includes(pattern.toLowerCase())
+            )
+          );
+          
+          if (matchedRole) {
+            console.log(`Rol premium encontrado en namespace: ${authNamespace}.${key}, rol: ${matchedRole}`)
             return true;
           }
         }
@@ -158,17 +179,16 @@ export function hasPremiumAccess(user) {
     }
     // Si el propio objeto del namespace es un array (poco común pero posible)
     else if (Array.isArray(namespaceObj)) {
-      // Verificar por ID exacto
-      if (namespaceObj.includes(auth0Config.premiumRoleId)) {
-        console.log(`Rol premium encontrado en namespace array`)
-        return true;
-      }
-      // Verificar por coincidencia parcial
-      if (namespaceObj.some(r => typeof r === 'string' && (
-        r.toLowerCase().includes('premium') || 
-        r.startsWith('rol_')
-      ))) {
-        console.log(`Rol premium encontrado por nombre en namespace array`)
+      // Verificar por coincidencia con patrones
+      const matchedRole = namespaceObj.find(r => 
+        typeof r === 'string' && 
+        auth0Config.premiumRolePatterns.some(pattern => 
+          r === pattern || r.toLowerCase().includes(pattern.toLowerCase())
+        )
+      );
+      
+      if (matchedRole) {
+        console.log(`Rol premium encontrado en namespace array, rol: ${matchedRole}`)
         return true;
       }
     }
@@ -178,13 +198,15 @@ export function hasPremiumAccess(user) {
   for (const key in user) {
     // Verificar arrays directos
     if (Array.isArray(user[key])) {
-      const hasNameMatch = user[key].some(item => 
+      // Verificar por coincidencia con patrones
+      const hasPatternMatch = user[key].some(item => 
         typeof item === 'string' && 
-        (item === auth0Config.premiumRoleId || 
-         item.toLowerCase().includes('premium') || 
-         item.startsWith('rol_'))
+        auth0Config.premiumRolePatterns.some(pattern => 
+          item === pattern || item.toLowerCase().includes(pattern.toLowerCase())
+        )
       );
-      if (hasNameMatch) {
+      
+      if (hasPatternMatch) {
         console.log(`Rol premium encontrado en propiedad: ${key}`)
         return true;
       }
@@ -194,13 +216,15 @@ export function hasPremiumAccess(user) {
     if (user[key] && typeof user[key] === 'object' && !Array.isArray(user[key])) {
       for (const subKey in user[key]) {
         if (Array.isArray(user[key][subKey])) {
-          const hasNameMatch = user[key][subKey].some(item => 
+          // Verificar por coincidencia con patrones
+          const hasPatternMatch = user[key][subKey].some(item => 
             typeof item === 'string' && 
-            (item === auth0Config.premiumRoleId || 
-             item.toLowerCase().includes('premium') || 
-             item.startsWith('rol_'))
+            auth0Config.premiumRolePatterns.some(pattern => 
+              item === pattern || item.toLowerCase().includes(pattern.toLowerCase())
+            )
           );
-          if (hasNameMatch) {
+          
+          if (hasPatternMatch) {
             console.log(`Rol premium encontrado en propiedad anidada: ${key}.${subKey}`)
             return true;
           }

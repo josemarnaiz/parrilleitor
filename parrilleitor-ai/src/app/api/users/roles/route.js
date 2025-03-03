@@ -1,10 +1,10 @@
 import { getSession } from '@auth0/nextjs-auth0/edge'
 import { isInAllowedList } from '@/config/allowedUsers'
-import { hasPremiumAccess } from '@/config/auth0Config'
+import { hasPremiumAccess, auth0Config } from '@/config/auth0Config'
 
-// Actualizo configuración de Auth0 - puede variar el formato según la configuración
-const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles'
-const ALTERNATIVE_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/user_authorization'
+// Obtener namespaces de Auth0
+const AUTH0_BASE_NAMESPACE = auth0Config.baseNamespace
+const AUTH0_ROLES_NAMESPACE = `${AUTH0_BASE_NAMESPACE}/roles`
 
 // LOG TEMPORAL PARA DEBUGGEAR ROLES DE AUTH0
 const DEBUG_AUTH0 = true
@@ -146,16 +146,26 @@ export async function GET(req) {
     let roles = [];
     let hasPremiumRole = false;
     
+    // Estrategia 0: Verificar el nuevo atributo isPremium (prioridad máxima)
+    if (session.user[`${AUTH0_BASE_NAMESPACE}/isPremium`] === true) {
+      hasPremiumRole = true;
+      console.log('API/roles - Premium access detected via direct isPremium claim');
+    }
+    // También verificar en objeto namespace
+    else if (session.user[AUTH0_BASE_NAMESPACE] && session.user[AUTH0_BASE_NAMESPACE].isPremium === true) {
+      hasPremiumRole = true;
+      console.log('API/roles - Premium access detected via nested isPremium claim');
+    }
     // Estrategia 1: Usar la función auxiliar de la configuración
-    if (hasPremiumAccess(session.user)) {
+    else if (hasPremiumAccess(session.user)) {
       hasPremiumRole = true;
       console.log('DEBUG - Premium access detected by hasPremiumAccess helper');
     }
     // Si la función auxiliar no detectó nada, seguir con otras estrategias
     else {
       // Estrategia 2: Namespace estándar para roles
-      if (session.user[AUTH0_NAMESPACE]) {
-        roles = session.user[AUTH0_NAMESPACE];
+      if (session.user[AUTH0_ROLES_NAMESPACE]) {
+        roles = session.user[AUTH0_ROLES_NAMESPACE];
         console.log('DEBUG - Roles found using standard namespace:', roles);
       } 
       // Estrategia 3: Propiedad roles directa
