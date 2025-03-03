@@ -3,6 +3,7 @@ import { AIProviderFactory } from '@/services/ai/AIProviderFactory';
 import { isInAllowedList } from '@/config/allowedUsers';
 import connectDB from '@/lib/mongodb';
 import Conversation from '@/models/Conversation';
+import { logAuth, logAuthError, logError, logInfo } from '@/config/logger';
 
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles';
 const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS';
@@ -36,92 +37,119 @@ MEDICAL BOUNDARIES:
 - For medical concerns, kindly suggest consulting a healthcare professional`;
 
 export default async function handler(req, res) {
-  // Generar un ID único para esta solicitud para seguimiento en logs
-  const requestId = Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
-  console.log(`[${requestId}] Iniciando solicitud de chat: ${req.method}`);
+  const requestId = crypto.randomUUID(); // ID único para seguir esta solicitud en los logs
+  
+  logInfo('Chat API request received', { 
+    method: req.method,
+    path: req.url,
+    requestId
+  });
+  
+  // Configurar encabezados CORS
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
 
-  // Set CORS headers
-  res.setHeader('Cache-Control', 'no-store, max-age=0');
-  res.setHeader('Access-Control-Allow-Origin', 'https://parrilleitorai.vercel.app');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-
-  // Handle OPTIONS request for CORS
+  // Manejar solicitudes CORS preflight
   if (req.method === 'OPTIONS') {
+    logInfo('CORS preflight request', { requestId });
     res.status(200).end();
     return;
   }
 
-  // Verificar autenticación para todos los métodos
   try {
-    console.log(`[${requestId}] Obteniendo sesión de usuario`);
+    // Obtener la sesión del usuario
     const session = await getSession(req, res);
-
+    
+    logAuth('Session obtained in chat API', session, { requestId });
+    
+    // Verificar que el usuario esté autenticado
     if (!session?.user) {
-      console.log(`[${requestId}] Usuario no autenticado`);
-      return res.status(401).json({ error: 'No autenticado' });
+      logAuthError('Authentication failed - no session', null, null, { requestId });
+      res.status(401).json({ error: 'No autorizado. Por favor, inicie sesión.' });
+      return;
     }
 
+    // Verificar si el usuario tiene acceso (usuario permitido o rol premium)
     const userEmail = session.user.email;
     const roles = session.user[AUTH0_NAMESPACE] || [];
     
     const hasPremiumRole = roles.includes(PREMIUM_ROLE_ID);
     const isAllowedUser = isInAllowedList(userEmail);
 
-    console.log(`[${requestId}] Chat API - Session user:`, {
-      email: userEmail,
-      roles,
-      hasPremiumRole,
+    logAuth('Access verification in chat API', session, {
       isAllowedUser,
-      timestamp: new Date().toISOString()
+      hasPremiumRole,
+      requestId
     });
-
-    if (!hasPremiumRole && !isAllowedUser) {
-      console.log(`[${requestId}] Usuario no premium intentando acceder:`, userEmail);
-      return res.status(403).json({ error: 'Se requiere una cuenta premium' });
+    
+    // Decisión final de acceso
+    const hasAccess = isAllowedUser || hasPremiumRole;
+    
+    if (!hasAccess) {
+      logAuthError('Premium access denied in chat API', null, session, { 
+        requestId,
+        userEmail,
+        isAllowedUser,
+        hasPremiumRole
+      });
+      res.status(403).json({ error: 'Se requiere una cuenta premium para usar la API de chat.' });
+      return;
     }
 
-    // Manejar método DELETE para eliminar una conversación
+    // Manejar solicitud según el método HTTP
     if (req.method === 'DELETE') {
-      const { conversationId } = req.query;
-      
-      if (!conversationId) {
-        return res.status(400).json({ error: 'Se requiere un ID de conversación' });
-      }
-      
       try {
-        await connectDB();
+        // Validar que se proporciona un ID de conversación
+        const { conversationId } = req.query;
         
-        // Buscar la conversación y verificar que pertenezca al usuario
-        const conversation = await Conversation.findOne({
+        if (!conversationId) {
+          logError('Missing conversationId in DELETE request', null, { requestId });
+          res.status(400).json({ error: 'Se requiere un ID de conversación para eliminar.' });
+          return;
+        }
+
+        // Conectar a la base de datos
+        const { db } = await connectDB();
+        
+        // Verificar que la conversación pertenece al usuario actual
+        const conversation = await Conversation.findOne({ 
           _id: conversationId,
-          userId: session.user.sub
+          userId: session.user.sub 
         });
         
         if (!conversation) {
-          return res.status(404).json({ error: 'Conversación no encontrada' });
+          logError('Conversation not found or does not belong to user', null, { 
+            requestId, 
+            conversationId,
+            userId: session.user.sub
+          });
+          res.status(404).json({ error: 'Conversación no encontrada o no pertenece a este usuario.' });
+          return;
         }
         
         // Eliminar la conversación
         await Conversation.deleteOne({ _id: conversationId });
         
-        console.log(`[${requestId}] Conversación eliminada: ${conversationId}`);
-        return res.status(200).json({ success: true, message: 'Conversación eliminada correctamente' });
-      } catch (error) {
-        console.error(`[${requestId}] Error al eliminar conversación:`, {
-          error: error.message,
-          stack: error.stack,
-          timestamp: new Date().toISOString()
+        logInfo('Conversation deleted successfully', { 
+          requestId, 
+          conversationId,
+          userId: session.user.sub
         });
         
-        return res.status(500).json({ 
-          error: 'Error al eliminar la conversación',
-          details: error.message
+        res.status(200).json({ message: 'Conversación eliminada correctamente' });
+        return;
+      } catch (error) {
+        logError('Error deleting conversation', error, { 
+          requestId,
+          method: 'DELETE'
         });
+        res.status(500).json({ error: 'Error al eliminar la conversación.' });
+        return;
       }
     }
-
+    
     // Si no es DELETE, verificar que sea POST
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Método no permitido' });
@@ -298,20 +326,10 @@ export default async function handler(req, res) {
     console.log(`[${requestId}] Solicitud completada exitosamente`);
     return res.status(200).json(response);
   } catch (error) {
-    console.error(`[${requestId}] Error general:`, {
-      error: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString()
+    logError('Unhandled error in chat API', error, { 
+      requestId,
+      method: req.method 
     });
-    
-    if (req.method === 'POST' && functionTimeout) {
-      clearTimeout(functionTimeout);
-    }
-    
-    return res.status(500).json({ 
-      error: 'Error interno del servidor',
-      message: 'Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo más tarde.',
-      details: error.message
-    });
+    res.status(500).json({ error: 'Error interno del servidor.' });
   }
 } 

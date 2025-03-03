@@ -1,5 +1,4 @@
 import { getSession } from '@auth0/nextjs-auth0/edge'
-import { debugAuth0Session, logAuth0Data } from '@/config/debugger'
 import { hasPremiumAccess, auth0Config } from '@/config/auth0Config'
 import { isInAllowedList } from '@/config/allowedUsers'
 
@@ -13,8 +12,20 @@ const commonHeaders = {
   'Access-Control-Allow-Credentials': 'true',
 }
 
+// Lista de emails con acceso a la información completa de depuración
+const DEBUG_ACCESS_EMAILS = [
+  'tu.email@ejemplo.com',  // Reemplaza con tu email
+  'admin@parrilleitor.com'
+];
+
+// Verificar si un usuario tiene acceso a diagnóstico completo
+function hasDebugAccess(email) {
+  if (!email) return false;
+  return DEBUG_ACCESS_EMAILS.includes(email.toLowerCase());
+}
+
 /**
- * Endpoint de depuración para Auth0
+ * Endpoint de depuración para Auth0 - Versión de producción
  * Muestra información detallada sobre la sesión y el token
  */
 export async function GET(req) {
@@ -23,18 +34,14 @@ export async function GET(req) {
     let session = null;
     try {
       session = await getSession(req);
-      
-      // Punto de depuración para analizar la sesión
-      debugAuth0Session(session, 'debug-api-auth0', {
-        url: req.url,
-        headers: Object.fromEntries(req.headers)
-      });
     } catch (error) {
       console.error('Error al obtener la sesión:', error);
       return Response.json({
         error: 'Error al obtener la sesión',
         message: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'unknown',
+        vercel: !!process.env.VERCEL
       }, {
         status: 500,
         headers: commonHeaders
@@ -47,7 +54,9 @@ export async function GET(req) {
         authenticated: false,
         error: 'No hay sesión activa',
         hint: 'Inicia sesión primero y luego accede a este endpoint',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'unknown',
+        vercel: !!process.env.VERCEL
       }, {
         status: 401,
         headers: commonHeaders
@@ -63,8 +72,19 @@ export async function GET(req) {
     // Verificar rol premium con nuestra función existente
     const hasPremiumRole = hasPremiumAccess(user);
     
+    // Verificar si tiene acceso a diagnóstico completo
+    const hasFullDebugAccess = hasDebugAccess(email);
+    
     // Datos recopilados para depuración
     const debugData = {
+      requestInfo: {
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'unknown',
+        isVercel: !!process.env.VERCEL,
+        region: process.env.VERCEL_REGION || 'unknown',
+        url: req.url,
+        method: req.method,
+      },
       authenticated: true,
       user: {
         email: user.email,
@@ -76,40 +96,70 @@ export async function GET(req) {
       accessCheck: {
         isAllowedListUser,
         hasPremiumRole,
-        hasAccess: isAllowedListUser || hasPremiumRole
-      },
-      authClaims: {
-        // Verificar isPremium en ubicaciones directas
-        isPremiumDirect: user[`${baseNamespace}/isPremium`],
-        premiumVerifiedAt: user[`${baseNamespace}/premiumVerifiedAt`],
-        // Buscar roles en ubicaciones conocidas
-        standardRoles: user[`${baseNamespace}/roles`],
-        rolesProperty: user.roles,
-      },
-      // Objeto de usuario filtrado (sin propiedades internas de Auth0)
-      filteredUserObject: Object.fromEntries(
+        hasAccess: isAllowedListUser || hasPremiumRole,
+        roles: {
+          // Verificar isPremium en ubicaciones directas
+          isPremiumDirect: user[`${baseNamespace}/isPremium`] || false,
+          premiumVerifiedAt: user[`${baseNamespace}/premiumVerifiedAt`] || null,
+          // Buscar roles en ubicaciones conocidas
+          standardRoles: user[`${baseNamespace}/roles`] || [],
+          rolesProperty: user.roles || [],
+          inAllowedList: isAllowedListUser,
+        }
+      }
+    };
+    
+    // Si tiene acceso a diagnóstico completo, incluir información adicional
+    if (hasFullDebugAccess) {
+      // Buscar todas las propiedades que podrían contener "premium" o "rol"
+      const premiumRelatedProps = {};
+      for (const key of Object.keys(user)) {
+        if (
+          (typeof user[key] === 'string' && (user[key].includes('premium') || user[key].includes('rol'))) ||
+          (Array.isArray(user[key]) && user[key].some(v => typeof v === 'string' && (v.includes('premium') || v.includes('rol'))))
+        ) {
+          premiumRelatedProps[key] = user[key];
+        }
+      }
+      
+      debugData.premiumRelatedProperties = premiumRelatedProps;
+      
+      // Añadir información técnica adicional
+      debugData.technicalInfo = {
+        userKeys: Object.keys(user),
+        auth0Namespaces: {
+          baseNamespace: baseNamespace,
+          rolesNamespace: `${baseNamespace}/roles`,
+          isPremiumPath: `${baseNamespace}/isPremium`
+        },
+        detectedNamespaces: Object.keys(user).filter(k => k.includes('https://')),
+        sessionInfo: {
+          hasExpiration: !!session.exp,
+          expiration: session.exp ? new Date(session.exp * 1000).toISOString() : null,
+          issuedAt: session.iat ? new Date(session.iat * 1000).toISOString() : null,
+        }
+      };
+      
+      // Filtrar el objeto usuario completo para diagnóstico avanzado
+      debugData.fullUserObject = Object.fromEntries(
         Object.entries(user).filter(([key]) => 
           !key.startsWith('_') && 
           key !== 'accessToken' && 
           key !== 'idToken' && 
           key !== 'refreshToken'
         )
-      ),
-      timestamp: new Date().toISOString()
-    };
-    
-    // Buscar todas las propiedades que podrían contener "premium" o "rol"
-    const premiumRelatedProps = {};
-    for (const key of Object.keys(user)) {
-      if (
-        (typeof user[key] === 'string' && (user[key].includes('premium') || user[key].includes('rol'))) ||
-        (Array.isArray(user[key]) && user[key].some(v => typeof v === 'string' && (v.includes('premium') || v.includes('rol'))))
-      ) {
-        premiumRelatedProps[key] = user[key];
-      }
+      );
+    } else {
+      debugData.notice = "Información limitada. Para acceso completo de diagnóstico, contacta al administrador.";
     }
     
-    debugData.premiumRelatedProperties = premiumRelatedProps;
+    // Añadir información de recomendación
+    debugData.recommendation = {
+      hasFullAccess: isAllowedListUser || hasPremiumRole,
+      suggestedAction: (!isAllowedListUser && !hasPremiumRole) 
+        ? "Contactar al soporte para verificar tu suscripción premium" 
+        : "Tu acceso está configurado correctamente"
+    };
     
     // Devolver la información para depuración
     return Response.json(debugData, {
@@ -122,7 +172,9 @@ export async function GET(req) {
       error: 'Error general',
       message: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'unknown',
+      vercel: !!process.env.VERCEL
     }, {
       status: 500,
       headers: commonHeaders
