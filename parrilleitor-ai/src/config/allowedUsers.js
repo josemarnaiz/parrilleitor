@@ -1,13 +1,6 @@
 // Lista adicional de usuarios con acceso premium
 export const ADDITIONAL_ALLOWED_USERS = [
-  'user1@example.com',
-  'user2@example.com',
-  'user3@example.com',
-  // Usuarios con acceso permanente para pruebas
-  'testparrilleitor2025@yopmail.com',
-  'josem.arnaizmartin@gmail.com',
-  'cesar.carlos.parrilla@gmail.com'
-  // Añade más emails aquí
+  // Lista vaciada - ahora el acceso premium se basa únicamente en los roles de Auth0
 ]
 
 // Función helper para verificar si un usuario está en la lista adicional

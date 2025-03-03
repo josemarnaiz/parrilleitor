@@ -5,6 +5,10 @@ import { hasPremiumAccess } from '@/config/auth0Config'
 // Actualizo configuración de Auth0 - puede variar el formato según la configuración
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles'
 const ALTERNATIVE_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/user_authorization'
+
+// LOG TEMPORAL PARA DEBUGGEAR ROLES DE AUTH0
+const DEBUG_AUTH0 = true
+
 const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS'
 const PREMIUM_ROLE_NAME = 'Premium'
 
@@ -107,6 +111,33 @@ export async function GET(req) {
 
     // Log completo del objeto de usuario para depuración
     console.log('Auth0 complete user object:', JSON.stringify(session.user, null, 2))
+    
+    // DEBUGGING TEMPORAL - Mostrar todas las propiedades del usuario para encontrar los roles
+    if (DEBUG_AUTH0) {
+      console.log('======= DEBUGGING AUTH0 USER OBJECT =======')
+      console.log('User email:', session.user.email)
+      console.log('User sub:', session.user.sub)
+      
+      // Listar todas las propiedades del objeto usuario
+      console.log('All user properties:')
+      Object.keys(session.user).forEach(key => {
+        console.log(`Property "${key}":`, JSON.stringify(session.user[key], null, 2))
+      })
+      
+      // Buscar cualquier propiedad que pueda contener la palabra "premium" o "rol"
+      console.log('Properties potentially containing roles:')
+      Object.keys(session.user).forEach(key => {
+        const value = session.user[key]
+        if (
+          (typeof value === 'string' && (value.toLowerCase().includes('premium') || value.toLowerCase().includes('rol'))) ||
+          (Array.isArray(value) && value.some(item => typeof item === 'string' && (item.toLowerCase().includes('premium') || item.toLowerCase().includes('rol'))))
+        ) {
+          console.log(`Found potential role info in "${key}":`, JSON.stringify(value, null, 2))
+        }
+      })
+      
+      console.log('======= END DEBUGGING AUTH0 =======')
+    }
 
     // Check both Auth0 roles and allowed users list
     const isAllowedListUser = isInAllowedList(email)

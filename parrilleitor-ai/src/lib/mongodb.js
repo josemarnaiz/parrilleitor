@@ -2,15 +2,10 @@ import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
 import mongoose from 'mongoose';
 
 // Configuración de conexión a MongoDB
-// Asegurarse de que la URI siempre tenga el formato correcto
-const DEFAULT_URI = "[REDACTED-MONGODB-URI]";
-const MONGODB_URI = process.env.MONGODB_URI && process.env.MONGODB_URI.startsWith('mongodb') 
-  ? process.env.MONGODB_URI 
-  : DEFAULT_URI;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://jmam:jmamadmin@cluster0.pogiz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const MONGODB_DATABASE = process.env.MONGODB_DATABASE || 'parrilleitor';
 
 console.log("URI de MongoDB configurada:", MONGODB_URI.replace(/mongodb(\+srv)?:\/\/[^:]+:[^@]+@/, 'mongodb$1://****:****@'));
-
-const MONGODB_DATABASE = process.env.MONGODB_DATABASE || 'parrilleitor';
 
 // Opciones del cliente MongoDB optimizadas para entornos serverless
 const options = {
@@ -19,82 +14,149 @@ const options = {
     strict: true,
     deprecationErrors: true,
   },
-  maxPoolSize: 5,           // Reducido para entornos serverless
-  minPoolSize: 1,           // Reducido para entornos serverless
-  connectTimeoutMS: 15000,  // Reducido a 15 segundos
-  socketTimeoutMS: 30000,   // Reducido a 30 segundos
-  serverSelectionTimeoutMS: 15000, // Timeout para selección de servidor
-  waitQueueTimeoutMS: 10000, // Timeout para la cola de espera
+  maxPoolSize: 10,           // Aumentado para manejar más conexiones
+  minPoolSize: 1,
+  connectTimeoutMS: 60000,   // Aumentado a 60 segundos
+  socketTimeoutMS: 60000,    // Aumentado a 60 segundos
+  serverSelectionTimeoutMS: 60000, // Aumentado a 60 segundos
+  waitQueueTimeoutMS: 30000, // Aumentado a 30 segundos
   family: 4,
   retryWrites: true,
   retryReads: true,
   w: 'majority',
-  wtimeoutMS: 10000,        // Timeout para operaciones de escritura
-};
-
-// Mongoose options optimized for serverless
-const mongooseOptions = {
-  maxPoolSize: 5,
-  minPoolSize: 1,
-  socketTimeoutMS: 30000,
-  connectTimeoutMS: 30000,
-  serverSelectionTimeoutMS: 30000,
-  heartbeatFrequencyMS: 10000,
-  bufferCommands: false, // Disable command buffering to prevent timeout issues
-  autoIndex: false, // Don't build indexes
-  retryWrites: true,
-  retryReads: true,
-  family: 4,
-  maxIdleTimeMS: 120000, // Close idle connections after 2 minutes
+  wtimeoutMS: 30000,        // Aumentado a 30 segundos
+  keepAlive: true,          // Mantener la conexión viva
+  autoReconnect: true,      // Reconectar automáticamente
+  reconnectTries: 30,       // Intentar reconectar 30 veces
+  reconnectInterval: 1000,  // Intervalo de 1 segundo entre intentos
 };
 
 // Variable para almacenar la conexión
-let client;
-let clientPromise;
-let mongooseConnection = null;
+let client = null;
+let clientPromise = null;
+let lastConnectionTime = null;
+const CONNECTION_TIMEOUT = 5 * 60 * 1000; // 5 minutos
+
+// Función para verificar si la conexión está viva
+async function isConnectionAlive() {
+  if (!client) return false;
+  try {
+    await client.db("admin").command({ ping: 1 });
+    return true;
+  } catch (error) {
+    console.log("La conexión no está viva:", error.message);
+    return false;
+  }
+}
 
 // Función para conectar a MongoDB
 async function connectToDatabase() {
   try {
-    if (!client) {
-      console.log("Iniciando conexión a MongoDB...");
-      
-      // Verificar que la URI tenga el formato correcto
-      if (!MONGODB_URI.startsWith('mongodb://') && !MONGODB_URI.startsWith('mongodb+srv://')) {
-        throw new Error('URI de MongoDB inválida. Debe comenzar con "mongodb://" o "mongodb+srv://"');
+    // Verificar si la conexión existente está viva y no ha expirado
+    if (client && lastConnectionTime && (Date.now() - lastConnectionTime < CONNECTION_TIMEOUT)) {
+      const isAlive = await isConnectionAlive();
+      if (isAlive) {
+        console.log("Reutilizando conexión existente a MongoDB");
+        return { client, db: client.db(MONGODB_DATABASE) };
       }
-      
-      client = new MongoClient(MONGODB_URI, options);
-      await client.connect();
-      console.log("Conexión a MongoDB establecida correctamente");
-      
-      // Verificar la conexión con un ping
-      await client.db("admin").command({ ping: 1 });
-      console.log("MongoDB respondió al ping correctamente");
     }
-    return { client, db: client.db(MONGODB_DATABASE) };
+
+    // Si llegamos aquí, necesitamos una nueva conexión
+    console.log("Iniciando nueva conexión a MongoDB...");
+    
+    // Cerrar la conexión anterior si existe
+    if (client) {
+      try {
+        await client.close();
+        console.log("Conexión anterior cerrada correctamente");
+      } catch (closeError) {
+        console.warn("Error al cerrar la conexión anterior:", closeError.message);
+      }
+      client = null;
+    }
+    
+    // Verificar que la URI tenga el formato correcto
+    if (!MONGODB_URI.startsWith('mongodb://') && !MONGODB_URI.startsWith('mongodb+srv://')) {
+      throw new Error('URI de MongoDB inválida. Debe comenzar con "mongodb://" o "mongodb+srv://"');
+    }
+    
+    client = new MongoClient(MONGODB_URI, options);
+    
+    // Conectar con retry
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      try {
+        await client.connect();
+        console.log("Conexión inicial establecida");
+        
+        // Verificar la conexión
+        const db = client.db(MONGODB_DATABASE);
+        await db.command({ ping: 1 });
+        console.log("Conexión verificada con ping exitoso");
+        
+        lastConnectionTime = Date.now();
+        return { client, db };
+      } catch (error) {
+        retryCount++;
+        if (retryCount === maxRetries) {
+          throw error;
+        }
+        console.log(`Intento ${retryCount} de ${maxRetries} fallido, reintentando...`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      }
+    }
   } catch (error) {
     console.error("Error al conectar a MongoDB:", {
-      error: error.message,
-      stack: error.stack,
+      message: error.message,
+      code: error.code,
+      codeName: error.codeName,
       timestamp: new Date().toISOString()
     });
-    
-    // Proporcionar información útil sobre posibles problemas de conexión
-    if (error.message.includes('Invalid scheme') || error.message.includes('URI de MongoDB inválida')) {
-      console.error("La URI de MongoDB no tiene el formato correcto. Asegúrate de que comience con 'mongodb://' o 'mongodb+srv://'");
-      console.error("URI actual (ofuscada):", MONGODB_URI.replace(/mongodb(\+srv)?:\/\/[^:]+:[^@]+@/, 'mongodb$1://****:****@'));
-    } else if (error.message.includes('connection timed out') || error.message.includes('no server found')) {
-      console.error("Posible problema de whitelist de IPs. Asegúrate de que la IP de tu servidor esté permitida en MongoDB Atlas Network Access.");
-      console.error("Recomendación: Añade 0.0.0.0/0 a la lista de IPs permitidas en MongoDB Atlas para permitir conexiones desde cualquier IP.");
-    } else if (error.message.includes('buffering timed out')) {
-      console.error("Timeout en operación de MongoDB. Esto puede ocurrir si la conexión es lenta o si hay problemas de red.");
-      console.error("Recomendación: Verifica la conectividad de red y considera aumentar los timeouts en la configuración.");
+
+    // Limpiar la conexión fallida
+    if (client) {
+      try {
+        await client.close();
+      } catch (closeError) {
+        console.error("Error al cerrar la conexión fallida:", closeError);
+      }
+      client = null;
+      lastConnectionTime = null;
     }
-    
+
     throw error;
   }
 }
+
+// Función para obtener una conexión
+export async function getMongoDb() {
+  try {
+    const { db } = await connectToDatabase();
+    return db;
+  } catch (error) {
+    console.error("Error al obtener la conexión MongoDB:", error);
+    throw error;
+  }
+}
+
+// Función para cerrar la conexión
+export async function closeMongoDb() {
+  if (client) {
+    try {
+      await client.close();
+      client = null;
+      console.log("Conexión a MongoDB cerrada correctamente");
+    } catch (error) {
+      console.error("Error al cerrar la conexión MongoDB:", error);
+      throw error;
+    }
+  }
+}
+
+// Exportar las funciones necesarias
+export { connectToDatabase };
 
 // Función para conectar Mongoose a MongoDB
 // Esta función es más confiable para operaciones de Mongoose como deleteMany
