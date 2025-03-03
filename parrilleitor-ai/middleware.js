@@ -1,6 +1,7 @@
 import { withMiddlewareAuthRequired, getSession } from '@auth0/nextjs-auth0/edge'
 import { isInAllowedList } from './src/config/allowedUsers'
 import { hasPremiumAccess, auth0Config } from './src/config/auth0Config'
+import { debugAuth0Session, logAuth0Data } from './src/config/debugger'
 import { NextResponse } from 'next/server'
 
 // Obtener el namespace base de Auth0 para verificaciones
@@ -50,6 +51,13 @@ export default async function middleware(req) {
 
     // Get session
     const session = await getSession(req)
+    
+    // Punto de depuración para analizar la sesión
+    debugAuth0Session(session, 'middleware-initial', {
+      path: req.nextUrl.pathname,
+      method: req.method,
+      headers: Object.fromEntries(req.headers)
+    });
     
     // Log session state
     console.log('Middleware session check:', {
@@ -110,6 +118,11 @@ export default async function middleware(req) {
     // VERIFICACIÓN DE ROL PREMIUM: Múltiples estrategias
     let roles = [];
     let hasPremiumRole = false;
+    
+    // Otro punto de depuración antes de verificar rol premium
+    logAuth0Data(session, 'middleware-premium-check', {
+      isAllowedUser: isInAllowedList(userEmail)
+    });
     
     // Estrategia 0: Verificar el nuevo atributo isPremium (prioridad máxima)
     if (session.user[`${AUTH0_BASE_NAMESPACE}/isPremium`] === true) {
@@ -216,16 +229,14 @@ export default async function middleware(req) {
     
     // Decisión final sobre el acceso
     const hasAccess = isAllowedUser || hasPremiumRole
-
-    // Log de verificación
-    console.log('Access verification:', {
-      email: userEmail,
+    
+    // Punto de depuración final para ver la decisión
+    debugAuth0Session(session, 'middleware-decision', {
       isAllowedUser,
       hasPremiumRole,
       hasAccess,
-      path,
-      timestamp: new Date().toISOString()
-    })
+      path
+    });
 
     // Si no tiene acceso premium pero intenta acceder a /chat, redirigir a unauthorized
     if (!hasAccess && path === '/chat') {

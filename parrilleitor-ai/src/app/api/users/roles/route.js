@@ -1,6 +1,7 @@
 import { getSession } from '@auth0/nextjs-auth0/edge'
 import { isInAllowedList } from '@/config/allowedUsers'
 import { hasPremiumAccess, auth0Config } from '@/config/auth0Config'
+import { debugAuth0Session, logAuth0Data } from '@/config/debugger'
 
 // Obtener namespaces de Auth0
 const AUTH0_BASE_NAMESPACE = auth0Config.baseNamespace
@@ -31,6 +32,13 @@ export async function GET(req) {
     let session = null;
     try {
       session = await getSession(req);
+      
+      // Punto de depuración para examinar la sesión en detalle
+      debugAuth0Session(session, 'roles-api-get', {
+        url: req.url,
+        method: req.method,
+        headers: Object.fromEntries(req.headers)
+      });
     } catch (sessionError) {
       console.log('Error getting session, but continuing:', {
         error: sessionError.message,
@@ -110,7 +118,7 @@ export async function GET(req) {
     const name = session.user.name || email
 
     // Log completo del objeto de usuario para depuración
-    console.log('Auth0 complete user object:', JSON.stringify(session.user, null, 2))
+    console.log(':', JSON.stringify(session.user, null, 2))
     
     // DEBUGGING TEMPORAL - Mostrar todas las propiedades del usuario para encontrar los roles
     if (DEBUG_AUTH0) {
@@ -145,6 +153,12 @@ export async function GET(req) {
     // VERIFICACIÓN DE ROL PREMIUM: Múltiples estrategias
     let roles = [];
     let hasPremiumRole = false;
+    
+    // Segundo punto de depuración para verificación de rol
+    logAuth0Data(session, 'roles-api-premium-check', {
+      isAllowedListUser,
+      email
+    });
     
     // Estrategia 0: Verificar el nuevo atributo isPremium (prioridad máxima)
     if (session.user[`${AUTH0_BASE_NAMESPACE}/isPremium`] === true) {
@@ -261,6 +275,14 @@ export async function GET(req) {
       isPremium,
       timestamp: new Date().toISOString()
     })
+
+    // Usar debugger para examinar la decisión final
+    debugAuth0Session(session, 'roles-api-decision', {
+      isAllowedListUser,
+      hasPremiumRole,
+      hasAccess: isAllowedListUser || hasPremiumRole,
+      email
+    });
 
     return Response.json({
       user: {
