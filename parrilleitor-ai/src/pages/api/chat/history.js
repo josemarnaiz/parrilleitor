@@ -3,9 +3,6 @@ import { isInAllowedList } from '@/config/allowedUsers';
 import { hasPremiumAccess } from '@/config/auth0Config';
 import { MongoClient } from 'mongodb';
 
-const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles';
-const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS';
-
 // Common headers
 const commonHeaders = {
   'Cache-Control': 'no-store, max-age=0',

@@ -1,10 +1,8 @@
 import { getSession } from '@auth0/nextjs-auth0';
 import { isInAllowedList } from '@/config/allowedUsers';
+import { hasPremiumAccess } from '@/config/auth0Config';
 import connectDB from '@/lib/mongodb';
 import Conversation from '@/models/Conversation';
-
-const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles';
-const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS';
 
 export default async function handler(req, res) {
   // Generar un ID único para esta solicitud para seguimiento en logs
@@ -39,20 +37,18 @@ export default async function handler(req, res) {
     }
 
     const userEmail = session.user.email;
-    const roles = session.user[AUTH0_NAMESPACE] || [];
-    
-    const hasPremiumRole = roles.includes(PREMIUM_ROLE_ID);
+    // Verificar premium usando el método actualizado
+    const hasPremiumFromClaims = hasPremiumAccess(session);
     const isAllowedUser = isInAllowedList(userEmail);
 
     console.log(`[${requestId}] Delete All API - Session user:`, {
       email: userEmail,
-      roles,
-      hasPremiumRole,
+      isPremium: hasPremiumFromClaims,
       isAllowedUser,
       timestamp: new Date().toISOString()
     });
 
-    if (!hasPremiumRole && !isAllowedUser) {
+    if (!hasPremiumFromClaims && !isAllowedUser) {
       console.log(`[${requestId}] Usuario no premium intentando acceder:`, userEmail);
       return res.status(403).json({ error: 'Se requiere una cuenta premium' });
     }
