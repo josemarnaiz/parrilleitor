@@ -25,8 +25,8 @@ export const auth0Config = {
   // Claims personalizados con namespace apropiado
   customClaims: {
     namespace: 'https://parrilleitorai.vercel.app',
-    isPremium: 'https://parrilleitorai.vercel.app/premium_status',
-    premiumVerifiedAt: 'https://parrilleitorai.vercel.app/premium_verified_at'
+    isPremium: 'premium_status',
+    premiumVerifiedAt: 'premium_verified_at'
   }
 };
 
@@ -37,12 +37,26 @@ export function hasPremiumAccess(accessToken) {
   if (!accessToken) return false;
   
   try {
+    // Log completo del token para debugging
+    console.log('Token debug:', {
+      keys: Object.keys(accessToken),
+      claims: Object.entries(accessToken)
+        .filter(([key]) => key.includes(auth0Config.customClaims.namespace))
+        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
+      timestamp: new Date().toISOString()
+    });
+
     // Verificar el claim personalizado de premium usando el namespace correcto
-    const premiumStatus = accessToken[auth0Config.customClaims.isPremium];
-    const premiumVerifiedAt = accessToken[auth0Config.customClaims.premiumVerifiedAt];
+    const premiumClaim = `${auth0Config.customClaims.namespace}/premium_status`;
+    const verifiedAtClaim = `${auth0Config.customClaims.namespace}/premium_verified_at`;
+    
+    const premiumStatus = accessToken[premiumClaim];
+    const premiumVerifiedAt = accessToken[verifiedAtClaim];
     
     // Log para debugging
     console.log('Premium access check:', {
+      premiumClaim,
+      verifiedAtClaim,
       premiumStatus,
       premiumVerifiedAt,
       timestamp: new Date().toISOString()

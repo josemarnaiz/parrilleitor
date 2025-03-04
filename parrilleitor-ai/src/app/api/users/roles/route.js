@@ -36,7 +36,12 @@ export async function GET(req) {
           timestamp: new Date().toISOString(),
           premiumStatus,
           premiumVerifiedAt,
-          namespace: auth0Config.customClaims.namespace
+          namespace: auth0Config.customClaims.namespace,
+          // Log del token completo para debugging
+          tokenKeys: Object.keys(session.accessToken),
+          claims: Object.entries(session.accessToken)
+            .filter(([key]) => key.includes(auth0Config.customClaims.namespace))
+            .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {})
         });
       }
       
