@@ -79,6 +79,18 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'No autenticado' });
     }
 
+    // Log completo de la sesión para debugging
+    console.log('Session Debug:', {
+      accessToken: session.accessToken ? 'present' : 'missing',
+      user: {
+        ...session.user,
+        // No logueamos el token completo por seguridad
+        accessToken: session.user.accessToken ? 'present' : 'missing',
+      },
+      sessionId: session.sessionId,
+      timestamp: new Date().toISOString()
+    });
+
     // Verify premium access using the same method as the rest of the app
     const hasPremiumFromClaims = hasPremiumAccess(session);
     const isAllowedUser = isInAllowedList(session.user.email);
@@ -88,7 +100,9 @@ export default async function handler(req, res) {
       isAllowedUser,
       email: session.user.email,
       sessionKeys: Object.keys(session),
-      userKeys: Object.keys(session.user)
+      userKeys: Object.keys(session.user),
+      isPremiumInUser: session.user.isPremium,
+      premiumVerifiedAt: session.user.premiumVerifiedAt
     });
 
     if (!hasPremiumFromClaims && !isAllowedUser) {
