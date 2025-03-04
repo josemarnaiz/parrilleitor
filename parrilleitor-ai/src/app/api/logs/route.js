@@ -3,12 +3,10 @@ import { NextResponse } from 'next/server';
 import { isInAllowedList } from '../../../config/allowedUsers';
 import { hasPremiumAccess, auth0Config } from '../../../config/auth0Config';
 import { logAuth, logAuthError, logError } from '../../../config/logger';
+import { connectToDatabase } from '../../../lib/mongodb-edge.js';
+
 // Detectar si estamos en Edge Runtime
 const isEdgeRuntime = typeof EdgeRuntime !== 'undefined';
-// Importar la versión apropiada de MongoDB según el entorno
-const { connectToDatabase } = isEdgeRuntime 
-  ? require('../../../lib/mongodb-edge') 
-  : require('../../../lib/mongodb');
 
 // Lista de correos electrónicos autorizados para acceder a los logs completos (solo administradores)
 const ADMIN_EMAILS = ['user1@example.com', 'user2@example.com']; // Reemplazar con correos reales

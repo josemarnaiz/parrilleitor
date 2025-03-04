@@ -1,6 +1,5 @@
 import { handleAuth, handleLogin, handleCallback, handleLogout } from '@auth0/nextjs-auth0/edge'
 import { getAuth0Config } from '@/config/auth0Config'
-import { logAuth, logError } from '@/config/logger'
 
 // Configuración común para Auth0
 const config = getAuth0Config()
@@ -9,12 +8,22 @@ const config = getAuth0Config()
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles'
 const AUTH0_PERMISSIONS = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/permissions'
 
+// Función simple de log para Edge Runtime
+const edgeLog = (type, message, data = {}) => {
+  console.log(JSON.stringify({
+    type,
+    message,
+    timestamp: new Date().toISOString(),
+    data
+  }));
+};
+
 // Manejador personalizado para Auth0
 export const GET = handleAuth({
   login: async (req) => {
     // Configurar el login para usar redirección directa
     try {
-      logAuth('Iniciando proceso de login con Auth0', null, {
+      edgeLog('auth', 'Iniciando proceso de login con Auth0', {
         url: req.url,
         method: req.method,
         headers: Object.fromEntries(req.headers.entries())
@@ -39,7 +48,7 @@ export const GET = handleAuth({
         errorPath: '/auth/diagnostics'
       });
     } catch (error) {
-      logError('Error en proceso de login Auth0', error, {
+      edgeLog('auth', 'Error en proceso de login Auth0', {
         url: req.url,
         method: req.method
       });
@@ -52,7 +61,7 @@ export const GET = handleAuth({
   callback: async (req) => {
     // Manejar el callback con configuración personalizada
     try {
-      logAuth('Procesando callback de Auth0', null, {
+      edgeLog('auth', 'Procesando callback de Auth0', {
         url: req.url,
         method: req.method
       });
@@ -60,13 +69,13 @@ export const GET = handleAuth({
       return handleCallback(req, {
         // Asegurar que se procesen correctamente los tokens
         afterCallback: (_, session) => {
-          logAuth('Auth0 callback procesado', session, {
+          edgeLog('auth', 'Auth0 callback procesado', {
             sessionKeys: Object.keys(session) || []
           });
           
           // Log del objeto de sesión para diagnóstico
           if (session && session.user) {
-            logAuth('Auth0 callback - datos de usuario', session, {
+            edgeLog('auth', 'Auth0 callback - datos de usuario', {
               userKeys: Object.keys(session.user) || []
             });
             
@@ -74,7 +83,7 @@ export const GET = handleAuth({
             // los copiamos al namespace estándar
             if (!session.user[AUTH0_NAMESPACE] && session.user.roles) {
               session.user[AUTH0_NAMESPACE] = session.user.roles;
-              logAuth('Roles copiados de session.user.roles a namespace estándar', null, {
+              edgeLog('auth', 'Roles copiados de session.user.roles a namespace estándar', {
                 roles: session.user.roles
               });
             }
@@ -82,7 +91,7 @@ export const GET = handleAuth({
             // Si hay permissions pero no hay roles, buscar en permissions
             if (!session.user[AUTH0_NAMESPACE] && session.user[AUTH0_PERMISSIONS]) {
               session.user[AUTH0_NAMESPACE] = session.user[AUTH0_PERMISSIONS];
-              logAuth('Roles copiados de permissions a namespace estándar', null, {
+              edgeLog('auth', 'Roles copiados de permissions a namespace estándar', {
                 permissions: session.user[AUTH0_PERMISSIONS]
               });
             }
@@ -90,7 +99,7 @@ export const GET = handleAuth({
             // Buscar en todas las propiedades para encontrar roles
             for (const key in session.user) {
               if (Array.isArray(session.user[key]) && key !== AUTH0_NAMESPACE) {
-                logAuth(`Encontrada propiedad array "${key}"`, null, {
+                edgeLog('auth', `Encontrada propiedad array "${key}"`, {
                   arrayProperty: session.user[key]
                 });
                 
@@ -98,7 +107,7 @@ export const GET = handleAuth({
                 if (session.user[key].some(item => typeof item === 'string' && 
                     (item.startsWith('rol_') || item.toLowerCase().includes('premium')))) {
                   session.user[AUTH0_NAMESPACE] = session.user[key];
-                  logAuth(`Roles copiados de "${key}" a namespace estándar`, null, {
+                  edgeLog('auth', `Roles copiados de "${key}" a namespace estándar`, {
                     source: key,
                     roles: session.user[key]
                   });
@@ -116,7 +125,7 @@ export const GET = handleAuth({
         errorPath: '/auth/diagnostics'
       });
     } catch (error) {
-      logError('Error en callback de Auth0', error, {
+      edgeLog('auth', 'Error en callback de Auth0', {
         url: req.url,
         method: req.method
       });
@@ -129,7 +138,7 @@ export const GET = handleAuth({
   logout: async (req) => {
     // Configurar el logout para evitar problemas de CORS
     try {
-      logAuth('Iniciando proceso de logout con Auth0', null, {
+      edgeLog('auth', 'Iniciando proceso de logout con Auth0', {
         url: req.url,
         method: req.method
       });
@@ -138,7 +147,7 @@ export const GET = handleAuth({
         returnTo: config.logoutReturnTo
       });
     } catch (error) {
-      logError('Error en proceso de logout Auth0', error, {
+      edgeLog('auth', 'Error en proceso de logout Auth0', {
         url: req.url,
         method: req.method
       });
@@ -155,7 +164,7 @@ export const POST = handleAuth({
   callback: async (req) => {
     // Manejar el callback con configuración personalizada
     try {
-      logAuth('Procesando callback POST de Auth0', null, {
+      edgeLog('auth', 'Procesando callback POST de Auth0', {
         url: req.url,
         method: req.method
       });
@@ -163,20 +172,20 @@ export const POST = handleAuth({
       return handleCallback(req, {
         // Asegurar que se procesen correctamente los tokens
         afterCallback: (_, session) => {
-          logAuth('Auth0 callback (POST) procesado', session, {
+          edgeLog('auth', 'Auth0 callback (POST) procesado', {
             sessionKeys: Object.keys(session) || []
           });
           
           // Log del objeto de sesión para diagnóstico
           if (session && session.user) {
-            logAuth('Auth0 callback (POST) - datos de usuario', session, {
+            edgeLog('auth', 'Auth0 callback (POST) - datos de usuario', {
               userKeys: Object.keys(session.user) || []
             });
             
             // Misma lógica que en GET para procesar roles
             if (!session.user[AUTH0_NAMESPACE] && session.user.roles) {
               session.user[AUTH0_NAMESPACE] = session.user.roles;
-              logAuth('Roles copiados de session.user.roles a namespace estándar (POST)', null, {
+              edgeLog('auth', 'Roles copiados de session.user.roles a namespace estándar (POST)', {
                 roles: session.user.roles
               });
             }
@@ -184,7 +193,7 @@ export const POST = handleAuth({
             // Si hay permissions pero no hay roles, buscar en permissions
             if (!session.user[AUTH0_NAMESPACE] && session.user[AUTH0_PERMISSIONS]) {
               session.user[AUTH0_NAMESPACE] = session.user[AUTH0_PERMISSIONS];
-              logAuth('Roles copiados de permissions a namespace estándar (POST)', null, {
+              edgeLog('auth', 'Roles copiados de permissions a namespace estándar (POST)', {
                 permissions: session.user[AUTH0_PERMISSIONS]
               });
             }
@@ -192,7 +201,7 @@ export const POST = handleAuth({
             // Buscar en todas las propiedades para encontrar roles
             for (const key in session.user) {
               if (Array.isArray(session.user[key]) && key !== AUTH0_NAMESPACE) {
-                logAuth(`Encontrada propiedad array "${key}" (POST)`, null, {
+                edgeLog('auth', `Encontrada propiedad array "${key}" (POST)`, {
                   arrayProperty: session.user[key]
                 });
                 
@@ -200,7 +209,7 @@ export const POST = handleAuth({
                 if (session.user[key].some(item => typeof item === 'string' && 
                     (item.startsWith('rol_') || item.toLowerCase().includes('premium')))) {
                   session.user[AUTH0_NAMESPACE] = session.user[key];
-                  logAuth(`Roles copiados de "${key}" a namespace estándar (POST)`, null, {
+                  edgeLog('auth', `Roles copiados de "${key}" a namespace estándar (POST)`, {
                     source: key,
                     roles: session.user[key]
                   });
@@ -217,7 +226,7 @@ export const POST = handleAuth({
         errorPath: '/auth/diagnostics'
       });
     } catch (error) {
-      logError('Error en callback POST de Auth0', error, {
+      edgeLog('auth', 'Error en callback POST de Auth0', {
         url: req.url,
         method: req.method
       });
@@ -230,7 +239,7 @@ export const POST = handleAuth({
   logout: async (req) => {
     // Manejar el logout con POST para evitar problemas de CORS
     try {
-      logAuth('Procesando logout POST con Auth0', null, {
+      edgeLog('auth', 'Procesando logout POST con Auth0', {
         url: req.url,
         method: req.method
       });
@@ -239,7 +248,7 @@ export const POST = handleAuth({
         returnTo: config.logoutReturnTo
       });
     } catch (error) {
-      logError('Error en proceso de logout POST Auth0', error, {
+      edgeLog('auth', 'Error en proceso de logout POST Auth0', {
         url: req.url,
         method: req.method
       });

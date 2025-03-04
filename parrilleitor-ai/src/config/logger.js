@@ -6,15 +6,13 @@
 // Detectar si estamos en Edge Runtime para evitar intentar usar MongoDB
 const isEdgeRuntime = typeof EdgeRuntime !== 'undefined';
 
-// Importar la versión apropiada de MongoDB según el entorno
-const { connectToDatabase } = isEdgeRuntime 
-  ? require('../lib/mongodb-edge') 
-  : require('../lib/mongodb');
-
 // Configuración del logger
 const DETAILED_LOGGING = true; // Habilitar logs detallados
 const SAVE_TO_DB = !isEdgeRuntime; // Solo guardar logs en la base de datos cuando no estamos en Edge
 const LOG_COLLECTION = 'logs'; // Nombre de la colección en MongoDB
+
+// Importar la versión Edge de MongoDB
+import { connectToDatabase } from '../lib/mongodb-edge.js';
 
 // Niveles de log
 const LOG_LEVELS = {
@@ -131,7 +129,7 @@ async function logBase(level, message, data = null, metadata = {}) {
   }
   
   // Guardar en la base de datos si está habilitado y no estamos en Edge Runtime
-  if (SAVE_TO_DB && !isEdgeRuntime) {
+  if (SAVE_TO_DB && !isEdgeRuntime && connectToDatabase) {
     try {
       const { db } = await connectToDatabase();
       await db.collection(LOG_COLLECTION).insertOne(logEntry);

@@ -7,7 +7,17 @@ import {
   checkAuth0Connectivity,
   handleAuth0Error
 } from '../../../../config/auth0Debugger'
-import { logAuth, logAuthError, logError } from '../../../../config/logger'
+import { connectToDatabase as connectToMongoDbEdge } from '../../../../lib/mongodb-edge.js'
+
+// Función simple de log para Edge Runtime
+const edgeLog = (type, message, data = {}) => {
+  console.log(JSON.stringify({
+    type,
+    message,
+    timestamp: new Date().toISOString(),
+    data
+  }));
+};
 
 // Headers comunes
 const commonHeaders = {
@@ -48,7 +58,7 @@ export async function GET(req) {
     try {
       session = await getSession(req)
     } catch (error) {
-      logError('Error al obtener sesión en diagnóstico Auth0', error, { requestId })
+      edgeLog('error', 'Error al obtener sesión en diagnóstico Auth0', { error: error.message, requestId })
     }
     
     // Verificar nivel de acceso
@@ -67,7 +77,7 @@ export async function GET(req) {
       // Acceso completo para admins, acceso parcial para usuarios permitidos o premium
       hasAccess = isAdminUser || isAllowed || hasPremium
       
-      logAuth('Auth0 Diagnóstico - verificación de acceso', session, {
+      edgeLog('auth', 'Auth0 Diagnóstico - verificación de acceso', {
         requestId,
         userEmail,
         isAdmin: isAdminUser,
@@ -138,7 +148,7 @@ export async function GET(req) {
     }, { headers: commonHeaders })
     
   } catch (error) {
-    logError('Error en endpoint de diagnóstico Auth0', error, { requestId })
+    edgeLog('error', 'Error en endpoint de diagnóstico Auth0', { error: error.message, requestId })
     
     return NextResponse.json({
       error: 'Error interno del servidor',
@@ -161,7 +171,7 @@ export async function POST(req) {
       session = await getSession(req)
     } catch (error) {
       // Solo registrar el error, no necesitamos detener el proceso
-      logError('Error al obtener sesión en reporte de error Auth0', error, { requestId })
+      edgeLog('error', 'Error al obtener sesión en reporte de error Auth0', { error: error.message, requestId })
     }
     
     // Parsear el cuerpo de la solicitud
@@ -186,7 +196,7 @@ export async function POST(req) {
     }
     
     // Si no hay error, simplemente registrar el evento
-    logAuth('Reporte desde cliente Auth0', session, {
+    edgeLog('auth', 'Reporte desde cliente Auth0', {
       requestId,
       data,
       userAgent: req.headers.get('user-agent') || 'unknown'
@@ -198,7 +208,7 @@ export async function POST(req) {
     }, { headers: commonHeaders })
     
   } catch (error) {
-    logError('Error al procesar reporte de cliente Auth0', error, { requestId })
+    edgeLog('error', 'Error al procesar reporte de cliente Auth0', { error: error.message, requestId })
     
     return NextResponse.json({
       error: 'Error interno del servidor',

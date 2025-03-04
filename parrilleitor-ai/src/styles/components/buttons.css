@@ -1,102 +1,112 @@
-/* Botones - sistema de botones mejorados con diseño actual */
-.btn {
-  @apply inline-flex items-center justify-center rounded-lg font-medium text-center transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2;
-  position: relative;
-  overflow: hidden;
-  transform: translateY(0);
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(0);
-}
-
-/* Efecto hover mejorado */
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-/* Efecto de clic mejorado */
-.btn:active {
-  transform: translateY(0);
-  box-shadow: var(--shadow-sm);
-}
-
-/* Tamaños de botones mejor definidos */
-.btn-xs {
-  @apply px-2.5 py-1.5 text-xs;
-}
-
-.btn-sm {
-  @apply px-3 py-2 text-sm;
-}
-
-.btn-md {
-  @apply px-4 py-2 text-sm;
-}
-
-.btn-lg {
-  @apply px-6 py-3 text-base;
-}
-
-.btn-xl {
-  @apply px-8 py-4 text-lg;
-}
-
-/* Variantes de botones */
-.btn-primary {
-  @apply bg-primary text-white focus:ring-primary/50;
-  background-image: var(--gradient-primary);
-}
-
-.btn-secondary {
-  @apply bg-secondary text-white focus:ring-secondary/50;
-  background-image: var(--gradient-secondary);
-}
-
-.btn-outline {
-  @apply border-2 border-primary bg-transparent text-primary hover:bg-primary/10 focus:ring-primary/30;
-}
-
-.btn-ghost {
-  @apply text-primary bg-transparent hover:bg-primary/10 focus:ring-primary/30;
-  box-shadow: none;
-}
-
-.btn-white {
-  @apply bg-white text-primary border border-gray-200 hover:bg-gray-50 focus:ring-primary/30;
-}
-
-/* Efecto de ripple para botones */
-.btn.btn-ripple {
-  position: relative;
-  overflow: hidden;
-}
-
-.btn.btn-ripple::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 5px;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.5);
-  opacity: 0;
-  border-radius: 100%;
-  transform: scale(1, 1) translate(-50%, -50%);
-  transform-origin: 50% 50%;
-}
-
-.btn.btn-ripple:focus:not(:active)::after {
-  animation: ripple 0.8s ease-out;
-}
-
-@keyframes ripple {
-  0% {
-    transform: scale(0, 0);
-    opacity: 0.5;
+@layer components {
+  /* Botones - sistema de botones mejorados con diseño actual */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg font-medium text-center transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    position: relative;
+    overflow: hidden;
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(0);
   }
-  100% {
-    transform: scale(100, 100);
-    opacity: 0;
+
+  /* Efecto hover mejorado */
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Efecto de clic mejorado */
+  .btn:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Tamaños de botones mejor definidos */
+  .btn-xs {
+    @apply px-2.5 py-1.5 text-xs;
+  }
+
+  .btn-sm {
+    @apply px-3 py-2 text-sm;
+  }
+
+  .btn-md {
+    @apply px-4 py-2 text-sm;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-base;
+  }
+
+  .btn-xl {
+    @apply px-8 py-4 text-lg;
+  }
+
+  /* Variantes de botones */
+  .btn-primary {
+    @apply bg-primary text-white focus:ring-2 focus:ring-primary focus:ring-opacity-50;
+    background-image: var(--gradient-primary);
+  }
+
+  .btn-primary:focus {
+    @apply ring-2 ring-primary ring-opacity-50;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-white;
+    background-image: var(--gradient-secondary);
+  }
+
+  .btn-secondary:focus {
+    @apply ring-2 ring-secondary ring-opacity-50;
+  }
+
+  .btn-outline {
+    @apply border-2 border-primary bg-transparent text-primary;
+  }
+
+  .btn-outline:hover {
+    @apply bg-primary bg-opacity-10;
+  }
+
+  .btn-outline:focus {
+    @apply ring-2 ring-primary ring-opacity-30;
+  }
+
+  .btn-ghost {
+    @apply text-primary bg-transparent;
+    box-shadow: none;
+  }
+
+  .btn-ghost:hover {
+    @apply bg-primary bg-opacity-10;
+  }
+
+  .btn-ghost:focus {
+    @apply ring-2 ring-primary ring-opacity-30;
+  }
+
+  .btn-white {
+    @apply bg-white text-primary border border-gray-200 hover:bg-gray-50;
+  }
+
+  .btn-white:focus {
+    @apply ring-2 ring-primary ring-opacity-30;
+  }
+
+  /* Efecto de ripple para botones */
+  .btn.btn-ripple {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn.btn-ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
   }
 }
 

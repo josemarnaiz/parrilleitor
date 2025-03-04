@@ -1,7 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
+/* Importar fuentes */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap');
 
 /* Importar estilos base */
@@ -22,3 +19,7 @@
 @import '../styles/pages/home.css';
 @import '../styles/pages/chat.css';
 @import '../styles/pages/profile.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

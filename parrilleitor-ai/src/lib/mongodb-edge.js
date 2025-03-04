@@ -32,12 +32,15 @@ export async function connectToDatabase() {
   };
 }
 
-// Objeto simulado para importaciones directas
-export default {
-  connectToDatabase,
-  getMongoDb: async () => (await connectToDatabase()).db,
-  closeMongoDb: async () => console.log("Edge Runtime: Simulando cierre de conexión MongoDB")
-};
+// Funciones adicionales exportadas
+export async function getMongoDb() {
+  const { db } = await connectToDatabase();
+  return db;
+}
+
+export async function closeMongoDb() {
+  console.log("Edge Runtime: Simulando cierre de conexión MongoDB");
+}
 
 // Clase simulada para mantener compatibilidad
 export class MongoDBClient {

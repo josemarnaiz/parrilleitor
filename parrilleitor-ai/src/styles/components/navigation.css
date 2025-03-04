@@ -71,7 +71,7 @@
 }
 
 .nav-link.active {
-  @apply bg-primary/10 text-primary font-medium;
+  @apply bg-primary text-primary font-medium bg-opacity-10;
 }
 
 /* Efecto de barra inferior para links activos (opcional) */
