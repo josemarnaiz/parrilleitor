@@ -4,9 +4,8 @@ import { isInAllowedList } from '@/config/allowedUsers';
 import connectDB from '@/lib/mongodb';
 import Conversation from '@/models/Conversation';
 import { logAuth, logAuthError, logError, logInfo } from '@/config/logger';
-
-const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles';
-const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS';
+import { hasPremiumAccess } from '@/config/auth0Config';
+import crypto from 'crypto';
 
 const SYSTEM_PROMPT = `You are ParrilleitorAI, a friendly and professional AI assistant specialized in sports nutrition and physical exercise. Your purpose is to help users achieve their fitness and nutrition goals.
 
@@ -73,26 +72,26 @@ export default async function handler(req, res) {
 
     // Verificar si el usuario tiene acceso (usuario permitido o rol premium)
     const userEmail = session.user.email;
-    const roles = session.user[AUTH0_NAMESPACE] || [];
     
-    const hasPremiumRole = roles.includes(PREMIUM_ROLE_ID);
+    // Usar el método actualizado para verificar acceso premium
+    const hasPremiumFromClaims = hasPremiumAccess(session);
     const isAllowedUser = isInAllowedList(userEmail);
 
     logAuth('Access verification in chat API', session, {
       isAllowedUser,
-      hasPremiumRole,
+      hasPremiumFromClaims,
       requestId
     });
     
     // Decisión final de acceso
-    const hasAccess = isAllowedUser || hasPremiumRole;
+    const hasAccess = isAllowedUser || hasPremiumFromClaims;
     
     if (!hasAccess) {
       logAuthError('Premium access denied in chat API', null, session, { 
         requestId,
         userEmail,
         isAllowedUser,
-        hasPremiumRole
+        hasPremiumFromClaims
       });
       res.status(403).json({ error: 'Se requiere una cuenta premium para usar la API de chat.' });
       return;

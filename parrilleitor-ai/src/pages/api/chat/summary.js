@@ -1,9 +1,7 @@
 import { getSession } from '@auth0/nextjs-auth0';
 import { isInAllowedList } from '@/config/allowedUsers';
 import getMongoDBClient from '@/lib/mongodb';
-
-const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles';
-const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS';
+import { hasPremiumAccess } from '@/config/auth0Config';
 
 // Common headers
 const commonHeaders = {
@@ -113,11 +111,10 @@ export default async function handler(req, res) {
     }
 
     // Verificar acceso premium
-    const roles = session.user[AUTH0_NAMESPACE] || [];
-    const hasPremiumRole = roles.includes(PREMIUM_ROLE_ID);
+    const hasPremiumFromClaims = hasPremiumAccess(session);
     const isAllowedUser = isInAllowedList(session.user.email);
 
-    if (!hasPremiumRole && !isAllowedUser) {
+    if (!hasPremiumFromClaims && !isAllowedUser) {
       return res.status(403).json({ error: 'Se requiere una cuenta premium' });
     }
 
