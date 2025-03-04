@@ -1,72 +1,67 @@
 // Configuración de Auth0 para la aplicación
 export const auth0Config = {
-  // Duración de la sesión en segundos (90 días)
-  sessionDuration: 90 * 24 * 60 * 60,
+  // Duración de la sesión en segundos (24 horas)
+  sessionDuration: 24 * 60 * 60,
   
-  // URL de retorno después del login
+  // URLs de retorno
   returnTo: '/',
-  
-  // URL de retorno después del logout
   logoutReturnTo: process.env.AUTH0_BASE_URL || 'https://parrilleitorai.vercel.app',
   
   // Opciones para evitar problemas de CORS
   useFormData: true,
   useRefreshTokens: true,
   
-  // Configuración específica para el logout
   logoutOptions: {
     localOnly: true
   },
   
+  // Configuración de autorización
   authorizationParams: {
     audience: process.env.AUTH0_AUDIENCE || 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/api/v2/',
-    scope: process.env.AUTH0_SCOPE || 'openid profile email read:roles'
+    // Definimos los scopes que necesitamos
+    scope: 'openid profile email read:premium_content access:premium_features'
   },
   
-  // Base namespace para Auth0
-  baseNamespace: 'https://dev-zwbfqql3rcbh67rv.us.auth0.com',
-  
-  // Claims específicos que Auth0 nos envía
-  claims: {
-    roles: 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles',
-    isPremium: 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/isPremium',
-    premiumVerifiedAt: 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/premiumVerifiedAt'
-  },
-  
-  // ID del rol premium
-  premiumRoleId: 'rol_vWDGREdcQo4ulVhS'
+  // Scopes para funcionalidades premium
+  premiumScopes: [
+    'read:premium_content',
+    'access:premium_features'
+  ]
 };
 
 /**
- * Verifica si un usuario tiene acceso premium basado en los claims de Auth0
+ * Verifica si un usuario tiene acceso premium basado en sus scopes
  */
-export function hasPremiumAccess(user) {
-  if (!user) return false;
+export function hasPremiumAccess(accessToken) {
+  if (!accessToken?.scope) return false;
   
-  const { claims } = auth0Config;
+  // Convertir el string de scopes en array
+  const scopes = accessToken.scope.split(' ');
   
-  // Verificar el claim directo de isPremium
-  if (user[claims.isPremium] === true) {
-    return true;
-  }
-  
-  // Verificar roles
-  const roles = user[claims.roles];
-  if (Array.isArray(roles) && roles.includes(auth0Config.premiumRoleId)) {
-    return true;
-  }
-  
-  return false;
+  // Verificar si tiene los scopes premium necesarios
+  return auth0Config.premiumScopes.some(scope => scopes.includes(scope));
 }
 
 /**
- * Obtiene los roles de un usuario desde los claims de Auth0
+ * Obtiene la información del usuario usando el endpoint userinfo
  */
-export function getUserRoles(user) {
-  if (!user) return [];
-  
-  const roles = user[auth0Config.claims.roles];
-  return Array.isArray(roles) ? roles : [];
+export async function getUserInfo(accessToken) {
+  try {
+    const response = await fetch(`${process.env.AUTH0_ISSUER_BASE_URL}/userinfo`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch user info');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching user info:', error);
+    return null;
+  }
 }
 
 /**

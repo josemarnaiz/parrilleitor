@@ -1,20 +1,7 @@
 import { getSession } from '@auth0/nextjs-auth0/edge'
 import { isInAllowedList } from '@/config/allowedUsers'
-import { hasPremiumAccess, auth0Config, getUserRoles } from '@/config/auth0Config'
-import { debugAuth0Session, logAuth0Data } from '@/config/debugger'
-
-// Obtener namespaces de Auth0
-const AUTH0_BASE_NAMESPACE = auth0Config.baseNamespace
-const AUTH0_ROLES_NAMESPACE = `${AUTH0_BASE_NAMESPACE}/roles`
-
-// LOG TEMPORAL PARA DEBUGGEAR ROLES DE AUTH0
-const DEBUG_AUTH0 = true
-
-const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS'
-const PREMIUM_ROLE_NAME = 'Premium'
-
-// Obtener la URL base actual
-const AUTH0_BASE_URL = process.env.AUTH0_BASE_URL || 'https://parrilleitorai.vercel.app'
+import { hasPremiumAccess, getUserInfo } from '@/config/auth0Config'
+import { debugAuth0Session } from '@/config/debugger'
 
 // Headers comunes
 const commonHeaders = {
@@ -40,23 +27,10 @@ export async function GET(req) {
         fullSession: JSON.stringify(session, null, 2)
       });
       
-      if (session?.user) {
-        console.log('🔍 AUTH0 RAW USER DATA:', {
+      if (session?.accessToken) {
+        console.log('🔍 AUTH0 ACCESS TOKEN DATA:', {
           timestamp: new Date().toISOString(),
-          userKeys: Object.keys(session.user),
-          fullUser: JSON.stringify(session.user, null, 2)
-        });
-        
-        // Log específico de claims importantes
-        const claimKeys = Object.values(auth0Config.claims);
-        const relevantClaims = {};
-        claimKeys.forEach(key => {
-          relevantClaims[key] = session.user[key];
-        });
-        
-        console.log('🔍 AUTH0 RELEVANT CLAIMS:', {
-          timestamp: new Date().toISOString(),
-          claims: relevantClaims
+          token: session.accessToken
         });
       }
       
@@ -75,15 +49,15 @@ export async function GET(req) {
     }
 
     // Si no hay sesión, devolver estado no autenticado
-    if (!session?.user) {
+    if (!session?.accessToken) {
       return Response.json({
         user: {
           email: null,
           name: null,
-          roles: [],
+          scopes: [],
           isPremium: false,
           isAllowedListUser: false,
-          hasPremiumRole: false,
+          hasPremiumAccess: false,
           isAuthenticated: false
         }
       }, {
@@ -91,25 +65,29 @@ export async function GET(req) {
       });
     }
 
+    // Obtener información del usuario usando el endpoint userinfo
+    const userInfo = await getUserInfo(session.accessToken);
+    
+    if (!userInfo) {
+      throw new Error('Failed to fetch user info');
+    }
+
     // Extraer información básica del usuario
-    const { email = '', name = '' } = session.user;
+    const { email = '', name = '' } = userInfo;
 
     // Verificar lista de permitidos
     const isAllowedListUser = isInAllowedList(email);
 
-    // Obtener roles usando la nueva función helper
-    const roles = getUserRoles(session.user);
-
-    // Verificar acceso premium usando la nueva función helper
-    const hasPremiumRole = hasPremiumAccess(session.user);
+    // Verificar acceso premium usando los scopes del access token
+    const hasPremiumFromScopes = hasPremiumAccess(session.accessToken);
 
     // Log de la decisión final
     console.log('Roles endpoint - Authorization check:', {
       email,
-      roles,
+      scopes: session.accessToken.scope,
       isAllowedListUser,
-      hasPremiumRole,
-      isPremium: isAllowedListUser || hasPremiumRole,
+      hasPremiumFromScopes,
+      isPremium: isAllowedListUser || hasPremiumFromScopes,
       timestamp: new Date().toISOString()
     });
 
@@ -117,10 +95,10 @@ export async function GET(req) {
       user: {
         email,
         name,
-        roles,
-        isPremium: isAllowedListUser || hasPremiumRole,
+        scopes: session.accessToken.scope.split(' '),
+        isPremium: isAllowedListUser || hasPremiumFromScopes,
         isAllowedListUser,
-        hasPremiumRole,
+        hasPremiumAccess: hasPremiumFromScopes,
         isAuthenticated: true
       }
     }, {
@@ -140,14 +118,14 @@ export async function GET(req) {
       user: {
         email: 'error@example.com',
         name: 'Error User',
-        roles: [],
+        scopes: [],
         isPremium: false,
         isAllowedListUser: false,
-        hasPremiumRole: false,
+        hasPremiumAccess: false,
         isAuthenticated: false,
         isTemporary: true
       },
-      error: 'Error al verificar roles',
+      error: 'Error al verificar acceso',
       details: error.message,
       type: error.constructor.name
     }, {
