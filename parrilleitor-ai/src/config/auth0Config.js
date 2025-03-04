@@ -18,28 +18,26 @@ export const auth0Config = {
   // Configuración de autorización
   authorizationParams: {
     audience: process.env.AUTH0_AUDIENCE || 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/api/v2/',
-    // Definimos los scopes que necesitamos
-    scope: 'openid profile email read:premium_content access:premium_features'
+    // Scopes básicos que necesitamos
+    scope: 'openid profile email'
   },
   
-  // Scopes para funcionalidades premium
-  premiumScopes: [
-    'read:premium_content',
-    'access:premium_features'
-  ]
+  // Claims personalizados con namespace apropiado
+  customClaims: {
+    namespace: 'https://parrilleitorai.vercel.app',
+    isPremium: 'https://parrilleitorai.vercel.app/premium_status',
+    premiumVerifiedAt: 'https://parrilleitorai.vercel.app/premium_verified_at'
+  }
 };
 
 /**
- * Verifica si un usuario tiene acceso premium basado en sus scopes
+ * Verifica si un usuario tiene acceso premium basado en los claims
  */
 export function hasPremiumAccess(accessToken) {
-  if (!accessToken?.scope) return false;
+  if (!accessToken) return false;
   
-  // Convertir el string de scopes en array
-  const scopes = accessToken.scope.split(' ');
-  
-  // Verificar si tiene los scopes premium necesarios
-  return auth0Config.premiumScopes.some(scope => scopes.includes(scope));
+  // Verificar el claim personalizado de premium usando el namespace correcto
+  return accessToken[auth0Config.customClaims.isPremium] === true;
 }
 
 /**

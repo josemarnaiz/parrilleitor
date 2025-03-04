@@ -1,6 +1,6 @@
 import { getSession } from '@auth0/nextjs-auth0/edge'
 import { isInAllowedList } from '@/config/allowedUsers'
-import { hasPremiumAccess, getUserInfo } from '@/config/auth0Config'
+import { hasPremiumAccess, getUserInfo, auth0Config } from '@/config/auth0Config'
 import { debugAuth0Session } from '@/config/debugger'
 
 // Headers comunes
@@ -30,7 +30,9 @@ export async function GET(req) {
       if (session?.accessToken) {
         console.log('🔍 AUTH0 ACCESS TOKEN DATA:', {
           timestamp: new Date().toISOString(),
-          token: session.accessToken
+          token: session.accessToken,
+          isPremium: session.accessToken[auth0Config.customClaims.isPremium],
+          verifiedAt: session.accessToken[auth0Config.customClaims.premiumVerifiedAt]
         });
       }
       
@@ -54,11 +56,11 @@ export async function GET(req) {
         user: {
           email: null,
           name: null,
-          scopes: [],
           isPremium: false,
           isAllowedListUser: false,
           hasPremiumAccess: false,
-          isAuthenticated: false
+          isAuthenticated: false,
+          premiumVerifiedAt: null
         }
       }, {
         headers: commonHeaders
@@ -78,16 +80,17 @@ export async function GET(req) {
     // Verificar lista de permitidos
     const isAllowedListUser = isInAllowedList(email);
 
-    // Verificar acceso premium usando los scopes del access token
-    const hasPremiumFromScopes = hasPremiumAccess(session.accessToken);
+    // Verificar acceso premium usando los claims del access token
+    const hasPremiumFromClaims = hasPremiumAccess(session.accessToken);
+    const premiumVerifiedAt = session.accessToken[auth0Config.customClaims.premiumVerifiedAt];
 
     // Log de la decisión final
     console.log('Roles endpoint - Authorization check:', {
       email,
-      scopes: session.accessToken.scope,
       isAllowedListUser,
-      hasPremiumFromScopes,
-      isPremium: isAllowedListUser || hasPremiumFromScopes,
+      hasPremiumFromClaims,
+      isPremium: isAllowedListUser || hasPremiumFromClaims,
+      premiumVerifiedAt,
       timestamp: new Date().toISOString()
     });
 
@@ -95,11 +98,11 @@ export async function GET(req) {
       user: {
         email,
         name,
-        scopes: session.accessToken.scope.split(' '),
-        isPremium: isAllowedListUser || hasPremiumFromScopes,
+        isPremium: isAllowedListUser || hasPremiumFromClaims,
         isAllowedListUser,
-        hasPremiumAccess: hasPremiumFromScopes,
-        isAuthenticated: true
+        hasPremiumAccess: hasPremiumFromClaims,
+        isAuthenticated: true,
+        premiumVerifiedAt
       }
     }, {
       headers: commonHeaders
@@ -118,12 +121,12 @@ export async function GET(req) {
       user: {
         email: 'error@example.com',
         name: 'Error User',
-        scopes: [],
         isPremium: false,
         isAllowedListUser: false,
         hasPremiumAccess: false,
         isAuthenticated: false,
-        isTemporary: true
+        isTemporary: true,
+        premiumVerifiedAt: null
       },
       error: 'Error al verificar acceso',
       details: error.message,
