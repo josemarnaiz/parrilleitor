@@ -1,11 +1,59 @@
 import { getSession } from '@auth0/nextjs-auth0';
 import { AIProviderFactory } from '@/services/ai/AIProviderFactory';
 import { isInAllowedList } from '@/config/allowedUsers';
-import connectDB from '@/lib/mongodb';
-import Conversation from '@/models/Conversation';
-import { logAuth, logAuthError, logError, logInfo } from '@/config/logger';
 import { hasPremiumAccess } from '@/config/auth0Config';
+import { logAuth, logAuthError, logError, logInfo } from '@/config/logger';
 import crypto from 'crypto';
+import { MongoClient, ObjectId } from 'mongodb';
+
+// MongoDB configuration
+const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_DB = process.env.MONGODB_DATABASE;
+const COLLECTION_NAME = 'conversations';
+
+// MongoDB client
+let cachedClient = null;
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedClient && cachedDb) {
+    return { client: cachedClient, db: cachedDb };
+  }
+
+  if (!MONGODB_URI) {
+    console.error('Error de configuración: No se ha definido MONGODB_URI en las variables de entorno');
+    throw new Error('La configuración de la base de datos es incorrecta. Contacta con el administrador.');
+  }
+
+  if (!MONGODB_DB) {
+    console.error('Error de configuración: No se ha definido MONGODB_DATABASE en las variables de entorno');
+    throw new Error('La configuración de la base de datos es incorrecta. Contacta con el administrador.');
+  }
+
+  if (!MONGODB_URI.startsWith('mongodb://') && !MONGODB_URI.startsWith('mongodb+srv://')) {
+    console.error('Error de configuración: Formato de MONGODB_URI incorrecto');
+    throw new Error('El formato de la URI de MongoDB es incorrecto. Debe comenzar con "mongodb://" o "mongodb+srv://"');
+  }
+
+  try {
+    const client = new MongoClient(MONGODB_URI, {
+      maxPoolSize: 1,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 5000,
+    });
+
+    await client.connect();
+    const db = client.db(MONGODB_DB);
+
+    cachedClient = client;
+    cachedDb = db;
+
+    return { client, db };
+  } catch (error) {
+    console.error('Error al conectar con MongoDB:', error);
+    throw new Error('No se pudo conectar a la base de datos. Verifica la conexión y las credenciales.');
+  }
+}
 
 const SYSTEM_PROMPT = `You are ParrilleitorAI, a friendly and professional AI assistant specialized in sports nutrition and physical exercise. Your purpose is to help users achieve their fitness and nutrition goals.
 
@@ -109,36 +157,55 @@ export default async function handler(req, res) {
           return;
         }
 
-        // Conectar a la base de datos
-        const { db } = await connectDB();
-        
-        // Verificar que la conversación pertenece al usuario actual
-        const conversation = await Conversation.findOne({ 
-          _id: conversationId,
-          userId: session.user.sub 
-        });
-        
-        if (!conversation) {
-          logError('Conversation not found or does not belong to user', null, { 
+        try {
+          // Conectar a la base de datos
+          const { db } = await connectToDatabase();
+          
+          // Convertir el ID a ObjectId con manejo de errores
+          let objectId;
+          try {
+            objectId = new ObjectId(conversationId);
+          } catch (error) {
+            logError('Invalid conversationId format', error, { requestId, conversationId });
+            res.status(400).json({ error: 'Formato de ID de conversación inválido.' });
+            return;
+          }
+          
+          // Verificar que la conversación pertenece al usuario actual
+          const conversation = await db.collection(COLLECTION_NAME).findOne({ 
+            _id: objectId,
+            userId: session.user.sub 
+          });
+          
+          if (!conversation) {
+            logError('Conversation not found or does not belong to user', null, { 
+              requestId, 
+              conversationId,
+              userId: session.user.sub
+            });
+            res.status(404).json({ error: 'Conversación no encontrada o no pertenece a este usuario.' });
+            return;
+          }
+          
+          // Eliminar la conversación
+          await db.collection(COLLECTION_NAME).deleteOne({ _id: objectId });
+          
+          logInfo('Conversation deleted successfully', { 
             requestId, 
             conversationId,
             userId: session.user.sub
           });
-          res.status(404).json({ error: 'Conversación no encontrada o no pertenece a este usuario.' });
+          
+          res.status(200).json({ message: 'Conversación eliminada correctamente' });
+          return;
+        } catch (error) {
+          logError('Error deleting conversation', error, { 
+            requestId,
+            method: 'DELETE'
+          });
+          res.status(500).json({ error: 'Error al eliminar la conversación.' });
           return;
         }
-        
-        // Eliminar la conversación
-        await Conversation.deleteOne({ _id: conversationId });
-        
-        logInfo('Conversation deleted successfully', { 
-          requestId, 
-          conversationId,
-          userId: session.user.sub
-        });
-        
-        res.status(200).json({ message: 'Conversación eliminada correctamente' });
-        return;
       } catch (error) {
         logError('Error deleting conversation', error, { 
           requestId,
@@ -236,22 +303,27 @@ export default async function handler(req, res) {
     try {
       // Intentar conectar a MongoDB
       console.log(`[${requestId}] Conectando a MongoDB`);
-      await connectDB();
+      const { db } = await connectToDatabase();
       console.log(`[${requestId}] Conexión a MongoDB establecida correctamente`);
       
       // Buscar o crear conversación
       if (conversationId) {
         console.log(`[${requestId}] Buscando conversación existente con ID: ${conversationId}`);
-        conversation = await Conversation.findOne({
-          _id: conversationId,
-          userId: session.user.sub,
-          isActive: true
-        });
-        
-        if (conversation) {
-          console.log(`[${requestId}] Conversación encontrada, mensajes actuales: ${conversation.messages.length}`);
-        } else {
-          console.log(`[${requestId}] Conversación no encontrada, creando nueva`);
+        try {
+          const existingConversation = await db.collection(COLLECTION_NAME).findOne({
+            _id: new ObjectId(conversationId),
+            userId: session.user.sub,
+            isActive: true
+          });
+          
+          if (existingConversation) {
+            console.log(`[${requestId}] Conversación encontrada, mensajes actuales: ${existingConversation.messages.length}`);
+            conversation = existingConversation;
+          } else {
+            console.log(`[${requestId}] Conversación no encontrada, creando nueva`);
+          }
+        } catch (findError) {
+          console.error(`[${requestId}] Error al buscar conversación:`, findError);
         }
       } else {
         console.log(`[${requestId}] Creando nueva conversación`);
@@ -259,23 +331,60 @@ export default async function handler(req, res) {
       
       if (!conversation) {
         // Crear nueva conversación
-        conversation = new Conversation({
+        conversation = {
           userId: session.user.sub,
           userEmail: session.user.email,
           messages: [],
           lastUpdated: new Date(),
-          isActive: true
-        });
-        console.log(`[${requestId}] Nueva conversación creada`);
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        try {
+          // Insertar la nueva conversación y obtener el ID
+          const result = await db.collection(COLLECTION_NAME).insertOne(conversation);
+          conversation._id = result.insertedId;
+          console.log(`[${requestId}] Nueva conversación creada con ID: ${conversation._id}`);
+        } catch (insertError) {
+          console.error(`[${requestId}] Error al crear nueva conversación:`, insertError);
+          throw insertError;
+        }
       }
       
-      // Usar el nuevo método addMessages para añadir ambos mensajes a la vez
+      // Añadir nuevos mensajes a la conversación
       console.log(`[${requestId}] Añadiendo mensajes a la conversación`);
-      // Esto es más eficiente que hacer dos operaciones de guardado separadas
-      await conversation.addMessages([
+      
+      const newMessages = [
         { role: 'user', content: truncatedMessage, timestamp: new Date() },
         { role: 'assistant', content: aiResponse, timestamp: new Date() }
-      ]);
+      ];
+      
+      try {
+        await db.collection(COLLECTION_NAME).updateOne(
+          { _id: conversation._id },
+          { 
+            $push: { 
+              messages: { 
+                $each: newMessages 
+              } 
+            },
+            $set: { 
+              lastUpdated: new Date(),
+              updatedAt: new Date() 
+            }
+          }
+        );
+        
+        // Actualizar el objeto conversation con los nuevos mensajes para devolverlo al cliente
+        conversation.messages = conversation.messages.concat(newMessages);
+        conversation.lastUpdated = new Date();
+        
+        console.log(`[${requestId}] Mensajes añadidos correctamente a la conversación ${conversation._id}`);
+      } catch (updateError) {
+        console.error(`[${requestId}] Error al añadir mensajes:`, updateError);
+        throw updateError;
+      }
       
       console.log(`[${requestId}] Conversación guardada correctamente en MongoDB, ID: ${conversation._id}`);
     } catch (error) {
