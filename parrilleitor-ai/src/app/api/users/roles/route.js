@@ -33,6 +33,33 @@ export async function GET(req) {
     try {
       session = await getSession(req);
       
+      // Log RAW de la sesión completa de Auth0
+      console.log('🔍 AUTH0 RAW SESSION DATA:', {
+        timestamp: new Date().toISOString(),
+        sessionKeys: Object.keys(session || {}),
+        fullSession: JSON.stringify(session, null, 2)
+      });
+      
+      if (session?.user) {
+        console.log('🔍 AUTH0 RAW USER DATA:', {
+          timestamp: new Date().toISOString(),
+          userKeys: Object.keys(session.user),
+          fullUser: JSON.stringify(session.user, null, 2)
+        });
+        
+        // Log específico de claims importantes
+        const claimKeys = Object.values(auth0Config.claims);
+        const relevantClaims = {};
+        claimKeys.forEach(key => {
+          relevantClaims[key] = session.user[key];
+        });
+        
+        console.log('🔍 AUTH0 RELEVANT CLAIMS:', {
+          timestamp: new Date().toISOString(),
+          claims: relevantClaims
+        });
+      }
+      
       // Debug de la sesión
       debugAuth0Session(session, 'roles-api-get', {
         url: req.url,
@@ -42,6 +69,7 @@ export async function GET(req) {
     } catch (sessionError) {
       console.log('Error getting session:', {
         error: sessionError.message,
+        stack: sessionError.stack,
         timestamp: new Date().toISOString()
       });
     }
