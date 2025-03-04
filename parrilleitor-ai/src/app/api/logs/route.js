@@ -3,7 +3,12 @@ import { NextResponse } from 'next/server';
 import { isInAllowedList } from '../../../config/allowedUsers';
 import { hasPremiumAccess, auth0Config } from '../../../config/auth0Config';
 import { logAuth, logAuthError, logError } from '../../../config/logger';
-import { connectToDatabase } from '../../../services/database';
+// Detectar si estamos en Edge Runtime
+const isEdgeRuntime = typeof EdgeRuntime !== 'undefined';
+// Importar la versión apropiada de MongoDB según el entorno
+const { connectToDatabase } = isEdgeRuntime 
+  ? require('../../../lib/mongodb-edge') 
+  : require('../../../lib/mongodb');
 
 // Lista de correos electrónicos autorizados para acceder a los logs completos (solo administradores)
 const ADMIN_EMAILS = ['user1@example.com', 'user2@example.com']; // Reemplazar con correos reales
@@ -90,7 +95,22 @@ export async function GET(req) {
     }
     
     try {
-      // Conectar a la base de datos
+      // Si estamos en Edge Runtime, no podemos conectar a MongoDB
+      if (isEdgeRuntime) {
+        return NextResponse.json({
+          logs: [],
+          meta: {
+            count: 0,
+            type,
+            days: safeDays,
+            isAdmin: isUserAdmin,
+            environment: 'edge',
+            message: 'Los logs de MongoDB no están disponibles en Edge Runtime'
+          }
+        }, { headers: corsHeaders });
+      }
+      
+      // Conectar a la base de datos (solo en Node.js runtime)
       const { db } = await connectToDatabase();
       
       // Obtener los logs de la colección de logs

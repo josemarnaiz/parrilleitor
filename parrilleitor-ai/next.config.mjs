@@ -4,7 +4,7 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
   },
-  serverExternalPackages: ['mongoose'],
+  serverExternalPackages: ['mongoose', 'mongodb'],
   images: {
     domains: ['lh3.googleusercontent.com', 's.gravatar.com'],
     unoptimized: false,
