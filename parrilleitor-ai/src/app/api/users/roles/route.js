@@ -19,6 +19,26 @@ export async function GET(req) {
     let session = null;
     try {
       session = await getSession(req);
+      
+      if (session) {
+        console.log('🔍 Session structure:', {
+          hasAccessToken: !!session.accessToken,
+          hasUser: !!session.user,
+          accessTokenKeys: session.accessToken ? Object.keys(session.accessToken) : [],
+          userKeys: session.user ? Object.keys(session.user) : []
+        });
+        
+        // Log del token decodificado para ver su estructura
+        if (session.accessToken) {
+          console.log('🔑 Access Token Claims:', {
+            namespace: auth0Config.customClaims.namespace,
+            premiumPath: `${auth0Config.customClaims.namespace}/premium_status`,
+            claims: Object.entries(session.accessToken)
+              .filter(([key]) => key.includes('https://'))
+              .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {})
+          });
+        }
+      }
     } catch (sessionError) {
       console.error('Session error:', sessionError.message);
     }

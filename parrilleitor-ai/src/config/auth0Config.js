@@ -33,12 +33,20 @@ export const auth0Config = {
 };
 
 /**
- * Verifica si un usuario tiene acceso premium basado en los claims
+ * Verifica si un usuario tiene acceso premium basado en los claims del access token
  */
 export function hasPremiumAccess(token) {
   if (!token) return false;
   
   try {
+    // Log completo del token para debugging
+    console.log('🔍 Token structure:', {
+      keys: Object.keys(token),
+      allClaims: Object.entries(token)
+        .filter(([key]) => key.includes('https://'))
+        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {})
+    });
+
     // Los claims personalizados están en el formato namespace/claim
     const premiumClaim = `${auth0Config.customClaims.namespace}/premium_status`;
     const verifiedAtClaim = `${auth0Config.customClaims.namespace}/premium_verified_at`;
@@ -48,9 +56,10 @@ export function hasPremiumAccess(token) {
     const premiumVerifiedAt = token[verifiedAtClaim];
     
     // Un solo log claro con la información relevante
-    console.log('🔑 Auth0 Claims:', {
-      claim: premiumClaim,
-      premium: premiumStatus,
+    console.log('🔑 Premium Status:', {
+      namespace: auth0Config.customClaims.namespace,
+      premiumClaim,
+      premiumStatus,
       verifiedAt: premiumVerifiedAt
     });
     
