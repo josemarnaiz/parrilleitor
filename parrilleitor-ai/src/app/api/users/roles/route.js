@@ -30,12 +30,12 @@ export async function GET(req) {
         
         // Log del token decodificado para ver su estructura
         if (session.accessToken) {
-          console.log('🔑 Access Token Claims:', {
+          // El accessToken es un string JWT
+          console.log('🔑 Access Token:', {
             namespace: auth0Config.customClaims.namespace,
             premiumPath: `${auth0Config.customClaims.namespace}/premium_status`,
-            claims: Object.entries(session.accessToken)
-              .filter(([key]) => key.includes('https://'))
-              .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {})
+            tokenLength: session.accessToken.length,
+            isJWT: session.accessToken.split('.').length === 3
           });
         }
       }

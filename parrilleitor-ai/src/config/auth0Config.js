@@ -33,34 +33,61 @@ export const auth0Config = {
 };
 
 /**
+ * Decodifica un JWT sin verificar la firma
+ * @param {string} token - El token JWT a decodificar
+ * @returns {Object|null} El payload del token decodificado o null si hay error
+ */
+function decodeJWT(token) {
+  try {
+    // El token JWT tiene 3 partes: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      console.log('❌ Invalid JWT format:', { partsLength: parts.length });
+      return null;
+    }
+    
+    // Decodificar el payload (segunda parte)
+    const payload = Buffer.from(parts[1], 'base64').toString();
+    const decoded = JSON.parse(payload);
+    
+    // Log del payload decodificado
+    console.log('✅ JWT Decoded:', {
+      iss: decoded.iss,
+      aud: decoded.aud,
+      customClaims: Object.keys(decoded).filter(key => key.startsWith('https://'))
+    });
+    
+    return decoded;
+  } catch (error) {
+    console.error('Error decoding JWT:', error);
+    return null;
+  }
+}
+
+/**
  * Verifica si un usuario tiene acceso premium basado en los claims del access token
  */
 export function hasPremiumAccess(token) {
   if (!token) return false;
   
   try {
-    // Log completo del token para debugging
-    console.log('🔍 Token structure:', {
-      keys: Object.keys(token),
-      allClaims: Object.entries(token)
-        .filter(([key]) => key.includes('https://'))
-        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {})
-    });
+    // Decodificar el JWT para acceder a los claims
+    const decodedToken = decodeJWT(token);
+    if (!decodedToken) return false;
 
     // Los claims personalizados están en el formato namespace/claim
     const premiumClaim = `${auth0Config.customClaims.namespace}/premium_status`;
-    const verifiedAtClaim = `${auth0Config.customClaims.namespace}/premium_verified_at`;
     
-    // Intentar leer los claims del token
-    const premiumStatus = token[premiumClaim];
-    const premiumVerifiedAt = token[verifiedAtClaim];
+    // Intentar leer los claims del token decodificado
+    const premiumStatus = decodedToken[premiumClaim];
     
-    // Un solo log claro con la información relevante
-    console.log('🔑 Premium Status:', {
-      namespace: auth0Config.customClaims.namespace,
-      premiumClaim,
-      premiumStatus,
-      verifiedAt: premiumVerifiedAt
+    // Log del claim específico que buscamos
+    console.log('🔑 Premium Claim Check:', {
+      claim: premiumClaim,
+      value: premiumStatus,
+      allCustomClaims: Object.entries(decodedToken)
+        .filter(([key]) => key.startsWith(auth0Config.customClaims.namespace))
+        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {})
     });
     
     return premiumStatus === true;
