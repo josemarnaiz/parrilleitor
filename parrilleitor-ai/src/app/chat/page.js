@@ -143,7 +143,7 @@ export default function Chat() {
     }
   }, [user, isUserLoading, retryCount, router])
 
-  const loadChatHistory = async () => {
+  const loadChatHistory = async (skipSettingMessages = false) => {
     try {
       setIsLoadingHistory(true);
       const response = await fetch('/api/chat/history', {
@@ -162,10 +162,14 @@ export default function Chat() {
           // Guardar todas las conversaciones
           setAllConversations(data.conversations);
           
-          // Cargar la conversación más reciente
-          const latestConversation = data.conversations[0];
-          setMessages(latestConversation.messages || []);
-          setSelectedConversationId(latestConversation._id);
+          // Solo actualizar mensajes si no estamos en medio de una conversación
+          // o si no se solicita explícitamente omitir esta parte
+          if (!skipSettingMessages && (!selectedConversationId || !messages.length)) {
+            // Cargar la conversación más reciente
+            const latestConversation = data.conversations[0];
+            setMessages(latestConversation.messages || []);
+            setSelectedConversationId(latestConversation._id);
+          }
           
           // Inicializar el objeto de resúmenes con los resúmenes existentes
           const summaries = {};
@@ -177,24 +181,37 @@ export default function Chat() {
           setConversationSummaries(summaries);
           
           // Si la conversación más reciente no tiene resumen, generarlo
+          const latestConversation = data.conversations[0];
           if (!latestConversation.summary) {
             generateSummary(latestConversation._id, latestConversation.messages);
           }
           
-          console.log('Conversación cargada:', latestConversation);
+          console.log('Conversaciones cargadas, conversaciones totales:', data.conversations.length);
         } else {
           console.log('No hay conversaciones disponibles');
-          setMessages([]);
+          
+          // Solo limpiar mensajes si no estamos explícitamente evitando esto
+          if (!skipSettingMessages) {
+            setMessages([]);
+          }
           setAllConversations([]);
         }
       } else {
         console.error('Error al cargar el historial:', data.error || 'Error desconocido');
-        setMessages([]);
+        
+        // Solo limpiar mensajes si no estamos explícitamente evitando esto
+        if (!skipSettingMessages) {
+          setMessages([]);
+        }
         setAllConversations([]);
       }
     } catch (error) {
       console.error('Error al cargar el historial de chat:', error);
-      setMessages([]);
+      
+      // Solo limpiar mensajes si no estamos explícitamente evitando esto
+      if (!skipSettingMessages) {
+        setMessages([]);
+      }
       setAllConversations([]);
     } finally {
       setIsLoadingHistory(false);
@@ -243,83 +260,45 @@ export default function Chat() {
   };
 
   const loadConversation = (conversationId) => {
+    // Verificar que no estamos cargando la misma conversación que ya está seleccionada
+    if (selectedConversationId === conversationId) {
+      console.log('La conversación ya está cargada:', conversationId);
+      return;
+    }
+    
     const conversation = allConversations.find(conv => conv._id === conversationId);
     if (conversation) {
-      setMessages(conversation.messages || []);
-      setSelectedConversationId(conversationId);
+      // Limpiar mensajes actuales y establecer los de la conversación seleccionada
+      setMessages([]); // Primero limpiar para evitar parpadeos/duplicados
       
-      // Si no hay resumen para esta conversación, generarlo
-      if (!conversationSummaries[conversationId]) {
-        generateSummary(conversationId, conversation.messages);
-      }
+      // Timeout mínimo para permitir que el estado se actualice
+      setTimeout(() => {
+        setMessages(conversation.messages || []);
+        setSelectedConversationId(conversationId);
+        
+        // Si no hay resumen para esta conversación, generarlo
+        if (!conversationSummaries[conversationId]) {
+          generateSummary(conversationId, conversation.messages);
+        }
+      }, 10);
     }
   };
 
   const startNewConversation = () => {
     setMessages([]);
     setSelectedConversationId(null);
-  };
-
-  const saveMessages = async (updatedMessages) => {
-    try {
-      setIsLoading(true);
-      
-      // Ensure we have messages to save
-      if (!updatedMessages || updatedMessages.length === 0) {
-        console.error('No hay mensajes para guardar');
-        setError('No hay mensajes para guardar');
-        return false;
-      }
-      
-      // Extract the last user message if available
-      const lastUserMessage = updatedMessages.filter(msg => msg.role === 'user').pop();
-      
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: lastUserMessage ? lastUserMessage.content : '',
-          messages: updatedMessages,
-          conversationId: selectedConversationId,
-        }),
-        credentials: 'include',
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log('Mensajes guardados con éxito');
-        // Si es una nueva conversación, establecer el ID de la conversación recién creada
-        if (!selectedConversationId && data.conversationId) {
-          setSelectedConversationId(data.conversationId);
-        }
-        
-        // Actualizar la lista de conversaciones
-        loadChatHistory();
-        
-        // Si hay suficientes mensajes, generar un resumen
-        if (updatedMessages.length >= 3) {
-          generateSummary(data.conversationId || selectedConversationId, updatedMessages);
-        }
-        
-        return true;
-      } else {
-        throw new Error(data.error || 'Error al guardar los mensajes');
-      }
-    } catch (error) {
-      console.error('Error al guardar los mensajes:', error);
-      setError(`Error al guardar: ${error.message}`);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
+    setInput('');
+    
+    // No se necesita guardar una conversación vacía, se creará cuando se envíe el primer mensaje
+    console.log('Nueva conversación iniciada');
   };
 
   const deleteConversation = async (conversationId) => {
+    if (!conversationId) return;
+    
     try {
       setIsDeletingConversation(true);
+      
       const response = await fetch(`/api/chat?conversationId=${conversationId}`, {
         method: 'DELETE',
         headers: {
@@ -328,46 +307,48 @@ export default function Chat() {
         credentials: 'include',
       });
 
-      const data = await response.json();
-
       if (response.ok) {
-        // Eliminar la conversación de allConversations
-        setAllConversations(prev => prev.filter(conv => conv._id !== conversationId));
+        console.log('Conversación eliminada con éxito:', conversationId);
         
-        // Si la conversación eliminada es la seleccionada actualmente
+        // Actualizar la lista de conversaciones localmente
+        const updatedConversations = allConversations.filter(conv => conv._id !== conversationId);
+        setAllConversations(updatedConversations);
+        
+        // Si la conversación eliminada era la seleccionada, cargar otra o limpiar
         if (selectedConversationId === conversationId) {
-          // Cargar la primera conversación si hay alguna, o crear una nueva
-          if (allConversations.length > 1) {
-            const nextConversation = allConversations.find(conv => conv._id !== conversationId);
-            if (nextConversation) {
-              loadConversation(nextConversation._id);
-            } else {
-              startNewConversation();
-            }
+          if (updatedConversations.length > 0) {
+            // Cargar la primera conversación disponible
+            const nextConversation = updatedConversations[0];
+            setMessages(nextConversation.messages || []);
+            setSelectedConversationId(nextConversation._id);
           } else {
-            startNewConversation();
+            // No hay más conversaciones, limpiar
+            setMessages([]);
+            setSelectedConversationId(null);
           }
         }
-        
-        console.log('Conversación eliminada con éxito');
-        return true;
       } else {
-        throw new Error(data.error || 'Error al eliminar la conversación');
+        const data = await response.json();
+        console.error('Error al eliminar la conversación:', data.error);
+        setError(`Error al eliminar: ${data.error}`);
       }
     } catch (error) {
       console.error('Error al eliminar la conversación:', error);
       setError(`Error al eliminar: ${error.message}`);
-      return false;
     } finally {
       setIsDeletingConversation(false);
       setShowDeleteConfirm(false);
       setConversationToDelete(null);
+      
+      // Recargar el historial completo para asegurar sincronización, pero sin actualizar los mensajes actuales
+      loadChatHistory(true);
     }
   };
 
   const deleteAllConversations = async () => {
     try {
       setIsDeletingConversation(true);
+      
       const response = await fetch('/api/chat/all', {
         method: 'DELETE',
         headers: {
@@ -375,23 +356,25 @@ export default function Chat() {
         },
         credentials: 'include',
       });
-
+      
       const data = await response.json();
-
+      
       if (response.ok) {
-        // Limpiar las conversaciones y mensajes
-        setAllConversations([]);
-        startNewConversation();
+        console.log('Todas las conversaciones eliminadas con éxito:', data);
         
-        console.log('Todas las conversaciones eliminadas con éxito');
-        return true;
+        // Limpiar todo el estado
+        setAllConversations([]);
+        setMessages([]);
+        setSelectedConversationId(null);
+        setConversationSummaries({});
+        setShowDeleteAllConfirm(false);
       } else {
-        throw new Error(data.error || 'Error al eliminar todas las conversaciones');
+        console.error('Error al eliminar todas las conversaciones:', data.error);
+        setError(`Error al eliminar: ${data.error}`);
       }
     } catch (error) {
       console.error('Error al eliminar todas las conversaciones:', error);
       setError(`Error al eliminar: ${error.message}`);
-      return false;
     } finally {
       setIsDeletingConversation(false);
       setShowDeleteAllConfirm(false);
@@ -421,87 +404,73 @@ export default function Chat() {
       timestamp: new Date(),
     };
     
+    // Actualizar UI inmediatamente con el mensaje del usuario
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInput('');
     setIsTyping(true);
     
     try {
-      // Guardar el mensaje del usuario
-      const saved = await saveMessages(updatedMessages);
+      // No guardamos los mensajes aquí, solo enviar al API directamente
+      console.log('Enviando mensaje al API con conversationId:', selectedConversationId);
+          
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage.content,
+          conversationId: selectedConversationId,
+        }),
+        credentials: 'include',
+      });
       
-      if (!saved) {
-        throw new Error('Error al guardar el mensaje');
+      const data = await response.json();
+      console.log('Respuesta recibida del API:', data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Error en la respuesta del asistente');
       }
       
-      // Simular envío al servicio de AI y respuesta
-      const sendMessageAsync = async () => {
-        try {
-          console.log('Enviando mensaje al API con conversationId:', selectedConversationId);
-          
-          const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              message: userMessage.content,
-              conversationId: selectedConversationId,
-            }),
-            credentials: 'include',
-          });
-          
-          const data = await response.json();
-          console.log('Respuesta recibida del API:', data);
-          
-          if (!response.ok) {
-            throw new Error(data.error || 'Error en la respuesta del asistente');
-          }
-          
-          // Añadir respuesta al chat
-          const assistantMessage = {
-            role: 'assistant',
-            content: data.response,
-            timestamp: new Date(),
-          };
-          
-          console.log('Añadiendo mensaje del asistente:', assistantMessage);
-          
-          const newMessages = [...updatedMessages, assistantMessage];
-          setMessages(newMessages);
-          
-          // Si se creó una nueva conversación, actualizar el ID
-          if (data.conversation && data.conversation._id && !selectedConversationId) {
-            console.log('Actualizando ID de conversación:', data.conversation._id);
-            setSelectedConversationId(data.conversation._id);
-          }
-          
-          // Guardar la respuesta
-          await saveMessages(newMessages);
-          
-        } catch (error) {
-          console.error('Error al procesar el mensaje:', error);
-          
-          // Mostrar mensaje de error en el chat
-          const errorMessage = {
-            role: 'error',
-            content: `Error: ${error.message}. Por favor, intenta de nuevo.`,
-            timestamp: new Date(),
-          };
-          
-          setMessages([...updatedMessages, errorMessage]);
-          setError(error.message);
-        } finally {
-          setIsTyping(false);
-        }
+      // Añadir respuesta al chat
+      const assistantMessage = {
+        role: 'assistant',
+        content: data.response,
+        timestamp: new Date(),
       };
       
-      sendMessageAsync();
+      console.log('Añadiendo mensaje del asistente:', assistantMessage);
+      
+      // Crear una nueva lista de mensajes con el mensaje del usuario y la respuesta
+      const newMessages = [...updatedMessages, assistantMessage];
+      setMessages(newMessages);
+      
+      // Si se creó una nueva conversación, actualizar el ID
+      if (data.conversation && data.conversation._id && !selectedConversationId) {
+        console.log('Actualizando ID de conversación:', data.conversation._id);
+        setSelectedConversationId(data.conversation._id);
+      }
+      
+      // La conversación ya está guardada por el backend
       
     } catch (error) {
-      console.error('Error en el envío del mensaje:', error);
-      setIsTyping(false);
+      console.error('Error al procesar el mensaje:', error);
+      
+      // Mostrar mensaje de error en el chat
+      const errorMessage = {
+        role: 'error',
+        content: `Error: ${error.message}. Por favor, intenta de nuevo.`,
+        timestamp: new Date(),
+      };
+      
+      setMessages([...updatedMessages, errorMessage]);
       setError(error.message);
+    } finally {
+      setIsTyping(false);
+      
+      // Actualizar la lista de conversaciones después de completar, pero sin modificar los mensajes
+      loadChatHistory(true);
     }
   };
 
