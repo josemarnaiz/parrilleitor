@@ -29,6 +29,49 @@ export const auth0Config = {
     // Los nombres de los claims (sin el namespace)
     isPremium: 'premium_status',
     premiumVerifiedAt: 'premium_verified_at'
+  },
+
+  // Callbacks para procesar el token
+  callbacks: {
+    async jwt({ token, account, profile }) {
+      // Log para debugging
+      console.log('JWT Callback:', { 
+        hasAccessToken: !!account?.access_token,
+        hasProfile: !!profile,
+        tokenKeys: Object.keys(token)
+      });
+
+      // Si tenemos un access token nuevo, lo guardamos
+      if (account?.access_token) {
+        // Decodificar el token para obtener los claims
+        const decodedToken = decodeJWT(account.access_token);
+        if (decodedToken) {
+          const premiumClaim = `${auth0Config.customClaims.namespace}/premium_status`;
+          const verifiedAtClaim = `${auth0Config.customClaims.namespace}/premium_verified_at`;
+
+          // Guardar los claims en el token de sesión
+          token.isPremium = decodedToken[premiumClaim] === true;
+          token.premiumVerifiedAt = decodedToken[verifiedAtClaim];
+          token.accessToken = account.access_token;
+
+          console.log('Premium Claims:', {
+            isPremium: token.isPremium,
+            verifiedAt: token.premiumVerifiedAt
+          });
+        }
+      }
+
+      return token;
+    },
+
+    async session({ session, token }) {
+      // Añadir la información de premium a la sesión
+      session.user.isPremium = token.isPremium;
+      session.user.premiumVerifiedAt = token.premiumVerifiedAt;
+      session.accessToken = token.accessToken;
+
+      return session;
+    }
   }
 };
 
@@ -67,32 +110,27 @@ function decodeJWT(token) {
 /**
  * Verifica si un usuario tiene acceso premium basado en los claims del access token
  */
-export function hasPremiumAccess(token) {
-  if (!token) return false;
+export function hasPremiumAccess(session) {
+  if (!session) return false;
   
   try {
-    // Decodificar el JWT para acceder a los claims
-    const decodedToken = decodeJWT(token);
-    if (!decodedToken) return false;
+    // Primero intentamos leer del usuario en la sesión
+    if (session.user?.isPremium !== undefined) {
+      return session.user.isPremium === true;
+    }
 
-    // Los claims personalizados están en el formato namespace/claim
-    const premiumClaim = `${auth0Config.customClaims.namespace}/premium_status`;
-    
-    // Intentar leer los claims del token decodificado
-    const premiumStatus = decodedToken[premiumClaim];
-    
-    // Log del claim específico que buscamos
-    console.log('🔑 Premium Claim Check:', {
-      claim: premiumClaim,
-      value: premiumStatus,
-      allCustomClaims: Object.entries(decodedToken)
-        .filter(([key]) => key.startsWith(auth0Config.customClaims.namespace))
-        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {})
-    });
-    
-    return premiumStatus === true;
+    // Si no está en la sesión, intentamos decodificar el token
+    if (session.accessToken) {
+      const decodedToken = decodeJWT(session.accessToken);
+      if (decodedToken) {
+        const premiumClaim = `${auth0Config.customClaims.namespace}/premium_status`;
+        return decodedToken[premiumClaim] === true;
+      }
+    }
+
+    return false;
   } catch (error) {
-    console.error('Error reading premium claim:', error);
+    console.error('Error checking premium access:', error);
     return false;
   }
 }

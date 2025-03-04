@@ -74,10 +74,9 @@ export async function GET(req) {
     // Verificar lista de permitidos
     const isAllowedListUser = isInAllowedList(email);
 
-    // Verificar acceso premium usando los claims del access token
-    const hasPremiumFromClaims = hasPremiumAccess(session.accessToken);
-    const verifiedAtClaim = `${auth0Config.customClaims.namespace}/${auth0Config.customClaims.premiumVerifiedAt}`;
-    const premiumVerifiedAt = session.accessToken[verifiedAtClaim];
+    // Verificar acceso premium usando la sesión
+    const hasPremiumFromClaims = hasPremiumAccess(session);
+    const premiumVerifiedAt = session.user?.premiumVerifiedAt;
 
     return Response.json({
       user: {
