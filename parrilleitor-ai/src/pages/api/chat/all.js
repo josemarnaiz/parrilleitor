@@ -1,8 +1,56 @@
 import { getSession } from '@auth0/nextjs-auth0';
 import { isInAllowedList } from '@/config/allowedUsers';
 import { hasPremiumAccess } from '@/config/auth0Config';
-import connectDB from '@/lib/mongodb';
-import Conversation from '@/models/Conversation';
+import { MongoClient } from 'mongodb';
+
+// MongoDB configuration
+const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_DB = process.env.MONGODB_DATABASE;
+const COLLECTION_NAME = 'conversations';
+
+// MongoDB client
+let cachedClient = null;
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedClient && cachedDb) {
+    return { client: cachedClient, db: cachedDb };
+  }
+
+  if (!MONGODB_URI) {
+    console.error('Error de configuración: No se ha definido MONGODB_URI en las variables de entorno');
+    throw new Error('La configuración de la base de datos es incorrecta. Contacta con el administrador.');
+  }
+
+  if (!MONGODB_DB) {
+    console.error('Error de configuración: No se ha definido MONGODB_DATABASE en las variables de entorno');
+    throw new Error('La configuración de la base de datos es incorrecta. Contacta con el administrador.');
+  }
+
+  if (!MONGODB_URI.startsWith('mongodb://') && !MONGODB_URI.startsWith('mongodb+srv://')) {
+    console.error('Error de configuración: Formato de MONGODB_URI incorrecto');
+    throw new Error('El formato de la URI de MongoDB es incorrecto. Debe comenzar con "mongodb://" o "mongodb+srv://"');
+  }
+
+  try {
+    const client = new MongoClient(MONGODB_URI, {
+      maxPoolSize: 1,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 5000,
+    });
+
+    await client.connect();
+    const db = client.db(MONGODB_DB);
+
+    cachedClient = client;
+    cachedDb = db;
+
+    return { client, db };
+  } catch (error) {
+    console.error('Error al conectar con MongoDB:', error);
+    throw new Error('No se pudo conectar a la base de datos. Verifica la conexión y las credenciales.');
+  }
+}
 
 export default async function handler(req, res) {
   // Generar un ID único para esta solicitud para seguimiento en logs
@@ -64,17 +112,16 @@ export default async function handler(req, res) {
       }, 25000); // 25 segundos para toda la función
       
       console.log(`[${requestId}] Conectando a MongoDB...`);
-      await connectDB();
+      const { db } = await connectToDatabase();
       
       console.log(`[${requestId}] Iniciando eliminación de conversaciones para userId: ${session.user.sub}`);
       
       // Implementar el deleteMany con timeout manual
       const deleteOperation = async () => {
         try {
-          // Usar el modelo directamente en vez de una función
-          return await Conversation.deleteMany({
+          return await db.collection(COLLECTION_NAME).deleteMany({
             userId: session.user.sub
-          }).exec(); // .exec() es importante para que se ejecute inmediatamente
+          });
         } catch (error) {
           console.error(`[${requestId}] Error en operación deleteMany:`, error);
           throw error;
