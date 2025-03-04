@@ -99,27 +99,28 @@ export default async function handler(req, res) {
     // Obtener el cliente de MongoDB
     const mongoClient = getMongoDBClient();
     
-    // Verificar la conexión a MongoDB con timeout
+    // Verificar la conexión a MongoDB
     try {
-      const isConnected = await mongoClient.ping();
-      if (!isConnected) {
+      const isConnected = await mongoClient.getConnection();
+      if (!isConnected?.db) {
         console.error('No se pudo conectar a MongoDB');
         clearTimeout(functionTimeout);
         return res.status(200).json({ 
           success: false,
           conversations: [],
           message: 'Error de conexión a MongoDB',
-          error: 'No se pudo establecer conexión con la base de datos. Verifica que la IP del servidor esté permitida en MongoDB Atlas.'
+          error: 'No se pudo establecer conexión con la base de datos.',
+          details: 'Verifica la configuración de MongoDB y los permisos de acceso.'
         });
       }
-    } catch (pingError) {
-      console.error('Error al verificar la conexión a MongoDB:', pingError);
+    } catch (connectionError) {
+      console.error('Error al verificar la conexión a MongoDB:', connectionError);
       clearTimeout(functionTimeout);
       return res.status(200).json({ 
         success: false,
         conversations: [],
         message: 'Error de conexión a MongoDB',
-        error: pingError.message,
+        error: connectionError.message,
         details: 'Es posible que necesites configurar el acceso desde cualquier IP (0.0.0.0/0) en MongoDB Atlas Network Access.'
       });
     }
