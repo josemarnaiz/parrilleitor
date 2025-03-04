@@ -1,7 +1,7 @@
 import { getSession } from '@auth0/nextjs-auth0';
 import { isInAllowedList } from '@/config/allowedUsers';
-import getMongoDBClient from '@/lib/mongodb';
 import { hasPremiumAccess } from '@/config/auth0Config';
+import { MongoClient } from 'mongodb';
 
 const AUTH0_NAMESPACE = 'https://dev-zwbfqql3rcbh67rv.us.auth0.com/roles';
 const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS';
@@ -10,14 +10,60 @@ const PREMIUM_ROLE_ID = 'rol_vWDGREdcQo4ulVhS';
 const commonHeaders = {
   'Cache-Control': 'no-store, max-age=0',
   'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': 'https://parrilleitorai.vercel.app',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Credentials': 'true',
 };
 
-// Nombre de la colección en MongoDB
+// MongoDB configuration
+const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_DB = process.env.MONGODB_DATABASE;
 const COLLECTION_NAME = 'conversations';
+
+// MongoDB client
+let cachedClient = null;
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedClient && cachedDb) {
+    return { client: cachedClient, db: cachedDb };
+  }
+
+  if (!MONGODB_URI) {
+    console.error('Error de configuración: No se ha definido MONGODB_URI en las variables de entorno');
+    throw new Error('La configuración de la base de datos es incorrecta. Contacta con el administrador.');
+  }
+
+  if (!MONGODB_DB) {
+    console.error('Error de configuración: No se ha definido MONGODB_DATABASE en las variables de entorno');
+    throw new Error('La configuración de la base de datos es incorrecta. Contacta con el administrador.');
+  }
+
+  if (!MONGODB_URI.startsWith('mongodb://') && !MONGODB_URI.startsWith('mongodb+srv://')) {
+    console.error('Error de configuración: Formato de MONGODB_URI incorrecto');
+    throw new Error('El formato de la URI de MongoDB es incorrecto. Debe comenzar con "mongodb://" o "mongodb+srv://"');
+  }
+
+  try {
+    const client = new MongoClient(MONGODB_URI, {
+      maxPoolSize: 1,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 5000,
+    });
+
+    await client.connect();
+    const db = client.db(MONGODB_DB);
+
+    cachedClient = client;
+    cachedDb = db;
+
+    return { client, db };
+  } catch (error) {
+    console.error('Error al conectar con MongoDB:', error);
+    throw new Error('No se pudo conectar a la base de datos. Verifica la conexión y las credenciales.');
+  }
+}
 
 // Función para manejar errores de forma consistente
 function handleError(res, error, defaultMessage = 'Error interno del servidor') {
@@ -27,23 +73,9 @@ function handleError(res, error, defaultMessage = 'Error interno del servidor') 
     timestamp: new Date().toISOString()
   });
   
-  // Determinar el tipo de error para dar una respuesta más específica
-  let errorMessage = defaultMessage;
-  let errorDetails = error.message;
-  
-  if (error.message.includes('buffering timed out') || error.message.includes('timed out')) {
-    errorMessage = 'La operación en la base de datos tardó demasiado tiempo. Por favor, inténtalo de nuevo.';
-    errorDetails = 'Timeout en operación de MongoDB. Esto puede ocurrir si la conexión es lenta o si hay problemas de red.';
-  } else if (error.message.includes('connection') || error.message.includes('network')) {
-    errorMessage = 'Problema de conexión con la base de datos. Por favor, inténtalo de nuevo más tarde.';
-    errorDetails = 'Error de conexión a MongoDB. Verifica la conectividad de red y la configuración de acceso.';
-  }
-  
-  // Siempre devolver 200 para evitar errores en el cliente, pero con información del error
   return res.status(200).json({
     success: false,
-    error: errorMessage,
-    details: errorDetails,
+    error: error.message || defaultMessage,
     timestamp: new Date().toISOString()
   });
 }
@@ -60,22 +92,10 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Establecer un timeout para la función completa
-  const functionTimeout = setTimeout(() => {
-    console.error('Timeout de función alcanzado, respondiendo con error');
-    return res.status(200).json({ 
-      success: false,
-      error: 'La solicitud ha excedido el tiempo máximo de espera',
-      message: 'Por favor, inténtalo de nuevo más tarde.',
-      timestamp: new Date().toISOString()
-    });
-  }, 25000); // 25 segundos de timeout total
-
   try {
     const session = await getSession(req, res);
 
     if (!session?.user) {
-      clearTimeout(functionTimeout);
       return res.status(401).json({ error: 'No autenticado' });
     }
 
@@ -84,14 +104,13 @@ export default async function handler(req, res) {
       accessToken: session.accessToken ? 'present' : 'missing',
       user: {
         ...session.user,
-        // No logueamos el token completo por seguridad
         accessToken: session.user.accessToken ? 'present' : 'missing',
       },
       sessionId: session.sessionId,
       timestamp: new Date().toISOString()
     });
 
-    // Verify premium access using the same method as the rest of the app
+    // Verify premium access
     const hasPremiumFromClaims = hasPremiumAccess(session);
     const isAllowedUser = isInAllowedList(session.user.email);
 
@@ -106,61 +125,29 @@ export default async function handler(req, res) {
     });
 
     if (!hasPremiumFromClaims && !isAllowedUser) {
-      clearTimeout(functionTimeout);
       return res.status(403).json({ error: 'Se requiere una cuenta premium' });
     }
 
-    // Obtener el cliente de MongoDB
-    const mongoClient = getMongoDBClient();
-    
-    // Verificar la conexión a MongoDB
-    try {
-      const isConnected = await mongoClient.getConnection();
-      if (!isConnected?.db) {
-        console.error('No se pudo conectar a MongoDB');
-        clearTimeout(functionTimeout);
-        return res.status(200).json({ 
-          success: false,
-          conversations: [],
-          message: 'Error de conexión a MongoDB',
-          error: 'No se pudo establecer conexión con la base de datos.',
-          details: 'Verifica la configuración de MongoDB y los permisos de acceso.'
-        });
-      }
-    } catch (connectionError) {
-      console.error('Error al verificar la conexión a MongoDB:', connectionError);
-      clearTimeout(functionTimeout);
-      return res.status(200).json({ 
-        success: false,
-        conversations: [],
-        message: 'Error de conexión a MongoDB',
-        error: connectionError.message,
-        details: 'Es posible que necesites configurar el acceso desde cualquier IP (0.0.0.0/0) en MongoDB Atlas Network Access.'
-      });
-    }
+    // Connect to MongoDB
+    let { db } = await connectToDatabase();
     
     if (req.method === 'GET') {
       try {
-        // Buscar conversaciones usando MongoDB
-        const conversations = await mongoClient.find(
-          COLLECTION_NAME,
-          {
+        const conversations = await db
+          .collection(COLLECTION_NAME)
+          .find({
             userId: session.user.sub,
             isActive: true
-          },
-          {
-            sort: { lastUpdated: -1 },
-            limit: 10
-          }
-        );
+          })
+          .sort({ lastUpdated: -1 })
+          .limit(10)
+          .toArray();
 
-        clearTimeout(functionTimeout);
         return res.status(200).json({ 
           success: true,
           conversations 
         });
       } catch (findError) {
-        clearTimeout(functionTimeout);
         return handleError(res, findError, 'Error al recuperar conversaciones');
       }
     }
@@ -170,7 +157,6 @@ export default async function handler(req, res) {
         const { messages, summary } = req.body;
 
         if (!messages || !Array.isArray(messages)) {
-          clearTimeout(functionTimeout);
           return res.status(200).json({ 
             success: false,
             message: 'Formato de mensajes inválido'
@@ -183,13 +169,12 @@ export default async function handler(req, res) {
         // Buscar conversación existente
         let existingConversation = null;
         try {
-          existingConversation = await mongoClient.findOne(
-            COLLECTION_NAME,
-            {
+          existingConversation = await db
+            .collection(COLLECTION_NAME)
+            .findOne({
               userId: session.user.sub,
               isActive: true
-            }
-          );
+            });
         } catch (findError) {
           console.warn('Error al buscar conversación existente, continuando con creación de nueva:', findError.message);
           // Continuar con la creación de una nueva conversación
@@ -214,12 +199,13 @@ export default async function handler(req, res) {
           }
 
           try {
-            result = await mongoClient.insertOne(COLLECTION_NAME, newConversation);
+            result = await db
+              .collection(COLLECTION_NAME)
+              .insertOne(newConversation);
             
             // Si hay un error de timeout, crear una respuesta simulada
             if (result.error === 'timeout') {
               console.warn('Timeout al insertar conversación, devolviendo respuesta simulada');
-              clearTimeout(functionTimeout);
               return res.status(200).json({ 
                 success: true,
                 conversation: {
@@ -234,7 +220,6 @@ export default async function handler(req, res) {
             // Añadir el ID al objeto de conversación para devolverlo
             newConversation._id = result.insertedId;
             
-            clearTimeout(functionTimeout);
             return res.status(200).json({ 
               success: true,
               conversation: newConversation
@@ -243,7 +228,6 @@ export default async function handler(req, res) {
             console.error('Error al insertar nueva conversación:', insertError);
             
             // Devolver una respuesta simulada para que el cliente pueda continuar
-            clearTimeout(functionTimeout);
             return res.status(200).json({ 
               success: true,
               conversation: {
@@ -270,16 +254,16 @@ export default async function handler(req, res) {
           }
 
           try {
-            result = await mongoClient.replaceOne(
-              COLLECTION_NAME,
-              { _id: existingConversation._id },
-              updatedConversation
-            );
+            result = await db
+              .collection(COLLECTION_NAME)
+              .replaceOne(
+                { _id: existingConversation._id },
+                updatedConversation
+              );
             
             // Si hay un error de timeout, devolver la conversación actualizada de todos modos
             if (result.error === 'timeout') {
               console.warn('Timeout al actualizar conversación, devolviendo respuesta simulada');
-              clearTimeout(functionTimeout);
               return res.status(200).json({ 
                 success: true,
                 conversation: updatedConversation,
@@ -287,7 +271,6 @@ export default async function handler(req, res) {
               });
             }
             
-            clearTimeout(functionTimeout);
             return res.status(200).json({ 
               success: true,
               conversation: updatedConversation
@@ -296,7 +279,6 @@ export default async function handler(req, res) {
             console.error('Error al actualizar conversación existente:', updateError);
             
             // Devolver la conversación actualizada de todos modos para que el cliente pueda continuar
-            clearTimeout(functionTimeout);
             return res.status(200).json({ 
               success: true,
               conversation: updatedConversation,
@@ -306,7 +288,6 @@ export default async function handler(req, res) {
           }
         }
       } catch (saveError) {
-        clearTimeout(functionTimeout);
         return handleError(res, saveError, 'Error al guardar la conversación');
       }
     }
@@ -318,12 +299,10 @@ export default async function handler(req, res) {
 
         // Opción 1: Borrar todas las conversaciones del usuario
         if (deleteAll === 'true') {
-          const result = await mongoClient.deleteMany(
-            COLLECTION_NAME,
-            { userId: session.user.sub }
-          );
+          const result = await db
+            .collection(COLLECTION_NAME)
+            .deleteMany({ userId: session.user.sub });
 
-          clearTimeout(functionTimeout);
           return res.status(200).json({
             success: true,
             message: 'Todas las conversaciones han sido eliminadas',
@@ -334,30 +313,26 @@ export default async function handler(req, res) {
         // Opción 2: Borrar una conversación específica
         else if (conversationId) {
           try {
-            const objectId = mongoClient.ObjectId(conversationId);
-            const result = await mongoClient.deleteOne(
-              COLLECTION_NAME,
-              { 
+            const objectId = db.ObjectId(conversationId);
+            const result = await db
+              .collection(COLLECTION_NAME)
+              .deleteOne({ 
                 _id: objectId,
                 userId: session.user.sub 
-              }
-            );
+              });
 
             if (result.deletedCount === 0) {
-              clearTimeout(functionTimeout);
               return res.status(404).json({
                 success: false,
                 message: 'No se encontró la conversación o no tienes permiso para eliminarla'
               });
             }
 
-            clearTimeout(functionTimeout);
             return res.status(200).json({
               success: true,
               message: 'Conversación eliminada correctamente'
             });
           } catch (idError) {
-            clearTimeout(functionTimeout);
             return res.status(400).json({
               success: false,
               message: 'ID de conversación inválido',
@@ -368,24 +343,19 @@ export default async function handler(req, res) {
         
         // Si no se proporcionó ninguna opción válida
         else {
-          clearTimeout(functionTimeout);
           return res.status(400).json({
             success: false,
             message: 'Se debe especificar conversationId o deleteAll=true'
           });
         }
       } catch (deleteError) {
-        clearTimeout(functionTimeout);
         return handleError(res, deleteError, 'Error al eliminar las conversaciones');
       }
     }
 
-    // Method not allowed
-    clearTimeout(functionTimeout);
     return res.status(405).json({ error: 'Método no permitido' });
 
   } catch (error) {
-    clearTimeout(functionTimeout);
-    return handleError(res, error, 'Error interno del servidor');
+    return handleError(res, error);
   }
 } 
