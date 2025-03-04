@@ -28,11 +28,15 @@ export async function GET(req) {
       });
       
       if (session?.accessToken) {
-        console.log('🔍 AUTH0 ACCESS TOKEN DATA:', {
+        // Log detallado de los claims relevantes
+        const premiumStatus = session.accessToken[auth0Config.customClaims.isPremium];
+        const premiumVerifiedAt = session.accessToken[auth0Config.customClaims.premiumVerifiedAt];
+        
+        console.log('🔍 AUTH0 PREMIUM CLAIMS:', {
           timestamp: new Date().toISOString(),
-          token: session.accessToken,
-          isPremium: session.accessToken[auth0Config.customClaims.isPremium],
-          verifiedAt: session.accessToken[auth0Config.customClaims.premiumVerifiedAt]
+          premiumStatus,
+          premiumVerifiedAt,
+          namespace: auth0Config.customClaims.namespace
         });
       }
       
@@ -60,7 +64,8 @@ export async function GET(req) {
           isAllowedListUser: false,
           hasPremiumAccess: false,
           isAuthenticated: false,
-          premiumVerifiedAt: null
+          premiumVerifiedAt: null,
+          lastChecked: new Date().toISOString()
         }
       }, {
         headers: commonHeaders
@@ -91,6 +96,7 @@ export async function GET(req) {
       hasPremiumFromClaims,
       isPremium: isAllowedListUser || hasPremiumFromClaims,
       premiumVerifiedAt,
+      namespace: auth0Config.customClaims.namespace,
       timestamp: new Date().toISOString()
     });
 
@@ -102,7 +108,8 @@ export async function GET(req) {
         isAllowedListUser,
         hasPremiumAccess: hasPremiumFromClaims,
         isAuthenticated: true,
-        premiumVerifiedAt
+        premiumVerifiedAt,
+        lastChecked: new Date().toISOString()
       }
     }, {
       headers: commonHeaders
@@ -126,7 +133,8 @@ export async function GET(req) {
         hasPremiumAccess: false,
         isAuthenticated: false,
         isTemporary: true,
-        premiumVerifiedAt: null
+        premiumVerifiedAt: null,
+        lastChecked: new Date().toISOString()
       },
       error: 'Error al verificar acceso',
       details: error.message,

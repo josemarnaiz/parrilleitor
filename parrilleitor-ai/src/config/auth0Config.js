@@ -36,8 +36,26 @@ export const auth0Config = {
 export function hasPremiumAccess(accessToken) {
   if (!accessToken) return false;
   
-  // Verificar el claim personalizado de premium usando el namespace correcto
-  return accessToken[auth0Config.customClaims.isPremium] === true;
+  try {
+    // Verificar el claim personalizado de premium usando el namespace correcto
+    const premiumStatus = accessToken[auth0Config.customClaims.isPremium];
+    const premiumVerifiedAt = accessToken[auth0Config.customClaims.premiumVerifiedAt];
+    
+    // Log para debugging
+    console.log('Premium access check:', {
+      premiumStatus,
+      premiumVerifiedAt,
+      timestamp: new Date().toISOString()
+    });
+    
+    return premiumStatus === true;
+  } catch (error) {
+    console.error('Error checking premium access:', {
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+    return false;
+  }
 }
 
 /**
