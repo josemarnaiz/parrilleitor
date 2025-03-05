@@ -3,6 +3,7 @@ import { AIProviderFactory } from '@/services/ai/AIProviderFactory';
 import { isInAllowedList } from '@/config/allowedUsers';
 import { hasPremiumAccess } from '@/config/auth0Config';
 import { logAuth, logAuthError, logError, logInfo } from '@/config/logger';
+import SYSTEM_PROMPT from '@/config/systemPrompt';
 import crypto from 'crypto';
 import { MongoClient, ObjectId } from 'mongodb';
 
@@ -54,34 +55,6 @@ async function connectToDatabase() {
     throw new Error('No se pudo conectar a la base de datos. Verifica la conexión y las credenciales.');
   }
 }
-
-const SYSTEM_PROMPT = `You are ParrilleitorAI, a friendly and professional AI assistant specialized in sports nutrition and physical exercise. Your purpose is to help users achieve their fitness and nutrition goals.
-
-ALLOWED AREAS:
-1. Sports nutrition and meal planning
-2. Exercise routines and training programs
-3. Basic sports supplementation
-4. Muscle recovery and rest
-5. Sports hydration
-6. Training periodization
-7. Fitness goals (fat loss, muscle gain, performance)
-
-LANGUAGE HANDLING:
-1. Detect the language of the user's input
-2. CONSISTENTLY maintain that language throughout the conversation
-
-RESPONSE GUIDELINES:
-1. Be specific and practical
-2. Explain the reasoning
-3. Prioritize safety and well-being
-4. Include relevant warnings
-5. Request more information when needed
-
-MEDICAL BOUNDARIES:
-- DO NOT give medical advice
-- DO NOT recommend medications
-- DO NOT address injuries or rehabilitation
-- For medical concerns, kindly suggest consulting a healthcare professional`;
 
 export default async function handler(req, res) {
   const requestId = crypto.randomUUID(); // ID único para seguir esta solicitud en los logs
@@ -256,10 +229,35 @@ export default async function handler(req, res) {
     // Preparar mensajes para OpenAI con el contexto mínimo necesario
     const messagesForAI = [
       { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: truncatedMessage }
     ];
+    
+    // Si hay una conversación existente, añadir los mensajes previos para dar contexto
+    if (conversationId) {
+      try {
+        console.log(`[${requestId}] Buscando historial de conversación para dar contexto`);
+        const { db } = await connectToDatabase();
+        const existingConversation = await db.collection(COLLECTION_NAME).findOne({
+          _id: new ObjectId(conversationId),
+          userId: session.user.sub,
+          isActive: true
+        });
+        
+        if (existingConversation && existingConversation.messages && existingConversation.messages.length > 0) {
+          // Añadir los últimos 10 mensajes (o menos si hay menos) para mantener un contexto razonable
+          const contextMessages = existingConversation.messages.slice(-10);
+          console.log(`[${requestId}] Añadiendo ${contextMessages.length} mensajes previos como contexto`);
+          messagesForAI.push(...contextMessages);
+        }
+      } catch (contextError) {
+        console.error(`[${requestId}] Error al obtener contexto de conversación:`, contextError);
+        // Continuar sin contexto si hay un error
+      }
+    }
+    
+    // Añadir el mensaje actual del usuario
+    messagesForAI.push({ role: 'user', content: truncatedMessage });
 
-    console.log(`[${requestId}] PASO 1: Solicitando respuesta a OpenAI`);
+    console.log(`[${requestId}] PASO 1: Solicitando respuesta a OpenAI con ${messagesForAI.length} mensajes en el contexto`);
     let aiResponse;
     try {
       // Obtener respuesta de OpenAI
