@@ -3,7 +3,7 @@ import { AIProviderFactory } from '@/services/ai/AIProviderFactory';
 import { isInAllowedList } from '@/config/allowedUsers';
 import { hasPremiumAccess } from '@/config/auth0Config';
 import { logAuth, logAuthError, logError, logInfo } from '@/config/logger';
-import SYSTEM_PROMPT from '@/config/systemPrompt';
+import SYSTEM_PROMPT, { getCustomPromptForQuery } from '@/config/systemPrompt';
 import crypto from 'crypto';
 import { MongoClient, ObjectId } from 'mongodb';
 
@@ -226,9 +226,14 @@ export default async function handler(req, res) {
     }
 
     // PASO 1: Obtener respuesta de OpenAI primero, sin guardar nada en MongoDB
-    // Preparar mensajes para OpenAI con el contexto mínimo necesario
+    // Preparar mensajes para OpenAI con el contexto y conocimiento personalizado
+    console.log(`[${requestId}] Generando prompt personalizado para la consulta`);
+    
+    // Obtener un prompt personalizado para esta consulta específica, incluyendo el perfil del usuario
+    const customPrompt = await getCustomPromptForQuery(truncatedMessage, session.user.sub);
+    
     const messagesForAI = [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: customPrompt },
     ];
     
     // Si hay una conversación existente, añadir los mensajes previos para dar contexto
